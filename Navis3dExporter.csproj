@@ -20,7 +20,7 @@
       <Private>false</Private>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Api.Clash">
-      <HintPath>lib\Autodesk.Navisworks.Api.Clash.dll</HintPath>
+      <HintPath>lib\Autodesk.Navisworks.Clash.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
