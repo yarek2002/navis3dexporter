@@ -100,9 +100,6 @@ namespace Navis3dExporter
             if (mesh2 != null)
                 scene.AddRigidMesh(mesh2, Matrix4x4.Identity);
 
-            if (!scene.DrawableMeshes.Any())
-                return;
-
             var model = scene.ToGltf2();
             model.SaveGLB(filePath);
         }
@@ -131,11 +128,7 @@ namespace Navis3dExporter
                 var v1 = new VertexPositionNormal(tri.V1, tri.Normal);
                 var v2 = new VertexPositionNormal(tri.V2, tri.Normal);
 
-                int i0 = prim.AddVertex(v0);
-                int i1 = prim.AddVertex(v1);
-                int i2 = prim.AddVertex(v2);
-
-                prim.AddTriangle(i0, i1, i2);
+                prim.AddTriangle(v0, v1, v2);
             }
 
             return mesh;
@@ -153,7 +146,7 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            var comState = COMApi.InwOpState10_document.GetNavisworksState();
+            var comState = (COMApi.InwOpState)COMApi.ComApiBridge.State;
             var comItem = COMApi.ComApiBridge.ToInwOaPath(modelItem);
             var selection = comState.ObjectFactory(
                 COMApi.nwEObjectType.eObjectType_nwOpSelection,
@@ -168,7 +161,7 @@ namespace Navis3dExporter
                 foreach (COMApi.InwOaFragment3 frag in path.Fragments())
                 {
                     frag.GenerateSimplePrimitives(
-                        (int)(COMApi.nwEVertexProperty.eNORMAL),
+                        COMApi.nwEVertexProperty.eNORMAL,
                         callback);
                 }
             }
@@ -222,11 +215,11 @@ namespace Navis3dExporter
 
             private static Vector3 ToVector3(COMApi.InwSimpleVertex v)
             {
-                var coord = (double[])v.Coordinates();
+                var coord = (Array)v.coord;
                 return new Vector3(
-                    (float)coord[0],
-                    (float)coord[1],
-                    (float)coord[2]);
+                    (float)(double)coord.GetValue(0),
+                    (float)(double)coord.GetValue(1),
+                    (float)(double)coord.GetValue(2));
             }
         }
 

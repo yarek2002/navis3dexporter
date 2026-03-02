@@ -3,6 +3,8 @@ using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.Plugins;
 using System.Windows;
 
+using NavisApp = Autodesk.Navisworks.Api.Application;
+
 namespace Navis3dExporter
 {
     [Plugin("Navis3dExporter.GlbExporter", "NV3D",
@@ -14,7 +16,7 @@ namespace Navis3dExporter
         {
             try
             {
-                Document doc = Application.ActiveDocument;
+                Document doc = NavisApp.ActiveDocument;
                 if (doc == null || doc.Models.Count == 0)
                 {
                     System.Windows.MessageBox.Show(
