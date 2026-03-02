@@ -32,4 +32,4 @@ jobs:
         with:
           name: Navis3dExporter-bin
           path: |
-            **/bin/Release/**
+            **/bin/**/Release/**
