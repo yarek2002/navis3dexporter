@@ -22,11 +22,7 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
         with:
-          vs-version: '[17.0,)'  # VS 2022
-
-      # ВАЖНО: Navisworks DLL должны быть доступны на раннере.
-      # Обычно их кладут в папку репозитория (например, ./lib/)
-      # и настраивают HintPath в csproj на эту папку.
+          vs-version: '[17.0,)'  # VS 2022.
 
       - name: Build Release
         run: msbuild Navis3dExporter.csproj /p:Configuration=Release /p:Platform=x64

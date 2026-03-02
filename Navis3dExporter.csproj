@@ -15,8 +15,12 @@
       <HintPath>lib\Autodesk.Navisworks.Api.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="Autodesk.Navisworks.Api.Com">
-      <HintPath>lib\Autodesk.Navisworks.Api.Com.dll</HintPath>
+    <Reference Include="Autodesk.Navisworks.Interop.ComApi">
+      <HintPath>lib\Autodesk.Navisworks.Interop.ComApi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.Api.Clash">
+      <HintPath>lib\Autodesk.Navisworks.Api.Clash.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
