@@ -12,11 +12,11 @@
 
   <ItemGroup>
     <Reference Include="Autodesk.Navisworks.Api">
-      <HintPath>$(ProgramFiles)\Autodesk\Navisworks Manage 2020\Autodesk.Navisworks.Api.dll</HintPath>
+      <HintPath>lib\Autodesk.Navisworks.Api.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Api.Com">
-      <HintPath>$(ProgramFiles)\Autodesk\Navisworks Manage 2020\Autodesk.Navisworks.Api.Com.dll</HintPath>
+      <HintPath>lib\Autodesk.Navisworks.Api.Com.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

@@ -153,7 +153,7 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            var comState = COMApi.InwOpState10)_document.GetNavisworksState();
+            var comState = COMApi.InwOpState10_document.GetNavisworksState();
             var comItem = COMApi.ComApiBridge.ToInwOaPath(modelItem);
             var selection = comState.ObjectFactory(
                 COMApi.nwEObjectType.eObjectType_nwOpSelection,
