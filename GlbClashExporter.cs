@@ -10,7 +10,7 @@ using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
 using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
-using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
+using ComBridge = Autodesk.Navisworks.Api.Interop.ComApi.ComApiBridge;
 
 namespace Navis3dExporter
 {
