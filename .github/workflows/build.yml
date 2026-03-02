@@ -17,7 +17,8 @@ jobs:
         uses: NuGet/setup-nuget@v2
 
       - name: Restore NuGet packages
-        run: dotnet restore Navis3dExporter.csproj
+        run: dotnet restore Navis3dExporter.csproj /p:NoWarn=NU1605
+
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
