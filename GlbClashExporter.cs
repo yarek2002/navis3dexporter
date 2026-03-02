@@ -9,6 +9,7 @@ using SharpGLTF.Geometry;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
+using Autodesk.Navisworks.Api.ComApi;
 using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
 
 namespace Navis3dExporter
@@ -146,8 +147,8 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            var comState = (COMApi.InwOpState)COMApi.ComApiBridge.State;
-            var comItem = COMApi.ComApiBridge.ToInwOaPath(modelItem);
+            var comState = (COMApi.InwOpState)ComApiBridge.State;
+            var comItem = ComApiBridge.ToInwOaPath(modelItem);
             var selection = comState.ObjectFactory(
                 COMApi.nwEObjectType.eObjectType_nwOpSelection,
                 null, null) as COMApi.InwOpSelection;

@@ -27,7 +27,7 @@ namespace Navis3dExporter
                     dialog.SelectedPath = FolderTextBox.Text;
                 }
 
-                if (dialog.ShowDialog() == DialogResult.OK &&
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK &&
                     !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                 {
                     FolderTextBox.Text = dialog.SelectedPath;
