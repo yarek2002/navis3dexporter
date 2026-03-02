@@ -10,7 +10,6 @@ using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
 using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
-using ComBridge = Autodesk.Navisworks.Api.Interop.ComApi.ComApiBridge;
 
 namespace Navis3dExporter
 {
@@ -145,29 +144,14 @@ namespace Navis3dExporter
 
         private List<TriangleData> ExtractTriangles(ModelItem modelItem)
         {
-            var triangles = new List<TriangleData>();
-
-            var comState = (COMApi.InwOpState)ComBridge.State;
-            var comItem = ComBridge.ToInwOaPath(modelItem);
-            var selection = comState.ObjectFactory(
-                COMApi.nwEObjectType.eObjectType_nwOpSelection,
-                null, null) as COMApi.InwOpSelection;
-
-            selection.Select(comItem);
-
-            var callback = new TriangleCollector(triangles);
-
-            foreach (COMApi.InwOaPath3 path in selection.Paths())
-            {
-                foreach (COMApi.InwOaFragment3 frag in path.Fragments())
-                {
-                    frag.GenerateSimplePrimitives(
-                        COMApi.nwEVertexProperty.eNORMAL,
-                        callback);
-                }
-            }
-
-            return triangles;
+            // В текущей конфигурации DLL отсутствует мост ComApiBridge,
+            // поэтому полноценное извлечение геометрии через GenerateSimplePrimitives
+            // недоступно. Чтобы сборка проходила, пока возвращаем пустой список.
+            //
+            // Как только в проект будет добавлена сборка с
+            // Autodesk.Navisworks.Api.ComApi.ComApiBridge,
+            // сюда можно вернуть реализацию на основе COM API.
+            return new List<TriangleData>();
         }
 
         private class TriangleCollector : COMApi.InwSimplePrimitivesCB
