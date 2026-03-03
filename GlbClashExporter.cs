@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
 using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.Clash;
 using SharpGLTF.Geometry;
@@ -44,9 +46,10 @@ namespace Navis3dExporter
 
                 testIndex++;
 
-                string testFolderName = !string.IsNullOrWhiteSpace(clashTest.DisplayName)
-                    ? SanitizeFileName(clashTest.DisplayName)
-                    : $"Test_{testIndex:000}";
+                string testFolderName = BuildSafeNamedSegment(
+                    prefix: $"Test_{testIndex:000}",
+                    displayName: clashTest.DisplayName,
+                    maxSegmentLen: 60);
 
                 string testFolder = Path.Combine(outputFolder, testFolderName);
                 Directory.CreateDirectory(testFolder);
@@ -60,9 +63,10 @@ namespace Navis3dExporter
                     {
                         groupIndex++;
 
-                        string groupName = string.IsNullOrWhiteSpace(group.DisplayName)
-                            ? $"Group_{groupIndex:0000}"
-                            : SanitizeFileName(group.DisplayName);
+                        string groupName = BuildSafeNamedSegment(
+                            prefix: $"Group_{groupIndex:0000}",
+                            displayName: group.DisplayName,
+                            maxSegmentLen: 80);
 
                         string filePath = Path.Combine(testFolder, groupName + ".glb");
                         ExportGroup(group, filePath);
@@ -71,9 +75,10 @@ namespace Navis3dExporter
                     {
                         // Одиночные результаты без группы
                         clashIndex++;
-                        string clashName = string.IsNullOrWhiteSpace(clashResult.DisplayName)
-                            ? $"Clash_{clashIndex:0000}"
-                            : SanitizeFileName(clashResult.DisplayName);
+                        string clashName = BuildSafeNamedSegment(
+                            prefix: $"Clash_{clashIndex:0000}",
+                            displayName: clashResult.DisplayName,
+                            maxSegmentLen: 80);
 
                         string filePath = Path.Combine(testFolder, clashName + ".glb");
                         ExportSingleClash(clashResult, filePath);
@@ -272,6 +277,45 @@ namespace Navis3dExporter
             var invalid = Path.GetInvalidFileNameChars();
             var safe = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray());
             return string.IsNullOrWhiteSpace(safe) ? "Clash" : safe;
+        }
+
+        private static string BuildSafeNamedSegment(string prefix, string displayName, int maxSegmentLen)
+        {
+            // Делаем сегмент пути достаточно коротким, чтобы не упереться в лимит 260 символов на Windows.
+            // Формат: "<prefix>_<sanitizedTrimmed>_<hash8>" (hash добавляем только если есть displayName).
+            var sanitizedPrefix = SanitizeFileName(prefix ?? "Item");
+            if (string.IsNullOrWhiteSpace(displayName))
+                return TrimToLength(sanitizedPrefix, maxSegmentLen);
+
+            var sanitizedName = SanitizeFileName(displayName).Trim();
+            var hash8 = ShortHash8(displayName);
+
+            // Оставляем место под "_"+hash
+            var suffix = "_" + hash8;
+            var baseMax = Math.Max(1, maxSegmentLen - suffix.Length);
+
+            var combinedBase = sanitizedPrefix + "_" + sanitizedName;
+            combinedBase = TrimToLength(combinedBase, baseMax);
+
+            return combinedBase + suffix;
+        }
+
+        private static string TrimToLength(string value, int maxLen)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            if (maxLen <= 0) return string.Empty;
+            return value.Length <= maxLen ? value : value.Substring(0, maxLen);
+        }
+
+        private static string ShortHash8(string value)
+        {
+            using (var sha1 = SHA1.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(value ?? string.Empty);
+                var hash = sha1.ComputeHash(bytes);
+                // 8 hex символов достаточно для уникальности в рамках одного теста
+                return BitConverter.ToString(hash, 0, 4).Replace("-", "").ToLowerInvariant();
+            }
         }
     }
 }
