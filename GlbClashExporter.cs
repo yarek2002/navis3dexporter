@@ -20,6 +20,11 @@ namespace Navis3dExporter
     {
         private readonly Document _document;
 
+        // Navisworks использует Z-up, glTF — Y-up.
+        // Поворот на -90° вокруг оси X переводит систему координат Navisworks в систему glTF.
+        private static readonly Matrix4x4 NavisToGltfTransform =
+            Matrix4x4.CreateRotationX(-(float)(Math.PI / 2));
+
         public GlbClashExporter(Document document)
         {
             _document = document ?? throw new ArgumentNullException(nameof(document));
@@ -49,7 +54,7 @@ namespace Navis3dExporter
                 var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
                 if (mesh != null)
                 {
-                    scene.AddRigidMesh(mesh, Matrix4x4.Identity);
+                    scene.AddRigidMesh(mesh, NavisToGltfTransform);
                 }
             }
 
@@ -152,13 +157,13 @@ namespace Navis3dExporter
             var mesh1 = BuildMeshFromModelItem(item1, "Item1",
                 new Vector4(1f, 0f, 0f, 1f));
             if (mesh1 != null)
-                scene.AddRigidMesh(mesh1, Matrix4x4.Identity);
+                scene.AddRigidMesh(mesh1, NavisToGltfTransform);
 
             // Второй элемент – синим
             var mesh2 = BuildMeshFromModelItem(item2, "Item2",
                 new Vector4(0f, 0f, 1f, 1f));
             if (mesh2 != null)
-                scene.AddRigidMesh(mesh2, Matrix4x4.Identity);
+                scene.AddRigidMesh(mesh2, NavisToGltfTransform);
 
             var model = scene.ToGltf2();
             model.SaveGLB(filePath);
@@ -186,12 +191,12 @@ namespace Navis3dExporter
                 var mesh1 = BuildMeshFromModelItem(item1, $"Item1_{index}",
                     new Vector4(1f, 0f, 0f, 1f));
                 if (mesh1 != null)
-                    scene.AddRigidMesh(mesh1, Matrix4x4.Identity);
+                    scene.AddRigidMesh(mesh1, NavisToGltfTransform);
 
                 var mesh2 = BuildMeshFromModelItem(item2, $"Item2_{index}",
                     new Vector4(0f, 0f, 1f, 1f));
                 if (mesh2 != null)
-                    scene.AddRigidMesh(mesh2, Matrix4x4.Identity);
+                    scene.AddRigidMesh(mesh2, NavisToGltfTransform);
             }
 
             var model = scene.ToGltf2();
