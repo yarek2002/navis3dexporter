@@ -16,6 +16,8 @@ namespace Navis3dExporter
         {
             try
             {
+                AssemblyResolver.EnsureRegistered();
+
                 Document doc = NavisApp.ActiveDocument;
                 if (doc == null || doc.Models.Count == 0)
                 {
