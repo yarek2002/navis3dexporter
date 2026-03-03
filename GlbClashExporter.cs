@@ -243,21 +243,31 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            // Передаём в COM-выборку сам элемент, COM-слой сам разберётся с его геометрией.
-            var coll = new ModelItemCollection();
-            coll.Add(modelItem);
+            // Копируем проверенный паттерн из примера:
+            // 1) строим COM-выборку только из данного ModelItem
+            // 2) обходим Paths
+            // 3) для каждого path берём только те фрагменты, которые реально относятся к нему
+            // 4) для каждого фрагмента вызываем GenerateSimplePrimitives с корректной матрицей LCS->WCS
 
-            var selection = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(coll);
+            var oSel = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(
+                new ModelItemCollection { modelItem });
 
             var callback = new TriangleCollector(triangles);
 
-            foreach (COMApi.InwOaPath3 path in selection.Paths())
+            foreach (COMApi.InwOaPath3 path in oSel.Paths())
             {
-                foreach (COMApi.InwOaFragment3 frag in path.Fragments())
-                {
-                    callback.CurrentTransform = TryGetFragmentTransform(frag);
+                var path1 = path;
 
-                    frag.GenerateSimplePrimitives(
+                var fragments = path.Fragments()
+                    .Cast<COMApi.InwOaFragment3>()
+                    .Where(f => IsFragmentOnPath(path1, f))
+                    .ToList();
+
+                foreach (var fragment in fragments)
+                {
+                    callback.CurrentTransform = GetLocalToWorldTransformMatrix(fragment);
+
+                    fragment.GenerateSimplePrimitives(
                         COMApi.nwEVertexProperty.eNORMAL,
                         callback);
                 }
@@ -270,7 +280,7 @@ namespace Navis3dExporter
         {
             private readonly List<TriangleData> _triangles;
 
-            public Matrix4x4 CurrentTransform { get; set; } = Matrix4x4.Identity;
+            public double[] CurrentTransform { get; set; } = null;
 
             public TriangleCollector(List<TriangleData> triangles)
             {
@@ -297,9 +307,9 @@ namespace Navis3dExporter
                 COMApi.InwSimpleVertex v2,
                 COMApi.InwSimpleVertex v3)
             {
-                var p0 = Vector3.Transform(ToVector3(v1), CurrentTransform);
-                var p1 = Vector3.Transform(ToVector3(v2), CurrentTransform);
-                var p2 = Vector3.Transform(ToVector3(v3), CurrentTransform);
+                var p0 = GetPoint(v1, CurrentTransform);
+                var p1 = GetPoint(v2, CurrentTransform);
+                var p2 = GetPoint(v3, CurrentTransform);
 
                 var normal = Vector3.Normalize(Vector3.Cross(p1 - p0, p2 - p0));
 
@@ -312,56 +322,53 @@ namespace Navis3dExporter
                 });
             }
 
-            private static Vector3 ToVector3(COMApi.InwSimpleVertex v)
+            private static Vector3 GetPoint(COMApi.InwSimpleVertex vertex, double[] matrix)
             {
-                var coord = (Array)v.coord;
-                // В COM-API Navisworks координаты могут быть как float, так и double.
-                // Используем Convert.ToSingle, чтобы корректно обработать оба случая.
-                return new Vector3(
-                    Convert.ToSingle(coord.GetValue(0)),
-                    Convert.ToSingle(coord.GetValue(1)),
-                    Convert.ToSingle(coord.GetValue(2)));
+                // Логика эквивалентна примеру из primer:
+                // берём coord как float[3] и умножаем на 4x4-матрицу LCS->WCS.
+                var arr = (Array)vertex.coord;
+                var v = arr.Cast<float>().ToArray();
+
+                if (matrix == null || matrix.Length != 16)
+                {
+                    return new Vector3(v[0], v[1], v[2]);
+                }
+
+                var x = v[0] * matrix[0] + v[1] * matrix[4] + v[2] * matrix[8] + matrix[12];
+                var y = v[0] * matrix[1] + v[1] * matrix[5] + v[2] * matrix[9] + matrix[13];
+                var z = v[0] * matrix[2] + v[1] * matrix[6] + v[2] * matrix[10] + matrix[14];
+
+                return new Vector3((float)x, (float)y, (float)z);
             }
         }
 
-        private static Matrix4x4 TryGetFragmentTransform(COMApi.InwOaFragment3 frag)
+        // From http://adndevblog.typepad.com/aec/2012/08/geometry-fragment-returns-all-instances-when-a-multiply-instanced-node-is-selected.html
+        private static bool IsFragmentOnPath(COMApi.InwOaPath3 path, COMApi.InwOaFragment3 fragment)
         {
-            try
+            var a1 = (Array)fragment.path.ArrayData;
+            var a2 = (Array)path.ArrayData;
+
+            if (a1.GetLength(0) == a2.GetLength(0) &&
+                a1.GetLowerBound(0) == a2.GetLowerBound(0) &&
+                a1.GetUpperBound(0) == a2.GetUpperBound(0))
             {
-                // Возвращает variant array[16] (double) - матрица LCS->WCS
-                var arr = (Array)frag.GetLocalToWorldMatrix();
-                if (arr == null || arr.Length < 16) return Matrix4x4.Identity;
-
-                float m00 = (float)(double)arr.GetValue(0);
-                float m01 = (float)(double)arr.GetValue(1);
-                float m02 = (float)(double)arr.GetValue(2);
-                float m03 = (float)(double)arr.GetValue(3);
-
-                float m10 = (float)(double)arr.GetValue(4);
-                float m11 = (float)(double)arr.GetValue(5);
-                float m12 = (float)(double)arr.GetValue(6);
-                float m13 = (float)(double)arr.GetValue(7);
-
-                float m20 = (float)(double)arr.GetValue(8);
-                float m21 = (float)(double)arr.GetValue(9);
-                float m22 = (float)(double)arr.GetValue(10);
-                float m23 = (float)(double)arr.GetValue(11);
-
-                float m30 = (float)(double)arr.GetValue(12);
-                float m31 = (float)(double)arr.GetValue(13);
-                float m32 = (float)(double)arr.GetValue(14);
-                float m33 = (float)(double)arr.GetValue(15);
-
-                return new Matrix4x4(
-                    m00, m01, m02, m03,
-                    m10, m11, m12, m13,
-                    m20, m21, m22, m23,
-                    m30, m31, m32, m33);
+                var i = a1.GetLowerBound(0);
+                for (; i <= a1.GetUpperBound(0); i++)
+                {
+                    if ((int)a1.GetValue(i) != (int)a2.GetValue(i))
+                        return false;
+                }
             }
-            catch
-            {
-                return Matrix4x4.Identity;
-            }
+
+            return true;
+        }
+
+        private static double[] GetLocalToWorldTransformMatrix(COMApi.InwOaFragment3 fragment)
+        {
+            // Адаптация расширения из primer: GetLocalToWorldMatrix() возвращает InwLTransform3f3.
+            var localToWorld = (COMApi.InwLTransform3f3)fragment.GetLocalToWorldMatrix();
+            var matrix = (Array)localToWorld.Matrix;
+            return matrix.Cast<double>().ToArray();
         }
 
         private static string SanitizeFileName(string name)
