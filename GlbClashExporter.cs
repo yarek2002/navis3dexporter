@@ -46,9 +46,7 @@ namespace Navis3dExporter
 
                 string testFolderName = !string.IsNullOrWhiteSpace(clashTest.DisplayName)
                     ? SanitizeFileName(clashTest.DisplayName)
-                    : !string.IsNullOrWhiteSpace(clashTest.Name)
-                        ? SanitizeFileName(clashTest.Name)
-                        : $"Test_{testIndex:000}";
+                    : $"Test_{testIndex:000}";
 
                 string testFolder = Path.Combine(outputFolder, testFolderName);
                 Directory.CreateDirectory(testFolder);
