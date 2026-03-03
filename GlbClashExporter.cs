@@ -315,10 +315,12 @@ namespace Navis3dExporter
             private static Vector3 ToVector3(COMApi.InwSimpleVertex v)
             {
                 var coord = (Array)v.coord;
+                // В COM-API Navisworks координаты могут быть как float, так и double.
+                // Используем Convert.ToSingle, чтобы корректно обработать оба случая.
                 return new Vector3(
-                    (float)(double)coord.GetValue(0),
-                    (float)(double)coord.GetValue(1),
-                    (float)(double)coord.GetValue(2));
+                    Convert.ToSingle(coord.GetValue(0)),
+                    Convert.ToSingle(coord.GetValue(1)),
+                    Convert.ToSingle(coord.GetValue(2)));
             }
         }
 
