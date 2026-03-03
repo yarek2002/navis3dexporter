@@ -171,7 +171,10 @@ namespace Navis3dExporter
             string meshName,
             Vector4 color)
         {
-            var triangles = ExtractTriangles(modelItem);
+           var triangles = ExtractTriangles(modelItem);
+            System.Windows.MessageBox.Show(
+                $"Triangles for {meshName}: {triangles.Count}",
+                "GLB Exporter");
             if (triangles.Count == 0)
                 return null;
 
