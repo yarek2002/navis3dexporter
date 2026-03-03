@@ -11,6 +11,7 @@ using SharpGLTF.Geometry;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
+using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
 
 namespace Navis3dExporter
@@ -208,19 +209,36 @@ namespace Navis3dExporter
 
         private List<TriangleData> ExtractTriangles(ModelItem modelItem)
         {
-            // В текущей конфигурации DLL отсутствует мост ComApiBridge,
-            // поэтому полноценное извлечение геометрии через GenerateSimplePrimitives
-            // недоступно. Чтобы сборка проходила, пока возвращаем пустой список.
-            //
-            // Как только в проект будет добавлена сборка с
-            // Autodesk.Navisworks.Api.ComApi.ComApiBridge,
-            // сюда можно вернуть реализацию на основе COM API.
-            return new List<TriangleData>();
+            var triangles = new List<TriangleData>();
+
+            // Конвертация .NET ModelItem -> COM selection
+            var coll = new ModelItemCollection();
+            coll.Add(modelItem);
+
+            var selection = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(coll);
+
+            var callback = new TriangleCollector(triangles);
+
+            foreach (COMApi.InwOaPath3 path in selection.Paths())
+            {
+                foreach (COMApi.InwOaFragment3 frag in path.Fragments())
+                {
+                    callback.CurrentTransform = TryGetFragmentTransform(frag);
+
+                    frag.GenerateSimplePrimitives(
+                        COMApi.nwEVertexProperty.eNORMAL,
+                        callback);
+                }
+            }
+
+            return triangles;
         }
 
         private class TriangleCollector : COMApi.InwSimplePrimitivesCB
         {
             private readonly List<TriangleData> _triangles;
+
+            public Matrix4x4 CurrentTransform { get; set; } = Matrix4x4.Identity;
 
             public TriangleCollector(List<TriangleData> triangles)
             {
@@ -247,9 +265,9 @@ namespace Navis3dExporter
                 COMApi.InwSimpleVertex v2,
                 COMApi.InwSimpleVertex v3)
             {
-                var p0 = ToVector3(v1);
-                var p1 = ToVector3(v2);
-                var p2 = ToVector3(v3);
+                var p0 = Vector3.Transform(ToVector3(v1), CurrentTransform);
+                var p1 = Vector3.Transform(ToVector3(v2), CurrentTransform);
+                var p2 = Vector3.Transform(ToVector3(v3), CurrentTransform);
 
                 var normal = Vector3.Normalize(Vector3.Cross(p1 - p0, p2 - p0));
 
@@ -269,6 +287,46 @@ namespace Navis3dExporter
                     (float)(double)coord.GetValue(0),
                     (float)(double)coord.GetValue(1),
                     (float)(double)coord.GetValue(2));
+            }
+        }
+
+        private static Matrix4x4 TryGetFragmentTransform(COMApi.InwOaFragment3 frag)
+        {
+            try
+            {
+                // Возвращает variant array[16] (double) - матрица LCS->WCS
+                var arr = (Array)frag.GetLocalToWorldMatrix();
+                if (arr == null || arr.Length < 16) return Matrix4x4.Identity;
+
+                float m00 = (float)(double)arr.GetValue(0);
+                float m01 = (float)(double)arr.GetValue(1);
+                float m02 = (float)(double)arr.GetValue(2);
+                float m03 = (float)(double)arr.GetValue(3);
+
+                float m10 = (float)(double)arr.GetValue(4);
+                float m11 = (float)(double)arr.GetValue(5);
+                float m12 = (float)(double)arr.GetValue(6);
+                float m13 = (float)(double)arr.GetValue(7);
+
+                float m20 = (float)(double)arr.GetValue(8);
+                float m21 = (float)(double)arr.GetValue(9);
+                float m22 = (float)(double)arr.GetValue(10);
+                float m23 = (float)(double)arr.GetValue(11);
+
+                float m30 = (float)(double)arr.GetValue(12);
+                float m31 = (float)(double)arr.GetValue(13);
+                float m32 = (float)(double)arr.GetValue(14);
+                float m33 = (float)(double)arr.GetValue(15);
+
+                return new Matrix4x4(
+                    m00, m01, m02, m03,
+                    m10, m11, m12, m13,
+                    m20, m21, m22, m23,
+                    m30, m31, m32, m33);
+            }
+            catch
+            {
+                return Matrix4x4.Identity;
             }
         }
 

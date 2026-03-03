@@ -16,6 +16,10 @@
       <HintPath>lib\Autodesk.Navisworks.Api.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Autodesk.Navisworks.ComApi">
+      <HintPath>lib\Autodesk.Navisworks.ComApi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Autodesk.Navisworks.Interop.ComApi">
       <HintPath>lib\Autodesk.Navisworks.Interop.ComApi.dll</HintPath>
       <Private>false</Private>
