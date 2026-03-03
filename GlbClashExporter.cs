@@ -64,7 +64,6 @@ namespace Navis3dExporter
                         groupIndex++;
 
                         string groupName = BuildSafeNamedSegment(
-                            prefix: $"Group_{groupIndex:0000}",
                             displayName: group.DisplayName,
                             maxSegmentLen: 80);
 
@@ -76,7 +75,6 @@ namespace Navis3dExporter
                         // Одиночные результаты без группы
                         clashIndex++;
                         string clashName = BuildSafeNamedSegment(
-                            prefix: $"Clash_{clashIndex:0000}",
                             displayName: clashResult.DisplayName,
                             maxSegmentLen: 80);
 
@@ -211,7 +209,8 @@ namespace Navis3dExporter
             var triangles = new List<TriangleData>();
 
             // Берём сам элемент и всю его иерархию, как в Clash Detective
-            var coll = new ModelItemCollection(modelItem.DescendantsAndSelf);
+            var coll = new ModelItemCollection();
+            coll.AddRange(modelItem.DescendantsAndSelf);
 
             var selection = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(coll);
 
@@ -350,10 +349,16 @@ namespace Navis3dExporter
             var suffix = "_" + hash8;
             var baseMax = Math.Max(1, maxSegmentLen - suffix.Length);
 
-            var combinedBase = sanitizedPrefix + "_" + sanitizedName;
+            var combinedBase = sanitizedName;
             combinedBase = TrimToLength(combinedBase, baseMax);
 
             return combinedBase + suffix;
+        }
+
+        // Упрощённый вариант без явного префикса — используется в текущих вызовах
+        private static string BuildSafeNamedSegment(string displayName, int maxSegmentLen)
+        {
+            return BuildSafeNamedSegment("Item", displayName, maxSegmentLen);
         }
 
         private static string TrimToLength(string value, int maxLen)
