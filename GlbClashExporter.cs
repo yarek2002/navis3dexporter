@@ -253,42 +253,13 @@ namespace Navis3dExporter
 
             foreach (COMApi.InwOaPath3 path in selection.Paths())
             {
-                bool hasFragments = false;
-
-                // Основной путь — через фрагменты
                 foreach (COMApi.InwOaFragment3 frag in path.Fragments())
                 {
-                    hasFragments = true;
-
                     callback.CurrentTransform = TryGetFragmentTransform(frag);
 
                     frag.GenerateSimplePrimitives(
                         COMApi.nwEVertexProperty.eNORMAL,
                         callback);
-                }
-
-                // Если фрагментов нет (или по какой-то причине они пустые),
-                // пробуем взять геометрию непосредственно с узла.
-                if (!hasFragments)
-                {
-                    COMApi.InwOaNode lastNode = null;
-                    foreach (COMApi.InwOaNode n in path.Nodes())
-                    {
-                        lastNode = n;
-                    }
-
-                    if (lastNode != null)
-                    {
-                        var geom = lastNode.Geometry as COMApi.InwOaGeometry;
-                        if (geom != null)
-                        {
-                            callback.CurrentTransform = Matrix4x4.Identity;
-
-                            geom.GenerateSimplePrimitives(
-                                COMApi.nwEVertexProperty.eNORMAL,
-                                callback);
-                        }
-                    }
                 }
             }
 
