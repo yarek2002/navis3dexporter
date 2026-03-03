@@ -25,6 +25,38 @@ namespace Navis3dExporter
             _document = document ?? throw new ArgumentNullException(nameof(document));
         }
 
+        public void ExportCurrentSelection(string outputFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(outputFilePath))
+                throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
+
+            var selection = _document.CurrentSelection;
+            if (selection == null || selection.SelectedItems == null || selection.SelectedItems.Count == 0)
+                throw new InvalidOperationException("В текущем выделении нет элементов для экспорта.");
+
+            var scene = new SceneBuilder();
+
+            int index = 0;
+            foreach (var item in selection.SelectedItems)
+            {
+                index++;
+
+                // Чередуем цвета, чтобы элементы различались
+                var color = (index % 2 == 1)
+                    ? new Vector4(1f, 0f, 0f, 1f)
+                    : new Vector4(0f, 0f, 1f, 1f);
+
+                var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                if (mesh != null)
+                {
+                    scene.AddRigidMesh(mesh, Matrix4x4.Identity);
+                }
+            }
+
+            var model = scene.ToGltf2();
+            model.SaveGLB(outputFilePath);
+        }
+
         public void ExportAllClashes(string outputFolder)
         {
             if (string.IsNullOrWhiteSpace(outputFolder))

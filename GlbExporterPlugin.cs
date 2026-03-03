@@ -36,10 +36,13 @@ namespace Navis3dExporter
                 }
 
                 var exporter = new GlbClashExporter(doc);
-                exporter.ExportAllClashes(window.SelectedFolder);
+
+                // Вариант через текущее выделение: экспорт всей выделенной геометрии в один GLB
+                string filePath = System.IO.Path.Combine(window.SelectedFolder, "Selection.glb");
+                exporter.ExportCurrentSelection(filePath);
 
                 System.Windows.MessageBox.Show(
-                    "Экспорт коллизий в GLB завершён.",
+                    "Экспорт выделенной геометрии в GLB завершён.",
                     "GLB Exporter");
 
                 return 0;
