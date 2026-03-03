@@ -48,7 +48,6 @@ namespace Navis3dExporter
                 testIndex++;
 
                 string testFolderName = BuildSafeNamedSegment(
-                    prefix: $"Test_{testIndex:000}",
                     displayName: clashTest.DisplayName,
                     maxSegmentLen: 60);
 
@@ -211,9 +210,8 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            // Конвертация .NET ModelItem -> COM selection
-            var coll = new ModelItemCollection();
-            coll.Add(modelItem);
+            // Берём сам элемент и всю его иерархию, как в Clash Detective
+            var coll = new ModelItemCollection(modelItem.DescendantsAndSelf);
 
             var selection = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(coll);
 
