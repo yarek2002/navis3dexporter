@@ -243,9 +243,9 @@ namespace Navis3dExporter
         {
             var triangles = new List<TriangleData>();
 
-            // Берём сам элемент и всю его иерархию, как в Clash Detective
+            // Передаём в COM-выборку сам элемент, COM-слой сам разберётся с его геометрией.
             var coll = new ModelItemCollection();
-            coll.AddRange(modelItem.DescendantsAndSelf);
+            coll.Add(modelItem);
 
             var selection = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(coll);
 
