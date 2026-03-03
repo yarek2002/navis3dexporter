@@ -34,7 +34,7 @@ namespace Navis3dExporter
             Directory.CreateDirectory(outputFolder);
 
             var tests = clashDoc.TestsData.Tests;
-            int clashIndex = 0;
+            int testIndex = 0;
 
             foreach (var test in tests)
             {
@@ -42,25 +42,52 @@ namespace Navis3dExporter
                 if (clashTest == null)
                     continue;
 
-                var results = GetAllResults(clashTest);
-                foreach (var result in results)
-                {
-                    clashIndex++;
-                    string clashName = string.IsNullOrWhiteSpace(result.DisplayName)
-                        ? $"Clash_{clashIndex:0000}"
-                        : SanitizeFileName(result.DisplayName);
+                testIndex++;
 
-                    string filePath = Path.Combine(outputFolder, clashName + ".glb");
-                    ExportSingleClash(result, filePath);
+                string testFolderName = !string.IsNullOrWhiteSpace(clashTest.DisplayName)
+                    ? SanitizeFileName(clashTest.DisplayName)
+                    : !string.IsNullOrWhiteSpace(clashTest.Name)
+                        ? SanitizeFileName(clashTest.Name)
+                        : $"Test_{testIndex:000}";
+
+                string testFolder = Path.Combine(outputFolder, testFolderName);
+                Directory.CreateDirectory(testFolder);
+
+                int groupIndex = 0;
+                int clashIndex = 0;
+
+                foreach (var child in clashTest.Children)
+                {
+                    if (child is ClashResultGroup group)
+                    {
+                        groupIndex++;
+
+                        string groupName = string.IsNullOrWhiteSpace(group.DisplayName)
+                            ? $"Group_{groupIndex:0000}"
+                            : SanitizeFileName(group.DisplayName);
+
+                        string filePath = Path.Combine(testFolder, groupName + ".glb");
+                        ExportGroup(group, filePath);
+                    }
+                    else if (child is ClashResult clashResult)
+                    {
+                        // Одиночные результаты без группы
+                        clashIndex++;
+                        string clashName = string.IsNullOrWhiteSpace(clashResult.DisplayName)
+                            ? $"Clash_{clashIndex:0000}"
+                            : SanitizeFileName(clashResult.DisplayName);
+
+                        string filePath = Path.Combine(testFolder, clashName + ".glb");
+                        ExportSingleClash(clashResult, filePath);
+                    }
                 }
             }
         }
 
-        private static IEnumerable<ClashResult> GetAllResults(ClashTest clashTest)
+        private static IEnumerable<ClashResult> GetResultsInGroup(ClashResultGroup group)
         {
-            // Разворачиваем и группы, и одиночные результаты
             var stack = new Stack<SavedItem>();
-            foreach (var child in clashTest.Children)
+            foreach (var child in group.Children)
                 stack.Push(child);
 
             while (stack.Count > 0)
@@ -70,9 +97,9 @@ namespace Navis3dExporter
                 {
                     yield return clashResult;
                 }
-                else if (item is ClashResultGroup group)
+                else if (item is ClashResultGroup subgroup)
                 {
-                    foreach (var child in group.Children)
+                    foreach (var child in subgroup.Children)
                         stack.Push(child);
                 }
             }
@@ -99,6 +126,40 @@ namespace Navis3dExporter
                 new Vector4(0f, 0f, 1f, 1f));
             if (mesh2 != null)
                 scene.AddRigidMesh(mesh2, Matrix4x4.Identity);
+
+            var model = scene.ToGltf2();
+            model.SaveGLB(filePath);
+        }
+
+        private void ExportGroup(ClashResultGroup group, string filePath)
+        {
+            var results = GetResultsInGroup(group).ToList();
+            if (results.Count == 0)
+                return;
+
+            var scene = new SceneBuilder();
+            int index = 0;
+
+            foreach (var clash in results)
+            {
+                index++;
+
+                var item1 = clash.Item1;
+                var item2 = clash.Item2;
+
+                if (item1 == null || item2 == null)
+                    continue;
+
+                var mesh1 = BuildMeshFromModelItem(item1, $"Item1_{index}",
+                    new Vector4(1f, 0f, 0f, 1f));
+                if (mesh1 != null)
+                    scene.AddRigidMesh(mesh1, Matrix4x4.Identity);
+
+                var mesh2 = BuildMeshFromModelItem(item2, $"Item2_{index}",
+                    new Vector4(0f, 0f, 1f, 1f));
+                if (mesh2 != null)
+                    scene.AddRigidMesh(mesh2, Matrix4x4.Identity);
+            }
 
             var model = scene.ToGltf2();
             model.SaveGLB(filePath);
