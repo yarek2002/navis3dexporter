@@ -257,8 +257,10 @@ namespace Navis3dExporter
                 {
                     callback.CurrentTransform = TryGetFragmentTransform(frag);
 
+                    // Важно запрашивать координаты вершин (eXYZ), иначе Navisworks не будет
+                    // генерировать для нас треугольники в колбэк.
                     frag.GenerateSimplePrimitives(
-                        COMApi.nwEVertexProperty.eNORMAL,
+                        COMApi.nwEVertexProperty.eXYZ | COMApi.nwEVertexProperty.eNORMAL,
                         callback);
                 }
             }
