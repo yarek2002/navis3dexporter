@@ -102,7 +102,7 @@ namespace Navis3dExporter
                         groupIndex++;
 
                         string groupName = BuildSafeNamedSegment(
-                            displayName: group.DisplayName,
+                            displayName: ExtractTrailingGuidToken(group.DisplayName),
                             maxSegmentLen: 80);
 
                         string filePath = Path.Combine(testFolder, groupName + ".glb");
