@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.Clash;
 using SharpGLTF.Geometry;
@@ -112,7 +113,7 @@ namespace Navis3dExporter
                         // Одиночные результаты без группы
                         clashIndex++;
                         string clashName = BuildSafeNamedSegment(
-                            displayName: clashResult.DisplayName,
+                            displayName: ExtractTrailingGuidToken(clashResult.DisplayName),
                             maxSegmentLen: 80);
 
                         string filePath = Path.Combine(testFolder, clashName + ".glb");
@@ -201,6 +202,44 @@ namespace Navis3dExporter
 
             var model = scene.ToGltf2();
             model.SaveGLB(filePath);
+        }
+
+        private static string ExtractTrailingGuidToken(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName)) return displayName;
+
+            // Пользовательский формат: значимая часть (GUID) в самом конце, разделитель '|'
+            // Пример: "Some text | more info | 3f2504e0-4f89-11d3-9a0c-0305e82c3301"
+            var tail = displayName;
+            var pipeIndex = displayName.LastIndexOf('|');
+            if (pipeIndex >= 0 && pipeIndex < displayName.Length - 1)
+            {
+                tail = displayName.Substring(pipeIndex + 1).Trim();
+            }
+
+            // Иногда GUID дополнительно отделяют '_' (например "...|...|name_<guid>")
+            var underscoreIndex = tail.LastIndexOf('_');
+            if (underscoreIndex >= 0 && underscoreIndex < tail.Length - 1)
+            {
+                var afterUnderscore = tail.Substring(underscoreIndex + 1).Trim();
+                if (LooksLikeGuid(afterUnderscore)) return afterUnderscore;
+            }
+
+            // Если хвост — GUID, используем его; иначе оставляем исходное имя,
+            // чтобы не терять информацию при нестандартных форматах.
+            return LooksLikeGuid(tail) ? tail : displayName;
+        }
+
+        private static bool LooksLikeGuid(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            value = value.Trim().Trim('{', '}');
+
+            if (Guid.TryParse(value, out _)) return true;
+
+            return Regex.IsMatch(
+                value,
+                @"^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$");
         }
 
         private MeshBuilder<VertexPositionNormal, VertexEmpty, VertexEmpty> BuildMeshFromModelItem(
@@ -392,13 +431,12 @@ namespace Navis3dExporter
             var hash8 = ShortHash8(displayName);
 
             // Оставляем место под "_"+hash
-            var suffix = "_" + hash8;
-            var baseMax = Math.Max(1, maxSegmentLen - suffix.Length);
+            var baseMax = Math.Max(1, maxSegmentLen);
 
             var combinedBase = sanitizedName;
             combinedBase = TrimToLength(combinedBase, baseMax);
 
-            return combinedBase + suffix;
+            return combinedBase;
         }
 
         // Упрощённый вариант без явного префикса — используется в текущих вызовах
