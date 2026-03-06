@@ -37,13 +37,26 @@ namespace Navis3dExporter
 
                 var exporter = new GlbClashExporter(doc);
 
-                // Экспорт всех коллизий из Clash Detective:
-                // для каждого теста создаётся папка, в ней по GLB на группу/отдельный результат.
-                exporter.ExportAllClashes(window.SelectedFolder);
+                if (window.ExportWholeModel)
+                {
+                    // Экспорт всей модели в один GLB-файл.
+                    var filePath = System.IO.Path.Combine(window.SelectedFolder, "Model.glb");
+                    exporter.ExportWholeModel(filePath);
 
-                System.Windows.MessageBox.Show(
-                    "Экспорт всех групп коллизий в GLB завершён.",
-                    "GLB Exporter");
+                    System.Windows.MessageBox.Show(
+                        "Экспорт всей модели в GLB завершён.",
+                        "GLB Exporter");
+                }
+                else
+                {
+                    // Экспорт всех коллизий из Clash Detective:
+                    // для каждого теста создаётся папка, в ней по GLB на группу/отдельный результат.
+                    exporter.ExportAllClashes(window.SelectedFolder);
+
+                    System.Windows.MessageBox.Show(
+                        "Экспорт всех групп коллизий в GLB завершён.",
+                        "GLB Exporter");
+                }
 
                 return 0;
             }

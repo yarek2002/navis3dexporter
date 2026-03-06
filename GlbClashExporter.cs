@@ -31,6 +31,29 @@ namespace Navis3dExporter
             _document = document ?? throw new ArgumentNullException(nameof(document));
         }
 
+        public void ExportWholeModel(string outputFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(outputFilePath))
+                throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
+
+            var root = _document.Models?.RootItem;
+            if (root == null)
+                throw new InvalidOperationException("В документе нет корневой модели для экспорта.");
+
+            var scene = new SceneBuilder();
+
+            // Окрашиваем всю модель нейтральным цветом
+            var mesh = BuildMeshFromModelItem(root, "WholeModel",
+                new Vector4(0.8f, 0.8f, 0.8f, 1f));
+            if (mesh != null)
+            {
+                scene.AddRigidMesh(mesh, NavisToGltfTransform);
+            }
+
+            var model = scene.ToGltf2();
+            model.SaveGLB(outputFilePath);
+        }
+
         public void ExportCurrentSelection(string outputFilePath)
         {
             if (string.IsNullOrWhiteSpace(outputFilePath))

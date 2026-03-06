@@ -1,13 +1,14 @@
 <Window x:Class="Navis3dExporter.ExportWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Экспорт коллизий в GLB"
-        Height="160"
+        Title="Экспорт в GLB"
+        Height="210"
         Width="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -40,6 +41,22 @@
                 Click="BrowseButton_OnClick" />
 
         <StackPanel Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Margin="0,12,0,0">
+            <TextBlock Text="Режим экспорта:"
+                       Margin="0,0,0,4" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ClashesModeRadio"
+                             Content="Коллизии (Clash Detective)"
+                             IsChecked="True"
+                             Margin="0,0,12,0" />
+                <RadioButton x:Name="WholeModelModeRadio"
+                             Content="Вся модель" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
                     Grid.Column="0"
                     Grid.ColumnSpan="3"
                     Orientation="Horizontal"

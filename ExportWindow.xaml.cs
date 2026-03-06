@@ -8,6 +8,7 @@ namespace Navis3dExporter
     public partial class ExportWindow : Window
     {
         public string SelectedFolder { get; private set; }
+        public bool ExportWholeModel => WholeModelModeRadio.IsChecked == true;
 
         public ExportWindow()
         {
