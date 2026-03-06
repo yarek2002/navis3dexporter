@@ -36,18 +36,26 @@ namespace Navis3dExporter
             if (string.IsNullOrWhiteSpace(outputFilePath))
                 throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
 
-            var root = _document.Models?.RootItem;
-            if (root == null)
-                throw new InvalidOperationException("В документе нет корневой модели для экспорта.");
+            var roots = _document.Models?.RootItems;
+            if (roots == null || roots.Count == 0)
+                throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
 
             var scene = new SceneBuilder();
 
-            // Окрашиваем всю модель нейтральным цветом
-            var mesh = BuildMeshFromModelItem(root, "WholeModel",
-                new Vector4(0.8f, 0.8f, 0.8f, 1f));
-            if (mesh != null)
+            int index = 0;
+            foreach (ModelItem root in roots)
             {
-                scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                index++;
+
+                var mesh = BuildMeshFromModelItem(
+                    root,
+                    $"Root_{index}",
+                    new Vector4(0.8f, 0.8f, 0.8f, 1f));
+
+                if (mesh != null)
+                {
+                    scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                }
             }
 
             var model = scene.ToGltf2();
