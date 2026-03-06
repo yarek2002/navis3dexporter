@@ -37,7 +37,7 @@ namespace Navis3dExporter
                 throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
 
             var roots = _document.Models?.RootItems;
-            if (roots == null || roots.Count == 0)
+            if (roots == null)
                 throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
 
             var scene = new SceneBuilder();
@@ -57,6 +57,9 @@ namespace Navis3dExporter
                     scene.AddRigidMesh(mesh, NavisToGltfTransform);
                 }
             }
+
+            if (index == 0)
+                throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
 
             var model = scene.ToGltf2();
             model.SaveGLB(outputFilePath);
