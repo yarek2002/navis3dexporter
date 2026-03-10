@@ -259,6 +259,9 @@ namespace Navis3dExporter
             var scene = new SceneBuilder();
             int clashIndex = 0;
 
+            // Кэш цветов по корневым моделям (каждая NWC получает свой цвет).
+            var rootColorMap = BuildRootColorMap();
+
             foreach (var test in clashDoc.TestsData.Tests)
             {
                 var clashTest = test as ClashTest;
@@ -289,7 +292,7 @@ namespace Navis3dExporter
                         foreach (var clash in GetResultsInGroup(group))
                         {
                             clashIndex++;
-                            AddClashToScene(scene, clash, clashIndex);
+                            AddClashToScene(scene, clash, clashIndex, rootColorMap);
                         }
                     }
                     else if (child is ClashResult clashResult)
@@ -298,7 +301,7 @@ namespace Navis3dExporter
                             continue;
 
                         clashIndex++;
-                        AddClashToScene(scene, clashResult, clashIndex);
+                        AddClashToScene(scene, clashResult, clashIndex, rootColorMap);
                     }
                 }
             }
@@ -310,7 +313,11 @@ namespace Navis3dExporter
             model.SaveGLB(outputFilePath);
         }
 
-        private void AddClashToScene(SceneBuilder scene, ClashResult clash, int index)
+        private void AddClashToScene(
+            SceneBuilder scene,
+            ClashResult clash,
+            int index,
+            Dictionary<ModelItem, Vector4> rootColorMap)
         {
             if (scene == null) throw new ArgumentNullException(nameof(scene));
             if (clash == null) return;
@@ -321,15 +328,121 @@ namespace Navis3dExporter
             if (item1 == null || item2 == null)
                 return;
 
-            var mesh1 = BuildMeshFromModelItem(item1, $"Item1_{index}",
-                new Vector4(1f, 0f, 0f, 1f));
+            var color1 = GetColorForModelItem(item1, rootColorMap, 0);
+            var color2 = GetColorForModelItem(item2, rootColorMap, 1);
+
+            var mesh1 = BuildMeshFromModelItem(item1, $"Item1_{index}", color1);
             if (mesh1 != null)
                 scene.AddRigidMesh(mesh1, NavisToGltfTransform);
 
-            var mesh2 = BuildMeshFromModelItem(item2, $"Item2_{index}",
-                new Vector4(0f, 0f, 1f, 1f));
+            var mesh2 = BuildMeshFromModelItem(item2, $"Item2_{index}", color2);
             if (mesh2 != null)
                 scene.AddRigidMesh(mesh2, NavisToGltfTransform);
+        }
+
+        private Dictionary<ModelItem, Vector4> BuildRootColorMap()
+        {
+            var map = new Dictionary<ModelItem, Vector4>();
+
+            var roots = _document.Models?.RootItems;
+            if (roots == null)
+                return map;
+
+            foreach (ModelItem root in roots)
+            {
+                var id = GetRootIdentifier(root);
+                map[root] = GetColorFromKey(id);
+            }
+
+            return map;
+        }
+
+        private Vector4 GetColorForModelItem(
+            ModelItem item,
+            Dictionary<ModelItem, Vector4> rootColorMap,
+            int localIndex)
+        {
+            // Если что-то не так с кэшем, возвращаем базовые цвета.
+            if (item == null || rootColorMap == null || rootColorMap.Count == 0)
+            {
+                return localIndex == 0
+                    ? new Vector4(1f, 0f, 0f, 1f)
+                    : new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            // Ищем корневой элемент (верхний в иерархии).
+            var root = item;
+            while (root.Parent != null)
+                root = root.Parent;
+
+            if (!rootColorMap.TryGetValue(root, out var color))
+            {
+                var id = GetRootIdentifier(root);
+                color = GetColorFromKey(id);
+                rootColorMap[root] = color;
+            }
+
+            return color;
+        }
+
+        private static string GetRootIdentifier(ModelItem root)
+        {
+            if (root == null) return string.Empty;
+
+            // Используем DisplayName как основной идентификатор модели.
+            var name = root.DisplayName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = root.ClassName;
+            }
+
+            return name ?? string.Empty;
+        }
+
+        private static Vector4 GetColorFromKey(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                return new Vector4(0.6f, 0.6f, 0.6f, 1f);
+
+            unchecked
+            {
+                int hash = key.GetHashCode();
+                if (hash < 0) hash = -hash;
+
+                // Преобразуем хеш в оттенок [0..360).
+                float h = (hash % 360) / 360f;
+                const float s = 0.65f;
+                const float v = 0.95f;
+
+                HsvToRgb(h, s, v, out float r, out float g, out float b);
+                return new Vector4(r, g, b, 1f);
+            }
+        }
+
+        private static void HsvToRgb(float h, float s, float v, out float r, out float g, out float b)
+        {
+            if (s <= 0f)
+            {
+                r = g = b = v;
+                return;
+            }
+
+            h = (h - (float)Math.Floor(h)) * 6f;
+            int i = (int)Math.Floor(h);
+            float f = h - i;
+            float p = v * (1f - s);
+            float q = v * (1f - s * f);
+            float t = v * (1f - s * (1f - f));
+
+            switch (i)
+            {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                default: r = v; g = p; b = q; break;
+            }
         }
 
         private static IEnumerable<ClashResult> GetResultsInGroup(ClashResultGroup group)
