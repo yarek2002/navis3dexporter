@@ -11,9 +11,6 @@ namespace Navis3dExporter
     {
         public string SelectedFolder { get; private set; }
         public bool ExportWholeModel => WholeModelModeRadio.IsChecked == true;
-        public IReadOnlyList<ClashSelectionWindow.ClashSelection> SelectedClashes { get; private set; } =
-            new List<ClashSelectionWindow.ClashSelection>();
-
         private readonly Document _document;
 
         public ExportWindow(Document document)
@@ -79,15 +76,40 @@ namespace Navis3dExporter
 
         private void SelectClashesButton_OnClick(object sender, RoutedEventArgs e)
         {
+            var path = FolderTextBox.Text?.Trim();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                System.Windows.MessageBox.Show(
+                    this,
+                    "Укажите папку для сохранения результатов перед выбором коллизий.",
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
-                var wnd = new ClashSelectionWindow(_document)
+                Directory.CreateDirectory(path);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    this,
+                    "Не удалось создать/открыть папку:\n" + ex.Message,
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var wnd = new ClashSelectionWindow(_document, path)
                 {
                     Owner = this
                 };
                 wnd.ShowDialog();
-
-                SelectedClashes = wnd.SelectedClashes;
             }
             catch (Exception ex)
             {

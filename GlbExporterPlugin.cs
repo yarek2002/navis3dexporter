@@ -49,20 +49,12 @@ namespace Navis3dExporter
                 }
                 else
                 {
-                    // Экспорт коллизий из Clash Detective.
-                    // Если пользователь выбрал конкретные группы/коллизии — экспортируем только их,
-                    // иначе экспортируем всё.
-                    if (window.SelectedClashes != null && window.SelectedClashes.Count > 0)
-                    {
-                        exporter.ExportSelectedClashes(window.SelectedFolder, window.SelectedClashes);
-                    }
-                    else
-                    {
-                        exporter.ExportAllClashes(window.SelectedFolder);
-                    }
+                    // Экспорт всех коллизий из Clash Detective.
+                    // Для каждого теста создаётся папка, в ней по GLB на группу/отдельный результат.
+                    exporter.ExportAllClashes(window.SelectedFolder);
 
                     System.Windows.MessageBox.Show(
-                        "Экспорт коллизий в GLB завершён.",
+                        "Экспорт всех групп коллизий в GLB завершён.",
                         "GLB Exporter");
                 }
 

@@ -14,6 +14,7 @@ namespace Navis3dExporter
     public partial class ClashSelectionWindow : Window
     {
         private readonly Document _document;
+        private readonly string _outputFolder;
         private readonly List<ClashItem> _items = new List<ClashItem>();
 
         public IReadOnlyList<ClashSelection> SelectedClashes =>
@@ -22,9 +23,10 @@ namespace Navis3dExporter
                 .Select(x => x.Selection)
                 .ToList();
 
-        public ClashSelectionWindow(Document document)
+        public ClashSelectionWindow(Document document, string outputFolder)
         {
             _document = document ?? throw new ArgumentNullException(nameof(document));
+            _outputFolder = outputFolder ?? throw new ArgumentNullException(nameof(outputFolder));
             InitializeComponent();
             LoadClashes();
         }
@@ -156,6 +158,45 @@ namespace Navis3dExporter
                     item.IsSelected = !item.IsSelected;
 
                 _lastClickedIndex = index;
+            }
+        }
+
+        private void ExportSelectedButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var selected = SelectedClashes;
+            if (selected == null || selected.Count == 0)
+            {
+                MessageBox.Show(
+                    this,
+                    "Не выбрано ни одной коллизии или группы для экспорта.",
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                var exporter = new GlbClashExporter(_document);
+                exporter.ExportSelectedClashes(_outputFolder, selected);
+
+                MessageBox.Show(
+                    this,
+                    "Экспорт выбранных коллизий в GLB завершён.",
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    "Ошибка при экспорте выбранных коллизий:\n" + ex.Message,
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
