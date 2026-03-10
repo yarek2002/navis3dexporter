@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -40,12 +41,26 @@ namespace Navis3dExporter
             Single = 2
         }
 
-        private class ClashItem
+        private class ClashItem : INotifyPropertyChanged
         {
             public string Name { get; set; }
             public string Status { get; set; }
-            public bool IsSelected { get; set; }
+
+            private bool _isSelected;
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set
+                {
+                    if (_isSelected == value) return;
+                    _isSelected = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+                }
+            }
+
             public ClashSelection Selection { get; set; }
+
+            public event PropertyChangedEventHandler PropertyChanged;
         }
 
         private void LoadClashes()
