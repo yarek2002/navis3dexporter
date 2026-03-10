@@ -76,20 +76,46 @@ namespace Navis3dExporter
 
             var scene = new SceneBuilder();
 
-            int index = 0;
-            foreach (var item in selection.SelectedItems)
+            int total = selection.SelectedItems.Count;
+
+            // Если выделено ровно два элемента – сохраняем старое поведение:
+            // первый красный, второй синий.
+            if (total == 2)
             {
-                index++;
-
-                // Чередуем цвета, чтобы элементы различались
-                var color = (index % 2 == 1)
-                    ? new Vector4(1f, 0f, 0f, 1f)
-                    : new Vector4(0f, 0f, 1f, 1f);
-
-                var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
-                if (mesh != null)
+                int index = 0;
+                foreach (ModelItem item in selection.SelectedItems)
                 {
-                    scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                    index++;
+
+                    var color = (index == 1)
+                        ? new Vector4(1f, 0f, 0f, 1f)   // красный
+                        : new Vector4(0f, 0f, 1f, 1f);  // синий
+
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    if (mesh != null)
+                    {
+                        scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                    }
+                }
+            }
+            else
+            {
+                // Если элементов больше двух – красим по исходной модели (NWC):
+                // все элементы из одной NWC получают один цвет.
+                var rootColorMap = BuildRootColorMap();
+
+                int index = 0;
+                foreach (ModelItem item in selection.SelectedItems)
+                {
+                    index++;
+
+                    var color = GetColorForModelItem(item, rootColorMap, 0);
+
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    if (mesh != null)
+                    {
+                        scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                    }
                 }
             }
 
