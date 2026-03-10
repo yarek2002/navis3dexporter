@@ -48,6 +48,7 @@ namespace Navis3dExporter
 
                 foreach (var child in clashTest.Children)
                 {
+                    // Негруппированные результаты коллизий
                     if (child is ClashResult clashResult)
                     {
                         items.Add(new ClashItem
@@ -56,16 +57,14 @@ namespace Navis3dExporter
                             Status = clashResult.Status.ToString()
                         });
                     }
+                    // Группы коллизий – отображаем сами группы как в Clash Detective
                     else if (child is ClashResultGroup group)
                     {
-                        foreach (var result in GetResultsInGroup(group))
+                        items.Add(new ClashItem
                         {
-                            items.Add(new ClashItem
-                            {
-                                Name = result.DisplayName,
-                                Status = result.Status.ToString()
-                            });
-                        }
+                            Name = group.DisplayName,
+                            Status = group.Status.ToString()
+                        });
                     }
                 }
             }
