@@ -56,6 +56,11 @@
                          VerticalAlignment="Center" />
             <RadioButton x:Name="WholeModelModeRadio"
                          Content="Вся модель"
+                         Margin="0,0,12,0"
+                         VerticalAlignment="Center" />
+            <RadioButton x:Name="SelectionModeRadio"
+                         Content="Выделенные объекты"
+                         Margin="0,0,12,0"
                          VerticalAlignment="Center" />
             <Button x:Name="SelectClashesButton"
                     Content="Выбрать коллизии для экспорта"
@@ -77,11 +82,6 @@
                     Margin="0,0,8,0"
                     IsDefault="True"
                     Click="RunButton_OnClick" />
-            <Button x:Name="ExportSelectionButton"
-                    Content="Экспорт выделенных объектов"
-                    Width="220"
-                    Margin="0,0,8,0"
-                    Click="ExportSelectionButton_OnClick" />
             <Button x:Name="CancelButton"
                     Content="Отмена"
                     Width="100"

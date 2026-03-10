@@ -11,6 +11,7 @@ namespace Navis3dExporter
     {
         public string SelectedFolder { get; private set; }
         public bool ExportWholeModel => WholeModelModeRadio.IsChecked == true;
+        public bool ExportSelection => SelectionModeRadio.IsChecked == true;
         private readonly Document _document;
 
         public ExportWindow(Document document)
@@ -122,59 +123,6 @@ namespace Navis3dExporter
             }
         }
 
-        private void ExportSelectionButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            var path = FolderTextBox.Text?.Trim();
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                System.Windows.MessageBox.Show(
-                    this,
-                    "Укажите папку для сохранения результатов.",
-                    "GLB Exporter",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                Directory.CreateDirectory(path);
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show(
-                    this,
-                    "Не удалось создать/открыть папку:\n" + ex.Message,
-                    "GLB Exporter",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                return;
-            }
-
-            var filePath = Path.Combine(path, "SelectedObjects.glb");
-
-            try
-            {
-                var exporter = new GlbClashExporter(_document);
-                exporter.ExportCurrentSelection(filePath);
-
-                System.Windows.MessageBox.Show(
-                    this,
-                    "Экспорт выделенных объектов в GLB завершён.",
-                    "GLB Exporter",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show(
-                    this,
-                    "Ошибка при экспорте выделенных объектов:\n" + ex.Message,
-                    "GLB Exporter",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-        }
     }
 }
 

@@ -47,6 +47,16 @@ namespace Navis3dExporter
                         "Экспорт всей модели в GLB завершён.",
                         "GLB Exporter");
                 }
+                else if (window.ExportSelection)
+                {
+                    // Экспорт текущего выделения в один GLB-файл.
+                    var filePath = System.IO.Path.Combine(window.SelectedFolder, "SelectedObjects.glb");
+                    exporter.ExportCurrentSelection(filePath);
+
+                    System.Windows.MessageBox.Show(
+                        "Экспорт выделенных объектов в GLB завершён.",
+                        "GLB Exporter");
+                }
                 else
                 {
                     // Экспорт всех коллизий из Clash Detective.
