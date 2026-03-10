@@ -157,6 +157,86 @@ namespace Navis3dExporter
             }
         }
 
+        public void ExportSelectedClashes(
+            string outputFolder,
+            IReadOnlyList<ClashSelectionWindow.ClashSelection> selected)
+        {
+            if (string.IsNullOrWhiteSpace(outputFolder))
+                throw new ArgumentException("Output folder is not specified.", nameof(outputFolder));
+            if (selected == null)
+                throw new ArgumentNullException(nameof(selected));
+            if (selected.Count == 0)
+                throw new InvalidOperationException("Не выбрано ни одной коллизии/группы для экспорта.");
+
+            var clashDoc = _document.GetClash();
+            if (clashDoc == null || clashDoc.TestsData.Tests.Count == 0)
+                throw new InvalidOperationException("В документе нет тестов коллизий (Clash Detective).");
+
+            Directory.CreateDirectory(outputFolder);
+
+            // Сопоставление по DisplayName (как видно в Clash Detective).
+            // Для имен файлов используем ExtractTrailingGuidToken + BuildSafeNamedSegment, как и в ExportAllClashes.
+            var byTest = selected
+                .GroupBy(x => x.TestDisplayName ?? string.Empty)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var test in clashDoc.TestsData.Tests)
+            {
+                var clashTest = test as ClashTest;
+                if (clashTest == null)
+                    continue;
+
+                if (!byTest.TryGetValue(clashTest.DisplayName ?? string.Empty, out var pickedInTest) ||
+                    pickedInTest.Count == 0)
+                    continue;
+
+                string testFolderName = BuildSafeNamedSegment(
+                    displayName: clashTest.DisplayName,
+                    maxSegmentLen: 60);
+
+                string testFolder = Path.Combine(outputFolder, testFolderName);
+                Directory.CreateDirectory(testFolder);
+
+                var pickedGroups = new HashSet<string>(
+                    pickedInTest
+                        .Where(x => x.Kind == ClashSelectionWindow.ClashSelectionKind.Group)
+                        .Select(x => x.ItemDisplayName ?? string.Empty));
+
+                var pickedSingles = new HashSet<string>(
+                    pickedInTest
+                        .Where(x => x.Kind == ClashSelectionWindow.ClashSelectionKind.Single)
+                        .Select(x => x.ItemDisplayName ?? string.Empty));
+
+                foreach (var child in clashTest.Children)
+                {
+                    if (child is ClashResultGroup group)
+                    {
+                        if (!pickedGroups.Contains(group.DisplayName ?? string.Empty))
+                            continue;
+
+                        string groupName = BuildSafeNamedSegment(
+                            displayName: ExtractTrailingGuidToken(group.DisplayName),
+                            maxSegmentLen: 80);
+
+                        string filePath = Path.Combine(testFolder, groupName + ".glb");
+                        ExportGroup(group, filePath);
+                    }
+                    else if (child is ClashResult clashResult)
+                    {
+                        if (!pickedSingles.Contains(clashResult.DisplayName ?? string.Empty))
+                            continue;
+
+                        string clashName = BuildSafeNamedSegment(
+                            displayName: ExtractTrailingGuidToken(clashResult.DisplayName),
+                            maxSegmentLen: 80);
+
+                        string filePath = Path.Combine(testFolder, clashName + ".glb");
+                        ExportSingleClash(clashResult, filePath);
+                    }
+                }
+            }
+        }
+
         private static IEnumerable<ClashResult> GetResultsInGroup(ClashResultGroup group)
         {
             var stack = new Stack<SavedItem>();

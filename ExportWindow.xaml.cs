@@ -10,6 +10,8 @@ namespace Navis3dExporter
     {
         public string SelectedFolder { get; private set; }
         public bool ExportWholeModel => WholeModelModeRadio.IsChecked == true;
+        public IReadOnlyList<ClashSelectionWindow.ClashSelection> SelectedClashes { get; private set; } =
+            new List<ClashSelectionWindow.ClashSelection>();
 
         private readonly Document _document;
 
@@ -83,6 +85,8 @@ namespace Navis3dExporter
                     Owner = this
                 };
                 wnd.ShowDialog();
+
+                SelectedClashes = wnd.SelectedClashes;
             }
             catch (Exception ex)
             {

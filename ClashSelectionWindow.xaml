@@ -18,10 +18,14 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   CanUserSortColumns="True"
-                  IsReadOnly="True"
+                  IsReadOnly="False"
                   SelectionMode="Extended"
-                  HeadersVisibility="Column">
+                  HeadersVisibility="Column"
+                  PreviewMouseLeftButtonDown="ClashesGrid_PreviewMouseLeftButtonDown">
             <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header=""
+                                       Width="40"
+                                       Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <DataGridTextColumn Header="Имя коллизии"
                                     Binding="{Binding Name}"
                                     Width="*" />
