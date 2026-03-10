@@ -43,6 +43,10 @@
                     Width="180"
                     Margin="0,0,8,0"
                     Click="ExportSelectedButton_OnClick" />
+            <Button Content="Экспортировать в один файл"
+                    Width="200"
+                    Margin="0,0,8,0"
+                    Click="ExportSelectedToSingleButton_OnClick" />
             <Button Content="Закрыть"
                     Width="100"
                     IsCancel="True" />

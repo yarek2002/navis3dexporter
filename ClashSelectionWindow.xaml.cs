@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.Clash;
+using Microsoft.Win32;
 
 namespace Navis3dExporter
 {
@@ -194,6 +195,58 @@ namespace Navis3dExporter
                 MessageBox.Show(
                     this,
                     "Ошибка при экспорте выбранных коллизий:\n" + ex.Message,
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ExportSelectedToSingleButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var selected = SelectedClashes;
+            if (selected == null || selected.Count == 0)
+            {
+                MessageBox.Show(
+                    this,
+                    "Не выбрано ни одной коллизии или группы для экспорта.",
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Сохранить выбранные коллизии в один GLB файл",
+                Filter = "GLB файлы (*.glb)|*.glb",
+                FileName = "SelectedClashes.glb",
+                OverwritePrompt = true,
+                InitialDirectory = _outputFolder
+            };
+
+            var result = dialog.ShowDialog(this);
+            if (result != true || string.IsNullOrWhiteSpace(dialog.FileName))
+                return;
+
+            try
+            {
+                var exporter = new GlbClashExporter(_document);
+                exporter.ExportSelectedClashesToSingleFile(dialog.FileName, selected);
+
+                MessageBox.Show(
+                    this,
+                    "Экспорт выбранных коллизий в один GLB файл завершён.",
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    "Ошибка при экспорте выбранных коллизий в один файл:\n" + ex.Message,
                     "GLB Exporter",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

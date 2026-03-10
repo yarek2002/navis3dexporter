@@ -237,6 +237,101 @@ namespace Navis3dExporter
             }
         }
 
+        public void ExportSelectedClashesToSingleFile(
+            string outputFilePath,
+            IReadOnlyList<ClashSelectionWindow.ClashSelection> selected)
+        {
+            if (string.IsNullOrWhiteSpace(outputFilePath))
+                throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
+            if (selected == null)
+                throw new ArgumentNullException(nameof(selected));
+            if (selected.Count == 0)
+                throw new InvalidOperationException("Не выбрано ни одной коллизии/группы для экспорта.");
+
+            var clashDoc = _document.GetClash();
+            if (clashDoc == null || clashDoc.TestsData.Tests.Count == 0)
+                throw new InvalidOperationException("В документе нет тестов коллизий (Clash Detective).");
+
+            var byTest = selected
+                .GroupBy(x => x.TestDisplayName ?? string.Empty)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var scene = new SceneBuilder();
+            int clashIndex = 0;
+
+            foreach (var test in clashDoc.TestsData.Tests)
+            {
+                var clashTest = test as ClashTest;
+                if (clashTest == null)
+                    continue;
+
+                if (!byTest.TryGetValue(clashTest.DisplayName ?? string.Empty, out var pickedInTest) ||
+                    pickedInTest.Count == 0)
+                    continue;
+
+                var pickedGroups = new HashSet<string>(
+                    pickedInTest
+                        .Where(x => x.Kind == ClashSelectionWindow.ClashSelectionKind.Group)
+                        .Select(x => x.ItemDisplayName ?? string.Empty));
+
+                var pickedSingles = new HashSet<string>(
+                    pickedInTest
+                        .Where(x => x.Kind == ClashSelectionWindow.ClashSelectionKind.Single)
+                        .Select(x => x.ItemDisplayName ?? string.Empty));
+
+                foreach (var child in clashTest.Children)
+                {
+                    if (child is ClashResultGroup group)
+                    {
+                        if (!pickedGroups.Contains(group.DisplayName ?? string.Empty))
+                            continue;
+
+                        foreach (var clash in GetResultsInGroup(group))
+                        {
+                            clashIndex++;
+                            AddClashToScene(scene, clash, clashIndex);
+                        }
+                    }
+                    else if (child is ClashResult clashResult)
+                    {
+                        if (!pickedSingles.Contains(clashResult.DisplayName ?? string.Empty))
+                            continue;
+
+                        clashIndex++;
+                        AddClashToScene(scene, clashResult, clashIndex);
+                    }
+                }
+            }
+
+            if (clashIndex == 0)
+                throw new InvalidOperationException("Не удалось найти выбранные коллизии для экспорта.");
+
+            var model = scene.ToGltf2();
+            model.SaveGLB(outputFilePath);
+        }
+
+        private void AddClashToScene(SceneBuilder scene, ClashResult clash, int index)
+        {
+            if (scene == null) throw new ArgumentNullException(nameof(scene));
+            if (clash == null) return;
+
+            var item1 = clash.Item1;
+            var item2 = clash.Item2;
+
+            if (item1 == null || item2 == null)
+                return;
+
+            var mesh1 = BuildMeshFromModelItem(item1, $"Item1_{index}",
+                new Vector4(1f, 0f, 0f, 1f));
+            if (mesh1 != null)
+                scene.AddRigidMesh(mesh1, NavisToGltfTransform);
+
+            var mesh2 = BuildMeshFromModelItem(item2, $"Item2_{index}",
+                new Vector4(0f, 0f, 1f, 1f));
+            if (mesh2 != null)
+                scene.AddRigidMesh(mesh2, NavisToGltfTransform);
+        }
+
         private static IEnumerable<ClashResult> GetResultsInGroup(ClashResultGroup group)
         {
             var stack = new Stack<SavedItem>();
