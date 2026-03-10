@@ -42,7 +42,8 @@ namespace Navis3dExporter
 
             foreach (var test in clashDoc.TestsData.Tests)
             {
-                if (test is not ClashTest clashTest)
+                var clashTest = test as ClashTest;
+                if (clashTest == null)
                     continue;
 
                 foreach (var child in clashTest.Children)
