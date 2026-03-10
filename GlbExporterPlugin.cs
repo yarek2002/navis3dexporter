@@ -27,7 +27,7 @@ namespace Navis3dExporter
                     return 0;
                 }
 
-                var window = new ExportWindow();
+                var window = new ExportWindow(doc);
                 // Показываем окно модально
                 var result = window.ShowDialog();
                 if (result != true || string.IsNullOrWhiteSpace(window.SelectedFolder))

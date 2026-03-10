@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using Autodesk.Navisworks.Api;
 
 namespace Navis3dExporter
 {
@@ -10,8 +11,11 @@ namespace Navis3dExporter
         public string SelectedFolder { get; private set; }
         public bool ExportWholeModel => WholeModelModeRadio.IsChecked == true;
 
-        public ExportWindow()
+        private readonly Document _document;
+
+        public ExportWindow(Document document)
         {
+            _document = document ?? throw new ArgumentNullException(nameof(document));
             InitializeComponent();
         }
 
@@ -68,6 +72,27 @@ namespace Navis3dExporter
             SelectedFolder = path;
             DialogResult = true;
             Close();
+        }
+
+        private void SelectClashesButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var wnd = new ClashSelectionWindow(_document)
+                {
+                    Owner = this
+                };
+                wnd.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    this,
+                    "Не удалось загрузить список коллизий:\n" + ex.Message,
+                    "GLB Exporter",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
     }
 }

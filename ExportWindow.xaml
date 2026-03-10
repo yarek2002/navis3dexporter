@@ -43,17 +43,26 @@
         <StackPanel Grid.Row="2"
                     Grid.Column="0"
                     Grid.ColumnSpan="3"
-                    Margin="0,12,0,0">
+                    Margin="0,12,0,0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Left">
             <TextBlock Text="Режим экспорта:"
-                       Margin="0,0,0,4" />
-            <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="ClashesModeRadio"
-                             Content="Коллизии (Clash Detective)"
-                             IsChecked="True"
-                             Margin="0,0,12,0" />
-                <RadioButton x:Name="WholeModelModeRadio"
-                             Content="Вся модель" />
-            </StackPanel>
+                       Margin="0,0,8,0"
+                       VerticalAlignment="Center" />
+            <RadioButton x:Name="ClashesModeRadio"
+                         Content="Коллизии (Clash Detective)"
+                         IsChecked="True"
+                         Margin="0,0,12,0"
+                         VerticalAlignment="Center" />
+            <RadioButton x:Name="WholeModelModeRadio"
+                         Content="Вся модель"
+                         VerticalAlignment="Center" />
+            <Button x:Name="SelectClashesButton"
+                    Content="Выбрать коллизии для экспорта"
+                    Margin="16,0,0,0"
+                    Padding="8,2"
+                    VerticalAlignment="Center"
+                    Click="SelectClashesButton_OnClick" />
         </StackPanel>
 
         <StackPanel Grid.Row="3"
