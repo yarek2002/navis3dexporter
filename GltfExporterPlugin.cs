@@ -1,6 +1,7 @@
 using System;
 using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.Plugins;
+using Autodesk.Navisworks.Api.Clash;
 using System.Windows;
 
 using NavisApp = Autodesk.Navisworks.Api.Application;
