@@ -12,6 +12,7 @@ using SharpGLTF.Geometry;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
+using SharpGLTF.Schema2;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
 
@@ -63,6 +64,41 @@ namespace Navis3dExporter
 
             var model = scene.ToGltf2();
             model.SaveGLB(outputFilePath);
+        }
+
+        public void ExportWholeModelAsGltf(string outputFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(outputFilePath))
+                throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
+
+            var roots = _document.Models?.RootItems;
+            if (roots == null)
+                throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
+
+            var scene = new SceneBuilder();
+
+            int index = 0;
+            foreach (ModelItem root in roots)
+            {
+                index++;
+
+                var mesh = BuildMeshFromModelItem(
+                    root,
+                    $"Root_{index}",
+                    new Vector4(0.8f, 0.8f, 0.8f, 1f));
+
+                if (mesh != null)
+                {
+                    scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                }
+            }
+
+            if (index == 0)
+                throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
+
+            var model = scene.ToGltf2();
+            var settings = new WriteSettings { MergeBuffers = false };
+            model.SaveGLTF(outputFilePath, settings);
         }
 
         public void ExportCurrentSelection(string outputFilePath)
@@ -121,6 +157,61 @@ namespace Navis3dExporter
 
             var model = scene.ToGltf2();
             model.SaveGLB(outputFilePath);
+        }
+
+        public void ExportCurrentSelectionAsGltf(string outputFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(outputFilePath))
+                throw new ArgumentException("Output file path is not specified.", nameof(outputFilePath));
+
+            var selection = _document.CurrentSelection;
+            if (selection == null || selection.SelectedItems == null || selection.SelectedItems.Count == 0)
+                throw new InvalidOperationException("В текущем выделении нет элементов для экспорта.");
+
+            var scene = new SceneBuilder();
+
+            int total = selection.SelectedItems.Count;
+
+            if (total == 2)
+            {
+                int index = 0;
+                foreach (ModelItem item in selection.SelectedItems)
+                {
+                    index++;
+
+                    var color = (index == 1)
+                        ? new Vector4(1f, 0f, 0f, 1f)
+                        : new Vector4(0f, 0f, 1f, 1f);
+
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    if (mesh != null)
+                    {
+                        scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                    }
+                }
+            }
+            else
+            {
+                var rootColorMap = BuildRootColorMap();
+
+                int index = 0;
+                foreach (ModelItem item in selection.SelectedItems)
+                {
+                    index++;
+
+                    var color = GetColorForModelItem(item, rootColorMap, 0);
+
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    if (mesh != null)
+                    {
+                        scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                    }
+                }
+            }
+
+            var model = scene.ToGltf2();
+            var settings = new WriteSettings { MergeBuffers = false };
+            model.SaveGLTF(outputFilePath, settings);
         }
 
         public void ExportAllClashes(string outputFolder)
