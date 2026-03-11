@@ -1,47 +1,23 @@
 {
   "version": 2,
-  "dgSpecHash": "vX4vq8kYNS4=",
-  "success": false,
+  "dgSpecHash": "KdFPDkZ8tOw=",
+  "success": true,
   "projectFilePath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\yarse\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\10.0.1\\microsoft.bcl.asyncinterfaces.10.0.1.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.3\\microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net47\\1.0.3\\microsoft.netframework.referenceassemblies.net47.1.0.3.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.core\\1.0.0\\sharpgltf.core.1.0.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.runtime\\1.0.0\\sharpgltf.runtime.1.0.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.toolkit\\1.0.0\\sharpgltf.toolkit.1.0.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.numerics.vectors\\4.3.0\\system.numerics.vectors.4.3.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.text.json\\8.0.3\\system.text.json.8.0.3.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\system.valuetuple\\4.5.0\\system.valuetuple.4.5.0.nupkg.sha512"
+    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.core\\1.0.6\\sharpgltf.core.1.0.6.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.toolkit\\1.0.0-alpha0020\\sharpgltf.toolkit.1.0.0-alpha0020.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.buffers\\4.6.1\\system.buffers.4.6.1.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.io.pipelines\\10.0.1\\system.io.pipelines.10.0.1.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.numerics.vectors\\4.6.1\\system.numerics.vectors.4.6.1.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.1.2\\system.runtime.compilerservices.unsafe.6.1.2.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.text.encodings.web\\10.0.1\\system.text.encodings.web.10.0.1.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.text.json\\10.0.1\\system.text.json.10.0.1.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.threading.tasks.extensions\\4.6.3\\system.threading.tasks.extensions.4.6.3.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\system.valuetuple\\4.6.1\\system.valuetuple.4.6.1.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "Navis3dExporter зависит от System.Numerics.Vectors (>= 4.1.3), но версия System.Numerics.Vectors 4.1.3 не найдена. Использовалась версия System.Numerics.Vectors 4.3.0.",
-      "projectPath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
-      "warningLevel": 1,
-      "filePath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
-      "libraryId": "System.Numerics.Vectors",
-      "targetGraphs": [
-        ".NETFramework,Version=v4.7"
-      ]
-    },
-    {
-      "code": "NU1605",
-      "level": "Error",
-      "message": "Предупреждение как ошибка: Обнаружено понижение версии пакета System.Numerics.Vectors с 4.5.0 на 4.3.0. Чтобы выбрать другую версию, создайте ссылку на пакет напрямую из проекта. \r\n Navis3dExporter -> SharpGLTF.Core 1.0.0 -> System.Text.Json 8.0.3 -> System.Memory 4.5.5 -> System.Numerics.Vectors (>= 4.5.0) \r\n Navis3dExporter -> System.Numerics.Vectors (>= 4.1.3)",
-      "projectPath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
-      "filePath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
-      "libraryId": "System.Numerics.Vectors",
-      "targetGraphs": [
-        ".NETFramework,Version=v4.7"
-      ]
-    }
-  ]
+  "logs": []
 }
