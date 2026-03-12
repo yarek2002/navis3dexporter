@@ -701,9 +701,9 @@ namespace Navis3dExporter
 
             foreach (var tri in triangles)
             {
-                var v0 = new VertexPositionNormal(tri.V0, tri.Normal);
-                var v1 = new VertexPositionNormal(tri.V1, tri.Normal);
-                var v2 = new VertexPositionNormal(tri.V2, tri.Normal);
+                var v0 = new VertexPositionNormal(tri.V0, tri.N0);
+                var v1 = new VertexPositionNormal(tri.V1, tri.N1);
+                var v2 = new VertexPositionNormal(tri.V2, tri.N2);
 
                 prim.AddTriangle(v0, v1, v2);
             }
@@ -716,7 +716,9 @@ namespace Navis3dExporter
             public Vector3 V0;
             public Vector3 V1;
             public Vector3 V2;
-            public Vector3 Normal;
+            public Vector3 N0;
+            public Vector3 N1;
+            public Vector3 N2;
         }
 
         private List<TriangleData> ExtractTriangles(ModelItem modelItem)
@@ -791,14 +793,30 @@ namespace Navis3dExporter
                 var p1 = GetPoint(v2, CurrentTransform);
                 var p2 = GetPoint(v3, CurrentTransform);
 
-                var normal = Vector3.Normalize(Vector3.Cross(p1 - p0, p2 - p0));
+                // Нормали берём из Navisworks (eNORMAL), чтобы:
+                // - сохранять сглаживание
+                // - повысить шанс переиспользования вершин (welding) в glTF
+                var n0 = GetNormal(v1, CurrentTransform);
+                var n1 = GetNormal(v2, CurrentTransform);
+                var n2 = GetNormal(v3, CurrentTransform);
+
+                // Если нормали не удалось получить, fallback на нормаль грани
+                if (n0 == Vector3.Zero || n1 == Vector3.Zero || n2 == Vector3.Zero)
+                {
+                    var face = Vector3.Normalize(Vector3.Cross(p1 - p0, p2 - p0));
+                    if (n0 == Vector3.Zero) n0 = face;
+                    if (n1 == Vector3.Zero) n1 = face;
+                    if (n2 == Vector3.Zero) n2 = face;
+                }
 
                 _triangles.Add(new TriangleData
                 {
                     V0 = p0,
                     V1 = p1,
                     V2 = p2,
-                    Normal = normal
+                    N0 = n0,
+                    N1 = n1,
+                    N2 = n2
                 });
             }
 
@@ -818,7 +836,48 @@ namespace Navis3dExporter
                 var y = v[0] * matrix[1] + v[1] * matrix[5] + v[2] * matrix[9] + matrix[13];
                 var z = v[0] * matrix[2] + v[1] * matrix[6] + v[2] * matrix[10] + matrix[14];
 
-                return new Vector3((float)x, (float)y, (float)z);
+                return Quantize(new Vector3((float)x, (float)y, (float)z), 1e-4f);
+            }
+
+            private static Vector3 GetNormal(COMApi.InwSimpleVertex vertex, double[] matrix)
+            {
+                try
+                {
+                    // InwSimpleVertex.normal доступен при eNORMAL
+                    var arr = (Array)vertex.normal;
+                    if (arr == null) return Vector3.Zero;
+
+                    var v = arr.Cast<float>().ToArray();
+                    if (v.Length < 3) return Vector3.Zero;
+
+                    var n = new Vector3(v[0], v[1], v[2]);
+
+                    if (matrix != null && matrix.Length == 16)
+                    {
+                        // Трансформируем нормаль 3x3 частью (без сдвига), затем нормализуем.
+                        var x = n.X * matrix[0] + n.Y * matrix[4] + n.Z * matrix[8];
+                        var y = n.X * matrix[1] + n.Y * matrix[5] + n.Z * matrix[9];
+                        var z = n.X * matrix[2] + n.Y * matrix[6] + n.Z * matrix[10];
+                        n = new Vector3((float)x, (float)y, (float)z);
+                    }
+
+                    if (n == Vector3.Zero) return Vector3.Zero;
+                    n = Vector3.Normalize(n);
+                    return Quantize(n, 1e-3f);
+                }
+                catch
+                {
+                    return Vector3.Zero;
+                }
+            }
+
+            private static Vector3 Quantize(Vector3 v, float step)
+            {
+                if (step <= 0f) return v;
+                float qx = (float)Math.Round(v.X / step) * step;
+                float qy = (float)Math.Round(v.Y / step) * step;
+                float qz = (float)Math.Round(v.Z / step) * step;
+                return new Vector3(qx, qy, qz);
             }
         }
 
