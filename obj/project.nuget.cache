@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "KdFPDkZ8tOw=",
+  "dgSpecHash": "8G2GFe/UYZk=",
   "success": true,
   "projectFilePath": "d:\\Navis3dExporter\\Navis3dExporter.csproj",
   "expectedPackageFiles": [
@@ -8,7 +8,8 @@
     "C:\\Users\\yarse\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.3\\microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net47\\1.0.3\\microsoft.netframework.referenceassemblies.net47.1.0.3.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.core\\1.0.6\\sharpgltf.core.1.0.6.nupkg.sha512",
-    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.toolkit\\1.0.0-alpha0020\\sharpgltf.toolkit.1.0.0-alpha0020.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.runtime\\1.0.6\\sharpgltf.runtime.1.0.6.nupkg.sha512",
+    "C:\\Users\\yarse\\.nuget\\packages\\sharpgltf.toolkit\\1.0.6\\sharpgltf.toolkit.1.0.6.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\system.buffers\\4.6.1\\system.buffers.4.6.1.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\system.io.pipelines\\10.0.1\\system.io.pipelines.10.0.1.nupkg.sha512",
     "C:\\Users\\yarse\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",

@@ -75,30 +75,58 @@ namespace Navis3dExporter
             if (roots == null)
                 throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
 
-            var scene = new SceneBuilder();
+            var dir = Path.GetDirectoryName(outputFilePath);
+            if (string.IsNullOrWhiteSpace(dir))
+                throw new InvalidOperationException("Output folder is not specified.");
+            Directory.CreateDirectory(dir);
+
+            var settings = new WriteSettings { MergeBuffers = false };
+
+            var baseName = Path.GetFileNameWithoutExtension(outputFilePath);
+            if (string.IsNullOrWhiteSpace(baseName))
+                baseName = "Model";
+
+            var parts = new List<ManifestPart>();
 
             int index = 0;
             foreach (ModelItem root in roots)
             {
                 index++;
 
+                var scene = new SceneBuilder();
+
                 var mesh = BuildMeshFromModelItem(
                     root,
                     $"Root_{index}",
                     new Vector4(0.8f, 0.8f, 0.8f, 1f));
 
-                if (mesh != null)
+                if (mesh == null)
+                    continue;
+
+                scene.AddRigidMesh(mesh, NavisToGltfTransform);
+
+                var model = scene.ToGltf2();
+
+                var safeRootName = BuildSafeNamedSegment(
+                    displayName: ExtractTrailingGuidToken(root.DisplayName ?? $"Root_{index}"),
+                    maxSegmentLen: 60);
+
+                var partFileName = $"{baseName}__{safeRootName}.gltf";
+                var partPath = Path.Combine(dir, partFileName);
+
+                model.SaveGLTF(partPath, settings);
+
+                parts.Add(new ManifestPart
                 {
-                    scene.AddRigidMesh(mesh, NavisToGltfTransform);
-                }
+                    File = partFileName,
+                    Label = root.DisplayName
+                });
             }
 
-            if (index == 0)
+            if (parts.Count == 0)
                 throw new InvalidOperationException("В документе нет корневых элементов модели для экспорта.");
 
-            var model = scene.ToGltf2();
-            var settings = new WriteSettings { MergeBuffers = false };
-            model.SaveGLTF(outputFilePath, settings);
+            WriteManifest(Path.Combine(dir, $"{baseName}.manifest.json"), "wholeModel", parts);
         }
 
         public void ExportCurrentSelection(string outputFilePath)
@@ -168,12 +196,21 @@ namespace Navis3dExporter
             if (selection == null || selection.SelectedItems == null || selection.SelectedItems.Count == 0)
                 throw new InvalidOperationException("В текущем выделении нет элементов для экспорта.");
 
-            var scene = new SceneBuilder();
-
             int total = selection.SelectedItems.Count;
+            var dir = Path.GetDirectoryName(outputFilePath);
+            if (string.IsNullOrWhiteSpace(dir))
+                throw new InvalidOperationException("Output folder is not specified.");
+            Directory.CreateDirectory(dir);
+
+            var baseName = Path.GetFileNameWithoutExtension(outputFilePath);
+            if (string.IsNullOrWhiteSpace(baseName))
+                baseName = "SelectedObjects";
+
+            var settings = new WriteSettings { MergeBuffers = false };
 
             if (total == 2)
             {
+                var scene = new SceneBuilder();
                 int index = 0;
                 foreach (ModelItem item in selection.SelectedItems)
                 {
@@ -189,29 +226,124 @@ namespace Navis3dExporter
                         scene.AddRigidMesh(mesh, NavisToGltfTransform);
                     }
                 }
+
+                var model = scene.ToGltf2();
+                model.SaveGLTF(outputFilePath, settings);
             }
             else
             {
+                // Для больших выборок делим по корневым моделям (NWC),
+                // чтобы избежать переполнений буфера.
                 var rootColorMap = BuildRootColorMap();
 
-                int index = 0;
+                var groups = new Dictionary<ModelItem, List<ModelItem>>();
                 foreach (ModelItem item in selection.SelectedItems)
                 {
-                    index++;
+                    var root = item;
+                    while (root.Parent != null)
+                        root = root.Parent;
 
-                    var color = GetColorForModelItem(item, rootColorMap, 0);
-
-                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
-                    if (mesh != null)
+                    if (!groups.TryGetValue(root, out var list))
                     {
-                        scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                        list = new List<ModelItem>();
+                        groups[root] = list;
                     }
+                    list.Add(item);
                 }
+
+                var parts = new List<ManifestPart>();
+                int groupIndex = 0;
+
+                foreach (var kvp in groups)
+                {
+                    groupIndex++;
+                    var root = kvp.Key;
+                    var items = kvp.Value;
+
+                    var scene = new SceneBuilder();
+                    int index = 0;
+
+                    foreach (var item in items)
+                    {
+                        index++;
+                        var color = GetColorForModelItem(item, rootColorMap, 0);
+
+                        var mesh = BuildMeshFromModelItem(item, $"Sel_{groupIndex}_{index}", color);
+                        if (mesh != null)
+                        {
+                            scene.AddRigidMesh(mesh, NavisToGltfTransform);
+                        }
+                    }
+
+                    var model = scene.ToGltf2();
+
+                    var safeRootName = BuildSafeNamedSegment(
+                        displayName: ExtractTrailingGuidToken(root.DisplayName ?? $"Root_{groupIndex}"),
+                        maxSegmentLen: 60);
+
+                    var partFileName = $"{baseName}__{safeRootName}.gltf";
+                    var partPath = Path.Combine(dir, partFileName);
+                    model.SaveGLTF(partPath, settings);
+
+                    parts.Add(new ManifestPart
+                    {
+                        File = partFileName,
+                        Label = root.DisplayName
+                    });
+                }
+
+                WriteManifest(Path.Combine(dir, $"{baseName}.manifest.json"), "selection", parts);
+            }
+        }
+
+        private class ManifestPart
+        {
+            public string File { get; set; }
+            public string Label { get; set; }
+        }
+
+        private static void WriteManifest(string manifestPath, string mode, List<ManifestPart> parts)
+        {
+            if (string.IsNullOrWhiteSpace(manifestPath))
+                throw new ArgumentException("Manifest path is not specified.", nameof(manifestPath));
+            if (string.IsNullOrWhiteSpace(mode))
+                mode = "unknown";
+            if (parts == null)
+                parts = new List<ManifestPart>();
+
+            var sb = new StringBuilder();
+            sb.Append("{\n");
+            sb.Append("  \"format\": \"navis3dexporter-manifest\",\n");
+            sb.Append("  \"version\": 1,\n");
+            sb.Append("  \"mode\": \"").Append(EscapeJson(mode)).Append("\",\n");
+            sb.Append("  \"parts\": [\n");
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                var p = parts[i] ?? new ManifestPart();
+                sb.Append("    { ");
+                sb.Append("\"file\": \"").Append(EscapeJson(p.File ?? string.Empty)).Append("\", ");
+                sb.Append("\"label\": \"").Append(EscapeJson(p.Label ?? string.Empty)).Append("\"");
+                sb.Append(" }");
+                if (i < parts.Count - 1) sb.Append(",");
+                sb.Append("\n");
             }
 
-            var model = scene.ToGltf2();
-            var settings = new WriteSettings { MergeBuffers = false };
-            model.SaveGLTF(outputFilePath, settings);
+            sb.Append("  ]\n");
+            sb.Append("}\n");
+
+            File.WriteAllText(manifestPath, sb.ToString(), Encoding.UTF8);
+        }
+
+        private static string EscapeJson(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            return s
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\t", "\\t");
         }
 
         public void ExportAllClashes(string outputFolder)

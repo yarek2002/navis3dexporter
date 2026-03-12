@@ -49,10 +49,26 @@
           }
         }
       },
-      "SharpGLTF.Toolkit/1.0.0-alpha0020": {
+      "SharpGLTF.Runtime/1.0.6": {
         "type": "package",
         "dependencies": {
-          "SharpGLTF.Core": "1.0.0-alpha0020"
+          "SharpGLTF.Core": "1.0.6"
+        },
+        "compile": {
+          "lib/netstandard2.0/SharpGLTF.Runtime.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/SharpGLTF.Runtime.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "SharpGLTF.Toolkit/1.0.6": {
+        "type": "package",
+        "dependencies": {
+          "SharpGLTF.Runtime": "1.0.6"
         },
         "compile": {
           "lib/netstandard2.0/SharpGLTF.Toolkit.dll": {
@@ -629,19 +645,47 @@
         "sharpgltf.core.nuspec"
       ]
     },
-    "SharpGLTF.Toolkit/1.0.0-alpha0020": {
-      "sha512": "1PMz5cGvUhmLqR581bjbuPZNuNAvD/+FdciPWV4H2Gl2cPDou/6xbKqYseRsebkJNYMYhLP5+LKu01SZawW/Qw==",
+    "SharpGLTF.Runtime/1.0.6": {
+      "sha512": "MVb0p0gzwnjHB03b0kMhf9bVUd6gSvs/jBpTkL6rMa0RtzSGARbCvZkpGbHXjxgSTncprEuzV4nAaaAucifc3Q==",
       "type": "package",
-      "path": "sharpgltf.toolkit/1.0.0-alpha0020",
+      "path": "sharpgltf.runtime/1.0.6",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "glTF2Sharp.png",
-        "lib/netcoreapp3.1/SharpGLTF.Toolkit.dll",
-        "lib/netcoreapp3.1/SharpGLTF.Toolkit.xml",
+        "lib/net10.0/SharpGLTF.Runtime.dll",
+        "lib/net10.0/SharpGLTF.Runtime.xml",
+        "lib/net6.0/SharpGLTF.Runtime.dll",
+        "lib/net6.0/SharpGLTF.Runtime.xml",
+        "lib/net8.0/SharpGLTF.Runtime.dll",
+        "lib/net8.0/SharpGLTF.Runtime.xml",
+        "lib/netstandard2.0/SharpGLTF.Runtime.dll",
+        "lib/netstandard2.0/SharpGLTF.Runtime.xml",
+        "lib/netstandard2.1/SharpGLTF.Runtime.dll",
+        "lib/netstandard2.1/SharpGLTF.Runtime.xml",
+        "sharpgltf.runtime.1.0.6.nupkg.sha512",
+        "sharpgltf.runtime.nuspec"
+      ]
+    },
+    "SharpGLTF.Toolkit/1.0.6": {
+      "sha512": "wb9Ebb4uwXevL4WiLlry29RWIYlxa+NiAa0BB8iSR7VbmgSa5Ij/QaPNlKi1jjA4oL8aEygg5V76zY1SJfIS+Q==",
+      "type": "package",
+      "path": "sharpgltf.toolkit/1.0.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "glTF2Sharp.png",
+        "lib/net10.0/SharpGLTF.Toolkit.dll",
+        "lib/net10.0/SharpGLTF.Toolkit.xml",
+        "lib/net6.0/SharpGLTF.Toolkit.dll",
+        "lib/net6.0/SharpGLTF.Toolkit.xml",
+        "lib/net8.0/SharpGLTF.Toolkit.dll",
+        "lib/net8.0/SharpGLTF.Toolkit.xml",
         "lib/netstandard2.0/SharpGLTF.Toolkit.dll",
         "lib/netstandard2.0/SharpGLTF.Toolkit.xml",
-        "sharpgltf.toolkit.1.0.0-alpha0020.nupkg.sha512",
+        "lib/netstandard2.1/SharpGLTF.Toolkit.dll",
+        "lib/netstandard2.1/SharpGLTF.Toolkit.xml",
+        "sharpgltf.toolkit.1.0.6.nupkg.sha512",
         "sharpgltf.toolkit.nuspec"
       ]
     },
@@ -920,7 +964,7 @@
     ".NETFramework,Version=v4.7": [
       "Microsoft.NETFramework.ReferenceAssemblies >= 1.0.3",
       "SharpGLTF.Core >= 1.0.6",
-      "SharpGLTF.Toolkit >= 1.0.0-alpha0020",
+      "SharpGLTF.Toolkit >= 1.0.6",
       "System.Numerics.Vectors >= 4.6.1"
     ]
   },
@@ -984,7 +1028,7 @@
           },
           "SharpGLTF.Toolkit": {
             "target": "Package",
-            "version": "[1.0.0-alpha0020, )"
+            "version": "[1.0.6, )"
           },
           "System.Numerics.Vectors": {
             "target": "Package",

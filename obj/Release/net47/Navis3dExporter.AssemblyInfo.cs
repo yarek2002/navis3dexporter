@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Navis3dExporter")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+696a4c0358c432fc2b25548cb5b9a13eb3643e55")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4591e9ef2055b6507d8000427872db0adb6d6fb")]
 [assembly: System.Reflection.AssemblyProductAttribute("Navis3dExporter")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Navis3dExporter")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -122,3 +122,4 @@ D:\Navis3dExporter\obj\Release\net47\Navis3dExporter.sourcelink.json
 d:\Navis3dExporter\obj\Release\net47\Navis3dE.0AE140F7.Up2Date
 D:\Navis3dExporter\obj\Release\net47\Navis3dExporter.dll
 D:\Navis3dExporter\obj\Release\net47\Navis3dExporter.pdb
+D:\Navis3dExporter\bin\Release\net47\SharpGLTF.Runtime.dll
