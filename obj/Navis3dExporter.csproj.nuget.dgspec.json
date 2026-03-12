@@ -60,7 +60,7 @@
             },
             "SharpGLTF.Toolkit": {
               "target": "Package",
-              "version": "[1.0.0-alpha0020, )"
+              "version": "[1.0.6, )"
             },
             "System.Numerics.Vectors": {
               "target": "Package",
