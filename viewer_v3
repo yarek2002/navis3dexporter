@@ -1785,6 +1785,17 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         controls.update();
       }
 
+      // Обновляем "дефолт" камеры под текущую сцену, чтобы resetCamera возвращал
+      // к удобному виду (особенно для манифеста/частей и больших моделей).
+      try {
+        if (typeof defaultCameraTarget !== 'undefined' && defaultCameraTarget) {
+          defaultCameraTarget.copy(center);
+        }
+        if (typeof defaultCameraPosition !== 'undefined' && defaultCameraPosition && camera) {
+          defaultCameraPosition.copy(camera.position);
+        }
+      } catch (e) {}
+
       addDebug('🎯 Части отцентрированы к (0,0,0) и камера обновлена', 'success');
     } catch (e) {
       addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
