@@ -27,9 +27,11 @@
         z-index: 100;
         border: 1px solid #4a6fa5;
         box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        width: 280px;
+        width: 380px;
         backdrop-filter: blur(5px);
-        
+        max-height: 90vh;
+        overflow-y: auto;
+        pointer-events: auto;
       }
       
       #debug-window {
