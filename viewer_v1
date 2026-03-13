@@ -201,6 +201,90 @@
         font-size: 12px;
         border: 1px solid #3a3a5a;
       }
+
+      /* viewer_v2: multi-file GLTF (manifest + .bin) UI */
+      .v2-section {
+        margin-top: 15px;
+        border-top: 1px solid #3a3a5a;
+        padding-top: 15px;
+      }
+
+      .v2-file-list {
+        background: #1e1e2e;
+        border: 1px solid #3a3a5a;
+        border-radius: 6px;
+        padding: 10px;
+        margin: 10px 0;
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 11px;
+      }
+
+      .v2-file-group {
+        margin-bottom: 10px;
+        padding: 8px;
+        background: #2a2a3a;
+        border-radius: 4px;
+      }
+
+      .v2-file-group-title {
+        color: #88aaff;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .v2-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #2a2a3a;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow: hidden;
+      }
+
+      .v2-progress-fill {
+        height: 100%;
+        background: #4aa56f;
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      .v2-model-list {
+        margin-top: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .v2-model-item {
+        background: #1e1e2e;
+        border: 1px solid #4a6fa5;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .v2-model-item:hover {
+        background: #2a2a3a;
+        border-color: #88aaff;
+      }
+
+      .v2-model-item.active {
+        background: #2a4a6a;
+        border-color: #ffaa44;
+      }
+
+      .v2-model-name {
+        font-weight: bold;
+        color: #88aaff;
+      }
+
+      .v2-model-position {
+        font-size: 10px;
+        color: #aaa;
+        margin-top: 4px;
+      }
     </style>
   </head>
   <body>
@@ -279,6 +363,42 @@
       <div class="model-info" id="model-info">
         <div>📊 Информация о модели:</div>
         <div id="model-stats">Нет загруженной модели</div>
+      </div>
+
+      <div class="v2-section">
+        <h3 style="color:#9b59b6; margin: 0 0 10px 0;">📦 Загрузка GLTF (манифест + BIN)</h3>
+
+        <div style="margin: 10px 0;">
+          <button class="btn" onclick="window.v2_step1_SelectManifest()">📋 ШАГ 1: Выбрать JSON манифест</button>
+          <button class="btn" onclick="window.v2_step2_SelectAllFiles()" id="v2-step2-btn" disabled style="opacity: 0.5;">📁 ШАГ 2: Выбрать ВСЕ файлы (.gltf + .bin)</button>
+          <button class="btn warning" onclick="window.v2_centerScene()">🎯 Центрировать сцену (все части)</button>
+          <button class="btn danger" onclick="window.v2_clearAllModels()">🗑️ Очистить части (манифест)</button>
+        </div>
+
+        <div id="v2-manifest-info" style="display:none; margin: 10px 0; padding: 10px; background: #1a3a2a; border-radius: 6px;">
+          <div style="font-size: 12px;">✅ Манифест загружен</div>
+          <div id="v2-manifest-details" style="font-size: 11px; color: #aaa;"></div>
+        </div>
+
+        <div id="v2-file-info" style="display:none;">
+          <div class="v2-file-group">
+            <div class="v2-file-group-title">📋 GLTF файлы:</div>
+            <div class="v2-file-list" id="v2-gltf-files-list"></div>
+          </div>
+          <div class="v2-file-group">
+            <div class="v2-file-group-title">💾 BIN файлы:</div>
+            <div class="v2-file-list" id="v2-bin-files-list"></div>
+          </div>
+          <div class="v2-progress-bar">
+            <div class="v2-progress-fill" id="v2-progress-fill"></div>
+          </div>
+          <div id="v2-progress-text" style="font-size: 11px; text-align: right;"></div>
+        </div>
+
+        <div class="v2-model-list">
+          <h4 style="margin: 0 0 10px 0; color: #4a6fa5;">📋 Загруженные части</h4>
+          <div id="v2-model-list">Нет загруженных частей</div>
+        </div>
       </div>
     </div>
     
@@ -1229,6 +1349,432 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     })
     .getDriveGlbBase64ByModelName(modelName);
 };
+</script>
+
+<script>
+// viewer_v2 logic ported into viewer_v1 (added; does not remove existing logic)
+(function() {
+  const v2 = {
+    modelsMap: new Map(),
+    currentManifest: null,
+    loadingInProgress: false,
+    fileManager: { gltf: new Map(), bin: new Map() },
+    globalBoundingBox: new THREE.Box3(),
+    hasModels: false,
+    sceneCenter: new THREE.Vector3(0, 0, 0),
+    sceneSize: new THREE.Vector3(0, 0, 0),
+    multiGroup: null
+  };
+
+  function el(id) { return document.getElementById(id); }
+
+  function safeSetHtml(id, html) {
+    const node = el(id);
+    if (node) node.innerHTML = html;
+  }
+
+  function safeShow(id, show) {
+    const node = el(id);
+    if (node) node.style.display = show ? 'block' : 'none';
+  }
+
+  function resetV2StatsUi() {
+    const fill = el('v2-progress-fill');
+    if (fill) fill.style.width = '0%';
+    safeSetHtml('v2-progress-text', '');
+  }
+
+  function ensureMultiGroup() {
+    if (v2.multiGroup && v2.multiGroup.parent === scene) return;
+    v2.multiGroup = new THREE.Group();
+    v2.multiGroup.name = 'v2_multi_gltf_group';
+    if (scene) scene.add(v2.multiGroup);
+    // Для совместимости с существующей логикой viewer_v1
+    // (clipping/clearModel/fitCameraToObject и т.п. работают по currentModel)
+    if (typeof currentModel !== 'undefined') {
+      currentModel = v2.multiGroup;
+    }
+  }
+
+  function recalculateGlobalBoundingBox() {
+    v2.globalBoundingBox = new THREE.Box3();
+    v2.hasModels = false;
+
+    v2.modelsMap.forEach(modelData => {
+      if (modelData.visible && modelData.box) {
+        if (!v2.hasModels) {
+          v2.globalBoundingBox.copy(modelData.box);
+          v2.hasModels = true;
+        } else {
+          v2.globalBoundingBox.union(modelData.box);
+        }
+      }
+    });
+
+    if (v2.hasModels) {
+      v2.sceneCenter.copy(v2.globalBoundingBox.getCenter(new THREE.Vector3()));
+      v2.sceneSize.copy(v2.globalBoundingBox.getSize(new THREE.Vector3()));
+    } else {
+      v2.sceneCenter.set(0, 0, 0);
+      v2.sceneSize.set(0, 0, 0);
+    }
+  }
+
+  function updateFileLists() {
+    const gltfList = el('v2-gltf-files-list');
+    const binList = el('v2-bin-files-list');
+    if (!gltfList || !binList) return;
+
+    gltfList.innerHTML = '';
+    v2.fileManager.gltf.forEach((file, name) => {
+      gltfList.innerHTML += `<div>📄 ${name}</div>`;
+    });
+
+    binList.innerHTML = '';
+    v2.fileManager.bin.forEach((file, name) => {
+      binList.innerHTML += `<div>💾 ${name}</div>`;
+    });
+  }
+
+  function updateProgress(loaded, total) {
+    const percent = total > 0 ? (loaded / total * 100) : 0;
+    const fill = el('v2-progress-fill');
+    const text = el('v2-progress-text');
+    if (fill) fill.style.width = `${percent.toFixed(0)}%`;
+    if (text) text.innerHTML = `${loaded}/${total} (${percent.toFixed(0)}%)`;
+  }
+
+  function updateModelsList() {
+    const container = el('v2-model-list');
+    if (!container) return;
+
+    if (v2.modelsMap.size === 0) {
+      container.innerHTML = 'Нет загруженных частей';
+      return;
+    }
+
+    let html = '';
+    v2.modelsMap.forEach((modelData, id) => {
+      const center = modelData.center || { x: 0, y: 0, z: 0 };
+      const visible = !!modelData.visible;
+      html += `
+        <div class="v2-model-item ${visible ? 'active' : ''}" onclick="window.v2_toggleModelVisibility('${id}')">
+          <div class="v2-model-name">${modelData.name}</div>
+          <div class="v2-model-position">📍 X:${center.x.toFixed(1)} Y:${center.y.toFixed(1)} Z:${center.z.toFixed(1)}</div>
+          <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function updateV2ModelStats() {
+    // Если viewer_v1 уже показывает статистику по currentModel — оставляем как есть.
+    // Здесь лишь доп. инфо для логов.
+    if (!v2.hasModels) return;
+    addDebug(`📊 Части: ${v2.modelsMap.size}, Центр: X:${v2.sceneCenter.x.toFixed(2)} Y:${v2.sceneCenter.y.toFixed(2)} Z:${v2.sceneCenter.z.toFixed(2)}`, 'info');
+  }
+
+  function loadModelWithDependencies(gltfFile, modelName) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const arrayBuffer = e.target.result;
+        const loader = new THREE.GLTFLoader();
+
+        // URLs для BIN файлов
+        const binUrls = new Map();
+        v2.fileManager.bin.forEach((file, name) => {
+          binUrls.set(name, URL.createObjectURL(file));
+        });
+
+        // Перехват загрузки ресурсов (BIN)
+        loader.manager.setURLModifier((url) => {
+          if (binUrls.has(url)) return binUrls.get(url);
+          return url;
+        });
+
+        loader.parse(
+          arrayBuffer,
+          '',
+          function(gltf) {
+            // cleanup URLs
+            binUrls.forEach(url => URL.revokeObjectURL(url));
+
+            const model = gltf.scene;
+            ensureMultiGroup();
+            v2.multiGroup.add(model);
+
+            // Bounding box модели
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            addDebug(`📐 Часть "${modelName}" размер: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`, 'info');
+            addDebug(`📍 Позиция: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+
+            const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+            v2.modelsMap.set(modelId, {
+              mesh: model,
+              name: modelName,
+              visible: true,
+              box: box.clone(),
+              center: center.clone(),
+              size: size.clone()
+            });
+
+            recalculateGlobalBoundingBox();
+            updateModelsList();
+            updateV2ModelStats();
+
+            resolve({ box, center, size, id: modelId });
+          },
+          undefined,
+          function(error) {
+            binUrls.forEach(url => URL.revokeObjectURL(url));
+            addDebug(`❌ Ошибка парсинга GLTF: ${error.message || error}`, 'error');
+            reject(error);
+          }
+        );
+      };
+
+      reader.onerror = function(error) {
+        addDebug(`❌ Ошибка чтения файла GLTF`, 'error');
+        reject(error);
+      };
+
+      reader.readAsArrayBuffer(gltfFile);
+    });
+  }
+
+  window.v2_toggleModelVisibility = function(modelId) {
+    const modelData = v2.modelsMap.get(modelId);
+    if (!modelData || !modelData.mesh) return;
+
+    modelData.visible = !modelData.visible;
+    modelData.mesh.visible = modelData.visible;
+
+    recalculateGlobalBoundingBox();
+    updateModelsList();
+    window.v2_centerScene();
+  };
+
+  window.v2_centerScene = function() {
+    if (!v2.hasModels) {
+      if (typeof resetCamera === 'function') resetCamera();
+      return;
+    }
+
+    try {
+      const center = v2.globalBoundingBox.getCenter(new THREE.Vector3());
+      const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      // Переиспользуем существующую логику viewer_v1 если доступна
+      if (typeof fitCameraToObject === 'function' && v2.multiGroup) {
+        fitCameraToObject(v2.multiGroup);
+        return;
+      }
+
+      // fallback
+      const distance = Math.max(maxDim * 1.5, 10);
+      if (camera) {
+        camera.position.set(center.x + distance, center.y + distance * 0.5, center.z + distance);
+        camera.lookAt(center);
+      }
+      if (controls) {
+        controls.target.copy(center);
+        controls.update();
+      }
+
+      addDebug('📷 Камера центрирована на всех частях', 'success');
+    } catch (e) {
+      addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
+    }
+  };
+
+  window.v2_clearAllModels = function(options) {
+    // Удаляем только части, загруженные через манифест
+    // options:
+    // - keepManifest: не сбрасывать манифест/кнопки
+    // - keepUi: не скрывать блоки UI
+    const opts = options || {};
+    try {
+      v2.modelsMap.forEach(modelData => {
+        if (modelData.mesh && modelData.mesh.parent) {
+          modelData.mesh.parent.remove(modelData.mesh);
+        }
+      });
+      v2.modelsMap.clear();
+      v2.globalBoundingBox = new THREE.Box3();
+      v2.hasModels = false;
+      v2.sceneCenter.set(0, 0, 0);
+      v2.sceneSize.set(0, 0, 0);
+
+      if (v2.multiGroup && v2.multiGroup.parent) {
+        v2.multiGroup.parent.remove(v2.multiGroup);
+      }
+      v2.multiGroup = null;
+
+      updateModelsList();
+      resetV2StatsUi();
+      if (!opts.keepUi) {
+        safeShow('v2-file-info', false);
+        safeShow('v2-manifest-info', false);
+      }
+
+      if (!opts.keepManifest) {
+        const step2 = el('v2-step2-btn');
+        if (step2) { step2.disabled = true; step2.style.opacity = '0.5'; }
+        v2.currentManifest = null;
+      }
+      v2.loadingInProgress = false;
+
+      addDebug('🗑️ Части (манифест) очищены', 'info');
+
+      // Совместимость: если currentModel указывал на группу частей — сбросим
+      if (typeof currentModel !== 'undefined' && currentModel && currentModel.name === 'v2_multi_gltf_group') {
+        currentModel = null;
+      }
+    } catch (e) {
+      addDebug(`❌ Ошибка очистки частей: ${e.message}`, 'error');
+    }
+  };
+
+  // STEP 1: choose manifest
+  window.v2_step1_SelectManifest = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      addDebug(`📋 Загрузка манифеста: ${file.name}`, 'info');
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          v2.currentManifest = JSON.parse(e.target.result);
+          const m = v2.currentManifest;
+
+          if (m && m.format === 'navis3dexporter-manifest' && Array.isArray(m.parts)) {
+            addDebug(`✅ Манифест содержит частей: ${m.parts.length}`, 'success');
+
+            safeShow('v2-manifest-info', true);
+            safeSetHtml('v2-manifest-details', `Файлов GLTF: ${m.parts.length}`);
+
+            const step2 = el('v2-step2-btn');
+            if (step2) { step2.disabled = false; step2.style.opacity = '1'; }
+
+            addDebug('👉 Теперь выберите ВСЕ файлы модели (.gltf + .bin)', 'success');
+          } else {
+            addDebug('❌ Неверный формат манифеста', 'error');
+          }
+        } catch (err) {
+          addDebug(`❌ Ошибка чтения JSON: ${err.message}`, 'error');
+        }
+      };
+
+      reader.readAsText(file);
+    };
+
+    input.click();
+  };
+
+  // STEP 2: choose all files
+  window.v2_step2_SelectAllFiles = function() {
+    if (!v2.currentManifest) {
+      addDebug('❌ Сначала загрузите манифест', 'error');
+      return;
+    }
+
+    if (v2.loadingInProgress) {
+      addDebug('⏳ Загрузка уже выполняется, подождите...', 'warning');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.gltf,.bin';
+
+    input.onchange = function(e) {
+      const files = Array.from(e.target.files || []);
+      addDebug(`📁 Выбрано файлов: ${files.length}`, 'info');
+
+      v2.fileManager = { gltf: new Map(), bin: new Map() };
+
+      files.forEach(file => {
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        if (ext === 'gltf') v2.fileManager.gltf.set(file.name, file);
+        if (ext === 'bin') v2.fileManager.bin.set(file.name, file);
+      });
+
+      // Сбрасываем старые части (чтобы не смешивать загрузки), но не трогаем манифест/кнопки/UI
+      window.v2_clearAllModels({ keepManifest: true, keepUi: true });
+
+      updateFileLists();
+      safeShow('v2-file-info', true);
+      resetV2StatsUi();
+
+      addDebug(`📊 GLTF: ${v2.fileManager.gltf.size}, BIN: ${v2.fileManager.bin.size}`, 'info');
+
+      // Начинаем загрузку по манифесту
+      const parts = v2.currentManifest.parts || [];
+      let loaded = 0;
+      const total = parts.length;
+      v2.loadingInProgress = true;
+
+      function finish() {
+        v2.loadingInProgress = false;
+        addDebug('✅ Все части обработаны', 'success');
+        safeSetHtml('status', '✅ Все части загружены (манифест)');
+        setTimeout(() => window.v2_centerScene(), 200);
+      }
+
+      async function loadSequential() {
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          const fileName = part.file;
+          const label = part.label || fileName;
+          const gltfFile = v2.fileManager.gltf.get(fileName);
+
+          safeSetHtml('status', `⏳ Загрузка части: ${label}`);
+          addDebug(`🔄 Загрузка ${i + 1}/${total}: ${label}`, 'info');
+
+          if (!gltfFile) {
+            addDebug(`⚠️ GLTF не найден среди выбранных файлов: ${fileName}`, 'warning');
+            loaded++;
+            updateProgress(loaded, total);
+            continue;
+          }
+
+          try {
+            await loadModelWithDependencies(gltfFile, label);
+          } catch (err) {
+            addDebug(`❌ Ошибка загрузки части: ${label}`, 'error');
+          } finally {
+            loaded++;
+            updateProgress(loaded, total);
+          }
+        }
+
+        finish();
+      }
+
+      loadSequential().catch(e2 => {
+        v2.loadingInProgress = false;
+        addDebug(`❌ Ошибка загрузки (sequence): ${e2.message || e2}`, 'error');
+      });
+    };
+
+    input.click();
+  };
+})();
 </script>
   </body>
 </html>
