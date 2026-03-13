@@ -1419,14 +1419,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
     if (v2.multiGroup) {
       v2.multiGroup.scale.set(s, s, s);
-      // При изменении масштаба меняются bbox/центры — пересчёт для корректной статистики/камеры
-      v2.modelsMap.forEach(modelData => {
-        if (!modelData || !modelData.mesh) return;
-        const box = new THREE.Box3().setFromObject(modelData.mesh);
-        modelData.box = box.clone();
-        modelData.center = box.getCenter(new THREE.Vector3());
-        modelData.size = box.getSize(new THREE.Vector3());
-      });
       recalculateGlobalBoundingBox();
       updateModelsList();
       updateV2ModelStats();
@@ -1450,13 +1442,19 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     v2.hasModels = false;
 
     v2.modelsMap.forEach(modelData => {
-      if (modelData.visible && modelData.box) {
-        if (!v2.hasModels) {
-          v2.globalBoundingBox.copy(modelData.box);
-          v2.hasModels = true;
-        } else {
-          v2.globalBoundingBox.union(modelData.box);
-        }
+      if (!modelData || !modelData.visible || !modelData.mesh) return;
+
+      // Всегда пересчитываем bbox по реальному объекту (с учётом transform группы)
+      const box = new THREE.Box3().setFromObject(modelData.mesh);
+      modelData.box = box.clone();
+      modelData.center = box.getCenter(new THREE.Vector3());
+      modelData.size = box.getSize(new THREE.Vector3());
+
+      if (!v2.hasModels) {
+        v2.globalBoundingBox.copy(box);
+        v2.hasModels = true;
+      } else {
+        v2.globalBoundingBox.union(box);
       }
     });
 
@@ -1642,17 +1640,12 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       // 1) Центрируем сами модели (сдвиг группы так, чтобы центр оказался в (0,0,0))
       // Это сохраняет взаимное положение частей, но перемещает сцену к началу координат.
       if (v2.multiGroup) {
+        // Перед сдвигом пересчитываем bbox по реальным объектам (иначе возможен “улёт” из-за кэша)
+        recalculateGlobalBoundingBox();
         const centerShift = v2.globalBoundingBox.getCenter(new THREE.Vector3());
 
-        // Сдвигаем группу
+        // Сдвигаем группу (если уже центрировано — shift близок к 0)
         v2.multiGroup.position.sub(centerShift);
-
-        // Обновляем сохранённые bbox/центры частей, чтобы список/статистика отражали новую позицию
-        v2.modelsMap.forEach(modelData => {
-          if (!modelData) return;
-          if (modelData.center) modelData.center.sub(centerShift);
-          if (modelData.box) modelData.box.translate(centerShift.clone().negate());
-        });
       }
 
       // Пересчитываем глобальный bbox после сдвига
