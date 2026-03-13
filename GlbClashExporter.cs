@@ -22,6 +22,12 @@ namespace Navis3dExporter
     {
         private readonly Document _document;
 
+        private struct ClipPlane
+        {
+            public Vector3 Point;  // точка на плоскости в WCS Navis
+            public Vector3 Normal; // нормаль, направленная в сторону видимой части
+        }
+
         // Navisworks использует Z-up, glTF — Y-up.
         // Поворот на -90° вокруг оси X переводит систему координат Navisworks в систему glTF.
         private static readonly Matrix4x4 NavisToGltfTransform =
@@ -140,6 +146,8 @@ namespace Navis3dExporter
 
             var scene = new SceneBuilder();
 
+            var clipPlanes = GetActiveClipPlanes();
+
             int total = selection.SelectedItems.Count;
 
             // Если выделено ровно два элемента – сохраняем старое поведение:
@@ -155,7 +163,7 @@ namespace Navis3dExporter
                         ? new Vector4(1f, 0f, 0f, 1f)   // красный
                         : new Vector4(0f, 0f, 1f, 1f);  // синий
 
-                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color, clipPlanes);
                     if (mesh != null)
                     {
                         scene.AddRigidMesh(mesh, NavisToGltfTransform);
@@ -175,7 +183,7 @@ namespace Navis3dExporter
 
                     var color = GetColorForModelItem(item, rootColorMap, 0);
 
-                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color, clipPlanes);
                     if (mesh != null)
                     {
                         scene.AddRigidMesh(mesh, NavisToGltfTransform);
@@ -207,6 +215,7 @@ namespace Navis3dExporter
                 baseName = "SelectedObjects";
 
             var settings = new WriteSettings { MergeBuffers = false };
+            var clipPlanes = GetActiveClipPlanes();
 
             if (total == 2)
             {
@@ -220,7 +229,7 @@ namespace Navis3dExporter
                         ? new Vector4(1f, 0f, 0f, 1f)
                         : new Vector4(0f, 0f, 1f, 1f);
 
-                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color);
+                    var mesh = BuildMeshFromModelItem(item, $"Sel_{index}", color, clipPlanes);
                     if (mesh != null)
                     {
                         scene.AddRigidMesh(mesh, NavisToGltfTransform);
@@ -268,7 +277,7 @@ namespace Navis3dExporter
                         index++;
                         var color = GetColorForModelItem(item, rootColorMap, 0);
 
-                        var mesh = BuildMeshFromModelItem(item, $"Sel_{groupIndex}_{index}", color);
+                        var mesh = BuildMeshFromModelItem(item, $"Sel_{groupIndex}_{index}", color, clipPlanes);
                         if (mesh != null)
                         {
                             scene.AddRigidMesh(mesh, NavisToGltfTransform);
@@ -843,6 +852,37 @@ namespace Navis3dExporter
             return mesh;
         }
 
+        private MeshBuilder<VertexPositionNormal, VertexEmpty, VertexEmpty> BuildMeshFromModelItem(
+            ModelItem modelItem,
+            string meshName,
+            Vector4 color,
+            IReadOnlyList<ClipPlane> clipPlanes)
+        {
+            var triangles = ExtractTriangles(modelItem, clipPlanes);
+            if (triangles.Count == 0)
+                return null;
+
+            var mesh = new MeshBuilder<VertexPositionNormal, VertexEmpty, VertexEmpty>(meshName);
+
+            var material = new MaterialBuilder()
+                .WithDoubleSide(true)
+                .WithMetallicRoughnessShader()
+                .WithBaseColor(color);
+
+            var prim = mesh.UsePrimitive(material);
+
+            foreach (var tri in triangles)
+            {
+                var v0 = new VertexPositionNormal(tri.V0, tri.N0);
+                var v1 = new VertexPositionNormal(tri.V1, tri.N1);
+                var v2 = new VertexPositionNormal(tri.V2, tri.N2);
+
+                prim.AddTriangle(v0, v1, v2);
+            }
+
+            return mesh;
+        }
+
         private struct TriangleData
         {
             public Vector3 V0;
@@ -855,6 +895,11 @@ namespace Navis3dExporter
 
         private List<TriangleData> ExtractTriangles(ModelItem modelItem)
         {
+            return ExtractTriangles(modelItem, null);
+        }
+
+        private List<TriangleData> ExtractTriangles(ModelItem modelItem, IReadOnlyList<ClipPlane> clipPlanes)
+        {
             var triangles = new List<TriangleData>();
 
             // Копируем проверенный паттерн из примера:
@@ -866,7 +911,7 @@ namespace Navis3dExporter
             var oSel = (COMApi.InwOpSelection)ComBridge.ToInwOpSelection(
                 new ModelItemCollection { modelItem });
 
-            var callback = new TriangleCollector(triangles);
+            var callback = new TriangleCollector(triangles, clipPlanes);
 
             foreach (COMApi.InwOaPath3 path in oSel.Paths())
             {
@@ -893,12 +938,14 @@ namespace Navis3dExporter
         private class TriangleCollector : COMApi.InwSimplePrimitivesCB
         {
             private readonly List<TriangleData> _triangles;
+            private readonly IReadOnlyList<ClipPlane> _clipPlanes;
 
             public double[] CurrentTransform { get; set; } = null;
 
-            public TriangleCollector(List<TriangleData> triangles)
+            public TriangleCollector(List<TriangleData> triangles, IReadOnlyList<ClipPlane> clipPlanes)
             {
                 _triangles = triangles;
+                _clipPlanes = clipPlanes ?? Array.Empty<ClipPlane>();
             }
 
             public void Line(COMApi.InwSimpleVertex v1, COMApi.InwSimpleVertex v2)
@@ -925,6 +972,9 @@ namespace Navis3dExporter
                 var p1 = GetPoint(v2, CurrentTransform);
                 var p2 = GetPoint(v3, CurrentTransform);
 
+                if (_clipPlanes.Count > 0 && IsTriangleCompletelyOutside(p0, p1, p2, _clipPlanes))
+                    return;
+
                 // Нормали берём из Navisworks (eNORMAL), чтобы:
                 // - сохранять сглаживание
                 // - повысить шанс переиспользования вершин (welding) в glTF
@@ -950,6 +1000,26 @@ namespace Navis3dExporter
                     N1 = n1,
                     N2 = n2
                 });
+            }
+
+            private static bool IsTriangleCompletelyOutside(
+                Vector3 v0, Vector3 v1, Vector3 v2,
+                IReadOnlyList<ClipPlane> planes)
+            {
+                const float eps = 1e-6f;
+
+                foreach (var plane in planes)
+                {
+                    float d0 = Vector3.Dot(v0 - plane.Point, plane.Normal);
+                    float d1 = Vector3.Dot(v1 - plane.Point, plane.Normal);
+                    float d2 = Vector3.Dot(v2 - plane.Point, plane.Normal);
+
+                    // Предположение: d <= 0 — внутри видимой части, d > 0 — снаружи.
+                    if (d0 > eps && d1 > eps && d2 > eps)
+                        return true;
+                }
+
+                return false;
             }
 
             private static Vector3 GetPoint(COMApi.InwSimpleVertex vertex, double[] matrix)
@@ -1067,6 +1137,95 @@ namespace Navis3dExporter
             combinedBase = TrimToLength(combinedBase, baseMax);
 
             return combinedBase;
+        }
+
+        private List<ClipPlane> GetActiveClipPlanes()
+        {
+            var result = new List<ClipPlane>();
+
+            // В разных версиях Navisworks API доступ к Viewpoint/Sectioning отличается,
+            // поэтому используем reflection и возвращаем пустой список, если доступа нет.
+            object view = _document.ActiveView;
+            if (view == null) return result;
+
+            object vp = GetPropertyValue(view, "Viewpoint")
+                         ?? GetPropertyValue(view, "CurrentViewpoint")
+                         ?? GetPropertyValue(_document, "CurrentViewpoint");
+
+            if (vp == null) return result;
+
+            object sectioning = GetPropertyValue(vp, "Sectioning");
+            if (sectioning == null) return result;
+
+            var enabledObj = GetPropertyValue(sectioning, "IsEnabled");
+            if (!(enabledObj is bool enabled) || !enabled) return result;
+
+            var planesObj = GetPropertyValue(sectioning, "SectionPlanes");
+            if (!(planesObj is System.Collections.IEnumerable planes)) return result;
+
+            foreach (var plane in planes)
+            {
+                var planeEnabledObj = GetPropertyValue(plane, "Enabled");
+                if (!(planeEnabledObj is bool planeEnabled) || !planeEnabled) continue;
+
+                var planeGeom = GetPropertyValue(plane, "Plane");
+                if (planeGeom == null) continue;
+
+                var origin = GetPropertyValue(planeGeom, "Origin");
+                var normal = GetPropertyValue(planeGeom, "Normal");
+                if (origin == null || normal == null) continue;
+
+                // Origin: X/Y/Z, Normal: X/Y/Z (обычно Point3D/Vector3D)
+                if (!TryGetXYZ(origin, out var ox, out var oy, out var oz)) continue;
+                if (!TryGetXYZ(normal, out var nx, out var ny, out var nz)) continue;
+
+                var p = new Vector3(ox, oy, oz);
+                var n = new Vector3(nx, ny, nz);
+                if (n == Vector3.Zero) continue;
+                n = Vector3.Normalize(n);
+
+                result.Add(new ClipPlane { Point = p, Normal = n });
+            }
+
+            return result;
+        }
+
+        private static object GetPropertyValue(object obj, string propertyName)
+        {
+            if (obj == null || string.IsNullOrWhiteSpace(propertyName)) return null;
+            var t = obj.GetType();
+            var p = t.GetProperty(propertyName);
+            if (p == null) return null;
+            return p.GetValue(obj, null);
+        }
+
+        private static bool TryGetXYZ(object obj, out float x, out float y, out float z)
+        {
+            x = y = z = 0f;
+            if (obj == null) return false;
+
+            var t = obj.GetType();
+            var px = t.GetProperty("X");
+            var py = t.GetProperty("Y");
+            var pz = t.GetProperty("Z");
+            if (px == null || py == null || pz == null) return false;
+
+            var vx = px.GetValue(obj, null);
+            var vy = py.GetValue(obj, null);
+            var vz = pz.GetValue(obj, null);
+            if (vx == null || vy == null || vz == null) return false;
+
+            try
+            {
+                x = Convert.ToSingle(vx);
+                y = Convert.ToSingle(vy);
+                z = Convert.ToSingle(vz);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // Упрощённый вариант без явного префикса — используется в текущих вызовах
