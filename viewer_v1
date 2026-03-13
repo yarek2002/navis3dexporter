@@ -399,11 +399,6 @@
           <h4 style="margin: 0 0 10px 0; color: #4a6fa5;">📋 Загруженные части</h4>
           <div id="v2-model-list">Нет загруженных частей</div>
         </div>
-
-        <div class="model-info" style="margin-top: 10px;">
-          <div>📊 Статистика частей:</div>
-          <div id="v2-model-stats">Нет данных</div>
-        </div>
       </div>
     </div>
     
@@ -1475,31 +1470,10 @@ window.loadFromDriveByNameWithValue = function(modelName) {
   }
 
   function updateV2ModelStats() {
-    let meshes = 0, vertices = 0;
-    let visibleParts = 0;
-
-    v2.modelsMap.forEach(modelData => {
-      if (!modelData.mesh) return;
-      if (modelData.visible) visibleParts++;
-      modelData.mesh.traverse(node => {
-        if (node && node.isMesh) {
-          meshes++;
-          if (node.geometry && node.geometry.attributes && node.geometry.attributes.position) {
-            vertices += node.geometry.attributes.position.count;
-          }
-        }
-      });
-    });
-
-    const statsNode = el('v2-model-stats');
-    if (statsNode) {
-      statsNode.innerHTML = `
-        Частей: ${v2.modelsMap.size} (видимых: ${visibleParts})<br>
-        Мешей: ${meshes}<br>
-        Вершин: ${vertices.toLocaleString()}<br>
-        Центр: X:${v2.sceneCenter.x.toFixed(1)} Y:${v2.sceneCenter.y.toFixed(1)} Z:${v2.sceneCenter.z.toFixed(1)}
-      `;
-    }
+    // Если viewer_v1 уже показывает статистику по currentModel — оставляем как есть.
+    // Здесь лишь доп. инфо для логов.
+    if (!v2.hasModels) return;
+    addDebug(`📊 Части: ${v2.modelsMap.size}, Центр: X:${v2.sceneCenter.x.toFixed(2)} Y:${v2.sceneCenter.y.toFixed(2)} Z:${v2.sceneCenter.z.toFixed(2)}`, 'info');
   }
 
   function loadModelWithDependencies(gltfFile, modelName) {
@@ -1584,7 +1558,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
     recalculateGlobalBoundingBox();
     updateModelsList();
-    updateV2ModelStats();
     window.v2_centerScene();
   };
 
@@ -1599,14 +1572,16 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
 
+      // Переиспользуем существующую логику viewer_v1 если доступна
+      if (typeof fitCameraToObject === 'function' && v2.multiGroup) {
+        fitCameraToObject(v2.multiGroup);
+        return;
+      }
+
       // fallback
       const distance = Math.max(maxDim * 1.5, 10);
       if (camera) {
-        camera.position.set(
-          center.x + distance,
-          center.y + distance * 0.5,
-          center.z + distance
-        );
+        camera.position.set(center.x + distance, center.y + distance * 0.5, center.z + distance);
         camera.lookAt(center);
       }
       if (controls) {
@@ -1645,7 +1620,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       updateModelsList();
       resetV2StatsUi();
-      updateV2ModelStats();
       if (!opts.keepUi) {
         safeShow('v2-file-info', false);
         safeShow('v2-manifest-info', false);
