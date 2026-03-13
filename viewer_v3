@@ -1597,6 +1597,27 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     }
 
     try {
+      // 1) Центрируем сами модели (сдвиг группы так, чтобы центр оказался в (0,0,0))
+      // Это сохраняет взаимное положение частей, но перемещает сцену к началу координат.
+      if (v2.multiGroup) {
+        const centerShift = v2.globalBoundingBox.getCenter(new THREE.Vector3());
+
+        // Сдвигаем группу
+        v2.multiGroup.position.sub(centerShift);
+
+        // Обновляем сохранённые bbox/центры частей, чтобы список/статистика отражали новую позицию
+        v2.modelsMap.forEach(modelData => {
+          if (!modelData) return;
+          if (modelData.center) modelData.center.sub(centerShift);
+          if (modelData.box) modelData.box.translate(centerShift.clone().negate());
+        });
+      }
+
+      // Пересчитываем глобальный bbox после сдвига
+      recalculateGlobalBoundingBox();
+      updateModelsList();
+      updateV2ModelStats();
+
       const center = v2.globalBoundingBox.getCenter(new THREE.Vector3());
       const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
@@ -1616,7 +1637,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         controls.update();
       }
 
-      addDebug('📷 Камера центрирована на всех частях', 'success');
+      addDebug('🎯 Части отцентрированы к (0,0,0) и камера обновлена', 'success');
     } catch (e) {
       addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
     }
