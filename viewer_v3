@@ -204,6 +204,71 @@
         border: 1px solid #3a3a5a;
       }
 
+      /* clipping toggle switch */
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 10px 0 6px 0;
+      }
+
+      .toggle-label {
+        font-size: 13px;
+        color: #ddd;
+      }
+
+      .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        user-select: none;
+      }
+
+      .toggle input {
+        display: none;
+      }
+
+      .toggle-ui {
+        width: 46px;
+        height: 26px;
+        border-radius: 999px;
+        background: #3a3a5a;
+        border: 1px solid #4a6fa5;
+        position: relative;
+        transition: background 0.2s, border-color 0.2s;
+        box-shadow: inset 0 0 0 2px rgba(0,0,0,0.15);
+      }
+
+      .toggle-ui::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: #ddd;
+        transition: transform 0.2s, background 0.2s;
+      }
+
+      .toggle input:checked + .toggle-ui {
+        background: #4aa56f;
+        border-color: #5fc98a;
+      }
+
+      .toggle input:checked + .toggle-ui::after {
+        transform: translateX(20px);
+        background: #fff;
+      }
+
+      .toggle-state {
+        font-size: 12px;
+        color: #aaa;
+        min-width: 42px;
+        text-align: right;
+      }
+
       /* viewer_v2: multi-file GLTF (manifest + .bin) UI */
       .v2-section {
         margin-top: 15px;
@@ -323,7 +388,14 @@
       <div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
       <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
 
-      <button class="btn warning" onclick="toggleClipping()">Вкл / Выкл</button>
+      <div class="toggle-row">
+        <div class="toggle-label">Срез (clipping)</div>
+        <label class="toggle" title="Включить/выключить срез">
+          <input type="checkbox" id="clipEnabledToggle">
+          <span class="toggle-ui"></span>
+          <span class="toggle-state" id="clipEnabledState">OFF</span>
+        </label>
+      </div>
 
 
 <div>
@@ -382,7 +454,8 @@
             <label style="font-size: 12px; color: #ccc;">📏 Масштаб частей</label>
             <div style="font-size: 12px; color: #88aaff;" id="v2-scale-value">1.00×</div>
           </div>
-          <input type="range" id="v2-scale-slider" min="0.01" max="10" step="0.01" value="1" style="width:100%;">
+          <!-- Лог-шкала: значение = log10(scale). Диапазон 1e-6 .. 1e2 -->
+          <input type="range" id="v2-scale-slider" min="-6" max="2" step="0.01" value="0" style="width:100%;">
           <div style="display:flex; gap: 8px; margin-top: 8px;">
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_autoScaleToViewport()">⚖️ Авто</button>
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_setScale(1)">1×</button>
@@ -523,7 +596,8 @@
 
         
         // Камера
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+        // Делаем far большим: модели могут быть в любых единицах/масштабах
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
         camera.position.copy(defaultCameraPosition);
         camera.lookAt(defaultCameraTarget);
         
@@ -1191,6 +1265,17 @@ document.getElementById("clipY2").addEventListener("input", function(e){
 document.getElementById("clipZ2").addEventListener("input", function(e){
   clipPlanes.Z2.constant = parseFloat(e.target.value);
 });
+
+// тумблер "Срез (clipping)"
+(function initClipToggle() {
+  const t = document.getElementById('clipEnabledToggle');
+  if (!t) return;
+  // синхронизируем начальное состояние UI
+  try { syncClipToggleUi(); } catch (e) {}
+  t.addEventListener('change', function(e) {
+    window.toggleClipping(!!e.target.checked);
+  });
+})();
 window.loadByNumberWithValue = function(value) {
   if (!value) {
     addDebug("❌ Нет значения для загрузки", "error");
@@ -1247,35 +1332,44 @@ window.loadByNumberWithValue = function(value) {
     .loadModelByNumber(value);  // передаём строку как есть
 };
 // включение / выключение среза
-window.toggleClipping = function() {
+function syncClipToggleUi() {
+  const t = document.getElementById('clipEnabledToggle');
+  const s = document.getElementById('clipEnabledState');
+  if (t) t.checked = !!clippingEnabled;
+  if (s) s.textContent = clippingEnabled ? 'ON' : 'OFF';
+}
 
-  clippingEnabled = !clippingEnabled;
+function applyClippingToModel(model) {
+  if (!model) return;
+  model.traverse(function(node) {
+    if (!node || !node.isMesh || !node.material) return;
 
-  if (!currentModel) return;
-
-  currentModel.traverse(function(node){
-
-    if(node.isMesh){
-
-      if(clippingEnabled){
-        node.material.clippingPlanes = [
-          clipPlanes.X1,
-          clipPlanes.X2,
-          clipPlanes.Y1,
-          clipPlanes.Y2,
-          clipPlanes.Z1,
-          clipPlanes.Z2
-        ];
-      } else {
-        node.material.clippingPlanes = null;
-      }
-
-      node.material.needsUpdate = true;
-
+    if (clippingEnabled) {
+      node.material.clippingPlanes = [
+        clipPlanes.X1,
+        clipPlanes.X2,
+        clipPlanes.Y1,
+        clipPlanes.Y2,
+        clipPlanes.Z1,
+        clipPlanes.Z2
+      ];
+    } else {
+      node.material.clippingPlanes = null;
     }
-
+    node.material.needsUpdate = true;
   });
+}
 
+window.toggleClipping = function(forceState) {
+  if (typeof forceState === 'boolean') {
+    clippingEnabled = forceState;
+  } else {
+    clippingEnabled = !clippingEnabled;
+  }
+
+  syncClipToggleUi();
+  if (!currentModel) return;
+  applyClippingToModel(currentModel);
 };
     </script>
 <script>
@@ -1414,7 +1508,11 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
     const slider = el('v2-scale-slider');
     const label = el('v2-scale-value');
-    if (slider && Number(slider.value) !== s) slider.value = String(s);
+    // slider хранит log10(scale)
+    if (slider) {
+      const logv = Math.log10(s);
+      if (isFinite(logv)) slider.value = String(logv);
+    }
     if (label) label.textContent = `${s.toFixed(2)}×`;
 
     if (v2.multiGroup) {
@@ -1650,6 +1748,17 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       // Пересчитываем глобальный bbox после сдвига
       recalculateGlobalBoundingBox();
+
+      // 2) “Ставим на землю”: поднимаем так, чтобы нижняя точка была на Y=0 (уровень сетки)
+      // Это важно для удобства и для предсказуемости срезов.
+      if (v2.multiGroup && v2.hasModels) {
+        const minY = v2.globalBoundingBox.min.y;
+        if (isFinite(minY) && Math.abs(minY) > 1e-9) {
+          v2.multiGroup.position.y -= minY; // если minY<0 — поднимем; если >0 — опустим
+          recalculateGlobalBoundingBox();
+        }
+      }
+
       updateModelsList();
       updateV2ModelStats();
 
@@ -1660,6 +1769,10 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       // fallback
       const distance = Math.max(maxDim * 1.5, 10);
       if (camera) {
+        // Динамически подстраиваем near/far, чтобы огромные модели не “обрезались” дальностью камеры
+        camera.near = Math.max(0.01, maxDim / 1000);
+        camera.far = Math.max(1000, distance * 10, maxDim * 10);
+        camera.updateProjectionMatrix();
         camera.position.set(
           center.x + distance,
           center.y + distance * 0.5,
@@ -1694,7 +1807,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       const newScale = targetSize / maxDim;
       // Ограничим, чтобы слайдер оставался адекватным
-      const clamped = Math.min(10, Math.max(0.01, newScale));
+      const clamped = Math.min(100, Math.max(1e-6, newScale));
       setV2Scale(clamped);
       addDebug(`⚖️ Автомасштаб: ${clamped.toFixed(3)}× (maxDim=${maxDim.toFixed(2)})`, 'success');
 
@@ -1895,7 +2008,9 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     const slider = el('v2-scale-slider');
     if (!slider) return;
     slider.addEventListener('input', function(e) {
-      setV2Scale(parseFloat(e.target.value));
+      const logv = parseFloat(e.target.value);
+      const s = Math.pow(10, logv);
+      setV2Scale(s);
     });
     // Инициализация UI
     setV2Scale(1);
