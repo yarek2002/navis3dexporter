@@ -377,6 +377,21 @@
           <button class="btn danger" onclick="window.v2_clearAllModels()">🗑️ Очистить части (манифест)</button>
         </div>
 
+        <div style="margin-top: 10px; padding: 10px; background: #1e1e2e; border-radius: 6px; border: 1px solid #3a3a5a;">
+          <div style="display:flex; justify-content: space-between; align-items: baseline; gap: 10px;">
+            <label style="font-size: 12px; color: #ccc;">📏 Масштаб частей</label>
+            <div style="font-size: 12px; color: #88aaff;" id="v2-scale-value">1.00×</div>
+          </div>
+          <input type="range" id="v2-scale-slider" min="0.01" max="10" step="0.01" value="1" style="width:100%;">
+          <div style="display:flex; gap: 8px; margin-top: 8px;">
+            <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_autoScaleToViewport()">⚖️ Авто</button>
+            <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_setScale(1)">1×</button>
+          </div>
+          <div style="font-size: 11px; color:#aaa; margin-top:6px;">
+            Масштаб влияет на удобство просмотра и на “шаг” среза.
+          </div>
+        </div>
+
         <div id="v2-manifest-info" style="display:none; margin: 10px 0; padding: 10px; background: #1a3a2a; border-radius: 6px;">
           <div style="font-size: 12px;">✅ Манифест загружен</div>
           <div id="v2-manifest-details" style="font-size: 11px; color: #aaa;"></div>
@@ -1370,7 +1385,8 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     hasModels: false,
     sceneCenter: new THREE.Vector3(0, 0, 0),
     sceneSize: new THREE.Vector3(0, 0, 0),
-    multiGroup: null
+    multiGroup: null,
+    scale: 1
   };
 
   function el(id) { return document.getElementById(id); }
@@ -1389,6 +1405,32 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     const fill = el('v2-progress-fill');
     if (fill) fill.style.width = '0%';
     safeSetHtml('v2-progress-text', '');
+  }
+
+  function setV2Scale(scale) {
+    const s = Number(scale);
+    if (!isFinite(s) || s <= 0) return;
+    v2.scale = s;
+
+    const slider = el('v2-scale-slider');
+    const label = el('v2-scale-value');
+    if (slider && Number(slider.value) !== s) slider.value = String(s);
+    if (label) label.textContent = `${s.toFixed(2)}×`;
+
+    if (v2.multiGroup) {
+      v2.multiGroup.scale.set(s, s, s);
+      // При изменении масштаба меняются bbox/центры — пересчёт для корректной статистики/камеры
+      v2.modelsMap.forEach(modelData => {
+        if (!modelData || !modelData.mesh) return;
+        const box = new THREE.Box3().setFromObject(modelData.mesh);
+        modelData.box = box.clone();
+        modelData.center = box.getCenter(new THREE.Vector3());
+        modelData.size = box.getSize(new THREE.Vector3());
+      });
+      recalculateGlobalBoundingBox();
+      updateModelsList();
+      updateV2ModelStats();
+    }
   }
 
   function ensureMultiGroup() {
@@ -1577,44 +1619,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     });
   }
 
-  function refreshPerPartBounds() {
-    // После трансформаций группы (scale/translate) старые box/center устаревают —
-    // пересчитываем по фактической геометрии в мировых координатах.
-    v2.modelsMap.forEach(modelData => {
-      if (!modelData || !modelData.mesh) return;
-      const box = new THREE.Box3().setFromObject(modelData.mesh);
-      modelData.box = box;
-      modelData.center = box.getCenter(new THREE.Vector3());
-      modelData.size = box.getSize(new THREE.Vector3());
-    });
-    recalculateGlobalBoundingBox();
-  }
-
-  function fitMultiGroupToViewport(targetMaxDim) {
-    if (!v2.multiGroup || !v2.hasModels) return;
-
-    // Важно: берём bbox по текущему состоянию (после центрирования/сдвигов)
-    const box = v2.globalBoundingBox;
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-
-    if (!isFinite(maxDim) || maxDim <= 0) return;
-
-    const desired = (typeof targetMaxDim === 'number' && isFinite(targetMaxDim) && targetMaxDim > 0)
-      ? targetMaxDim
-      : 6; // по умолчанию делаем "удобный" размер (хорошо сочетается со слайдерами подрезки -5..5)
-
-    const scale = desired / maxDim;
-    if (!isFinite(scale) || scale <= 0) return;
-
-    v2.multiGroup.scale.setScalar(scale);
-    refreshPerPartBounds();
-    updateModelsList();
-    updateV2ModelStats();
-
-    addDebug(`📏 Автомасштаб: ${scale.toFixed(4)} (maxDim ${maxDim.toFixed(2)} → ${desired})`, 'success');
-  }
-
   window.v2_toggleModelVisibility = function(modelId) {
     const modelData = v2.modelsMap.get(modelId);
     if (!modelData || !modelData.mesh) return;
@@ -1643,9 +1647,18 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         // Сдвигаем группу
         v2.multiGroup.position.sub(centerShift);
 
-        // После сдвига — пересчитаем bbox/центры корректно
-        refreshPerPartBounds();
+        // Обновляем сохранённые bbox/центры частей, чтобы список/статистика отражали новую позицию
+        v2.modelsMap.forEach(modelData => {
+          if (!modelData) return;
+          if (modelData.center) modelData.center.sub(centerShift);
+          if (modelData.box) modelData.box.translate(centerShift.clone().negate());
+        });
       }
+
+      // Пересчитываем глобальный bbox после сдвига
+      recalculateGlobalBoundingBox();
+      updateModelsList();
+      updateV2ModelStats();
 
       const center = v2.globalBoundingBox.getCenter(new THREE.Vector3());
       const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
@@ -1669,6 +1682,33 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       addDebug('🎯 Части отцентрированы к (0,0,0) и камера обновлена', 'success');
     } catch (e) {
       addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
+    }
+  };
+
+  window.v2_setScale = function(scale) {
+    setV2Scale(scale);
+  };
+
+  window.v2_autoScaleToViewport = function() {
+    if (!v2.hasModels) return;
+    try {
+      // Подгоняем так, чтобы максимальный размер сцены стал около targetSize “единиц”
+      // (срезы в viewer_v3 по умолчанию -5..5, поэтому targetSize ~ 8-12 удобно)
+      const targetSize = 10;
+      const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      if (!isFinite(maxDim) || maxDim <= 0) return;
+
+      const newScale = targetSize / maxDim;
+      // Ограничим, чтобы слайдер оставался адекватным
+      const clamped = Math.min(10, Math.max(0.01, newScale));
+      setV2Scale(clamped);
+      addDebug(`⚖️ Автомасштаб: ${clamped.toFixed(3)}× (maxDim=${maxDim.toFixed(2)})`, 'success');
+
+      // После автомасштаба — чуть обновим камеру под новый размер
+      window.v2_centerScene();
+    } catch (e) {
+      addDebug(`❌ Ошибка автомасштаба: ${e.message}`, 'error');
     }
   };
 
@@ -1811,10 +1851,9 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         v2.loadingInProgress = false;
         addDebug('✅ Все части обработаны', 'success');
         safeSetHtml('status', '✅ Все части загружены (манифест)');
+        // Автоподгон масштаба под вьюпорт/срезы, затем центрирование
         setTimeout(() => {
-          // Центрируем геометрию к (0,0,0), подгоняем масштаб, и снова центрируем/обновляем камеру
-          window.v2_centerScene();
-          fitMultiGroupToViewport(6);
+          window.v2_autoScaleToViewport();
           window.v2_centerScene();
         }, 200);
       }
@@ -1857,6 +1896,17 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
     input.click();
   };
+
+  // Слайдер масштаба
+  document.addEventListener('DOMContentLoaded', function() {
+    const slider = el('v2-scale-slider');
+    if (!slider) return;
+    slider.addEventListener('input', function(e) {
+      setV2Scale(parseFloat(e.target.value));
+    });
+    // Инициализация UI
+    setV2Scale(1);
+  });
 })();
 </script>
   </body>
