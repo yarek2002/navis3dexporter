@@ -1577,6 +1577,44 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     });
   }
 
+  function refreshPerPartBounds() {
+    // После трансформаций группы (scale/translate) старые box/center устаревают —
+    // пересчитываем по фактической геометрии в мировых координатах.
+    v2.modelsMap.forEach(modelData => {
+      if (!modelData || !modelData.mesh) return;
+      const box = new THREE.Box3().setFromObject(modelData.mesh);
+      modelData.box = box;
+      modelData.center = box.getCenter(new THREE.Vector3());
+      modelData.size = box.getSize(new THREE.Vector3());
+    });
+    recalculateGlobalBoundingBox();
+  }
+
+  function fitMultiGroupToViewport(targetMaxDim) {
+    if (!v2.multiGroup || !v2.hasModels) return;
+
+    // Важно: берём bbox по текущему состоянию (после центрирования/сдвигов)
+    const box = v2.globalBoundingBox;
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+
+    if (!isFinite(maxDim) || maxDim <= 0) return;
+
+    const desired = (typeof targetMaxDim === 'number' && isFinite(targetMaxDim) && targetMaxDim > 0)
+      ? targetMaxDim
+      : 6; // по умолчанию делаем "удобный" размер (хорошо сочетается со слайдерами подрезки -5..5)
+
+    const scale = desired / maxDim;
+    if (!isFinite(scale) || scale <= 0) return;
+
+    v2.multiGroup.scale.setScalar(scale);
+    refreshPerPartBounds();
+    updateModelsList();
+    updateV2ModelStats();
+
+    addDebug(`📏 Автомасштаб: ${scale.toFixed(4)} (maxDim ${maxDim.toFixed(2)} → ${desired})`, 'success');
+  }
+
   window.v2_toggleModelVisibility = function(modelId) {
     const modelData = v2.modelsMap.get(modelId);
     if (!modelData || !modelData.mesh) return;
@@ -1605,18 +1643,9 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         // Сдвигаем группу
         v2.multiGroup.position.sub(centerShift);
 
-        // Обновляем сохранённые bbox/центры частей, чтобы список/статистика отражали новую позицию
-        v2.modelsMap.forEach(modelData => {
-          if (!modelData) return;
-          if (modelData.center) modelData.center.sub(centerShift);
-          if (modelData.box) modelData.box.translate(centerShift.clone().negate());
-        });
+        // После сдвига — пересчитаем bbox/центры корректно
+        refreshPerPartBounds();
       }
-
-      // Пересчитываем глобальный bbox после сдвига
-      recalculateGlobalBoundingBox();
-      updateModelsList();
-      updateV2ModelStats();
 
       const center = v2.globalBoundingBox.getCenter(new THREE.Vector3());
       const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
@@ -1782,7 +1811,12 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         v2.loadingInProgress = false;
         addDebug('✅ Все части обработаны', 'success');
         safeSetHtml('status', '✅ Все части загружены (манифест)');
-        setTimeout(() => window.v2_centerScene(), 200);
+        setTimeout(() => {
+          // Центрируем геометрию к (0,0,0), подгоняем масштаб, и снова центрируем/обновляем камеру
+          window.v2_centerScene();
+          fitMultiGroupToViewport(6);
+          window.v2_centerScene();
+        }, 200);
       }
 
       async function loadSequential() {
