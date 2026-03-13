@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; background: #1a1a2e; font-family: 'Segoe UI', Arial; }
+      
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+      
+      #control-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(30, 30, 40, 0.95);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        z-index: 100;
+        border: 1px solid #4a6fa5;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        width: 280px;
+        backdrop-filter: blur(5px);
+        
+      }
+      
+      #debug-window {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        max-height: 80vh;
+        background: rgba(20, 20, 30, 0.98);
+        color: #fff;
+        border-radius: 12px;
+        z-index: 1000;
+        border: 2px solid #ff4444;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+        display: flex;
+        flex-direction: column;
+        font-family: 'Consolas', monospace;
+        backdrop-filter: blur(5px);
+        resize: both;
+        overflow: auto;
+        min-width: 300px;
+      }
+      
+      #debug-header {
+        padding: 12px 16px;
+        background: #2a2a3a;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #ff4444;
+        cursor: move;
+      }
+      
+      #debug-header h3 {
+        margin: 0;
+        color: #ff8888;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      #debug-header button {
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0 8px;
+      }
+      
+      #debug-header button:hover {
+        color: #ff8888;
+      }
+      
+      #debug-content {
+        padding: 16px;
+        overflow-y: auto;
+        max-height: calc(80vh - 120px);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      
+      .debug-entry {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 6px;
+        border-left: 4px solid;
+        word-break: break-all;
+      }
+      
+      .debug-info {
+        background: #1e3a3a;
+        border-left-color: #44aaff;
+      }
+      
+      .debug-success {
+        background: #1a3a2a;
+        border-left-color: #44ff88;
+      }
+      
+      .debug-warning {
+        background: #3a3a1a;
+        border-left-color: #ffaa44;
+      }
+      
+      .debug-error {
+        background: #3a1a1a;
+        border-left-color: #ff4444;
+      }
+      
+      .debug-timestamp {
+        color: #888;
+        font-size: 11px;
+        margin-right: 8px;
+      }
+      
+      #status {
+        margin: 10px 0;
+        padding: 10px;
+        background: #1e1e2e;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      
+      .btn {
+        background: #4a6fa5;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 5px 5px 5px 0;
+        font-size: 14px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+      
+      .btn:hover {
+        background: #5f8bc9;
+        transform: translateY(-2px);
+      }
+      
+      .btn.danger {
+        background: #a54a4a;
+      }
+      
+      .btn.danger:hover {
+        background: #c95f5f;
+      }
+      
+      .btn.success {
+        background: #4aa56f;
+      }
+      
+      .btn.success:hover {
+        background: #5fc98a;
+      }
+      
+      .btn.warning {
+        background: #a58b4a;
+      }
+      
+      .btn.warning:hover {
+        background: #c9a85f;
+      }
+      
+      input[type="file"] {
+        margin: 10px 0;
+        width: 100%;
+        padding: 8px;
+        background: #1e1e2e;
+        color: white;
+        border: 1px solid #4a6fa5;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      
+      input[type="file"]:hover {
+        border-color: #88aaff;
+      }
+      
+      .model-info {
+        background: #1e1e2e;
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 10px;
+        font-size: 12px;
+        border: 1px solid #3a3a5a;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+    
+    <div id="control-panel">
+      <h3 style="margin-top: 0; color: #4a6fa5;">🎮 Управление 3D</h3>
+      
+      <div style="margin: 15px 0;">
+        <button class="btn success" onclick="window.loadTestModel()">🧪 Тестовая модель</button>
+        <button class="btn warning" onclick="window.resetCamera()">📷 Сбросить камеру</button>
+        <button class="btn danger" onclick="window.clearModel()">🗑️ Очистить</button>
+      </div>
+      
+      <div>
+        <label>📁 Загрузите локальный GLB файл:</label>
+        <input type="file" id="file-input" accept=".glb,.gltf">
+        <div style="font-size: 12px; color: #aaa; margin-top: 5px;">
+          Поддерживаются форматы: .glb, .gltf
+        </div>
+      </div>
+
+      <div style="margin-top:15px;">
+      <label>☁️ Загрузка по номеру из таблицы (Google Drive):</label>
+      <input type="text" id="drive-number" placeholder="Номер" style="width:100%;">
+      <button class="btn" onclick="window.loadByNumber()">⬇️ Загрузить модель</button>
+      <div style="font-size:12px; color:#aaa; margin-top:5px;">
+      </div>
+      <div style="margin-top:15px;">
+      <label>☁️ Загрузка по имени файла (без .glb):</label>
+      <input type="text" id="drive-modelname" placeholder="Например: -01_9-13_1 или robot_arm">
+      <button class="btn" onclick="window.loadFromDriveByName()">⬇️ Загрузить</button>
+      </div>
+      <div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
+      <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
+
+      <button class="btn warning" onclick="toggleClipping()">Вкл / Выкл</button>
+
+
+<div>
+<label>Срез X (влево / вправо)</label>
+<input type="range" id="clipX" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+
+<div>
+<label>Срез Y (вверх / вниз)</label>
+<input type="range" id="clipY" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+
+<div>
+<label>Срез Z (вперёд / назад)</label>
+<input type="range" id="clipZ" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+<div>
+<label>Срез X2 (справа)</label>
+<input type="range" id="clipX2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+
+<div>
+<label>Срез Y2 (сверху)</label>
+<input type="range" id="clipY2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+
+<div>
+<label>Срез Z2 (спереди)</label>
+<input type="range" id="clipZ2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+</div>
+</div>
+
+    </div>
+          
+      <div id="status">
+        <span>⚪ Готов к загрузке</span>
+      </div>
+      
+      <div class="model-info" id="model-info">
+        <div>📊 Информация о модели:</div>
+        <div id="model-stats">Нет загруженной модели</div>
+      </div>
+    </div>
+    
+    <div id="debug-window">
+      <div id="debug-header">
+        <h3>
+          <span>🐞 Окно отладки</span>
+          <span style="color: #ff4444; font-size: 12px;" id="error-counter">0</span>
+        </h3>
+        <div>
+          <button onclick="window.clearDebug()" title="Очистить">🗑️</button>
+          <button onclick="window.toggleDebug()" title="Свернуть">⎯</button>
+        </div>
+      </div>
+      <div id="debug-content">
+        <div class="debug-entry debug-info">
+          <span class="debug-timestamp">[00:00]</span>
+          🔍 Система отладки инициализирована
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      // Глобальные переменные
+      const MODEL_FROM_URL = "<?= modelParam ?>";
+      let scene, camera, renderer, controls, currentModel;
+
+      // система среза
+      let clipPlanes = {
+        X1: new THREE.Plane(new THREE.Vector3(1,0,0),100),
+        X2: new THREE.Plane(new THREE.Vector3(-1,0,0),100),
+
+        Y1: new THREE.Plane(new THREE.Vector3(0,1,0),100),
+        Y2: new THREE.Plane(new THREE.Vector3(0,-1,0),100),
+
+        Z1: new THREE.Plane(new THREE.Vector3(0,0,1),100),
+        Z2: new THREE.Plane(new THREE.Vector3(0,0,-1),100)
+      };
+      let clippingEnabled = false;
+      let clipAxis = "Y";
+      let debugEntries = [];
+      let errorCount = 0;
+      let defaultCameraPosition = new THREE.Vector3(4, 3, 5);
+      let defaultCameraTarget = new THREE.Vector3(0, 0, 0);
+      
+      // Делаем функции глобальными
+      window.clearDebug = function() {
+        debugEntries = [];
+        errorCount = 0;
+        document.getElementById('error-counter').textContent = '0';
+        document.getElementById('debug-content').innerHTML = '';
+        addDebug('Окно отладки очищено', 'info');
+      };
+      
+      window.toggleDebug = function() {
+        const debugContent = document.getElementById('debug-content');
+        debugContent.style.display = debugContent.style.display === 'none' ? 'block' : 'none';
+      };
+      
+      // Функция для добавления сообщений в окно отладки
+      function addDebug(message, type = 'info') {
+        const date = new Date();
+        const timestamp = `[${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}]`;
+        
+        if (type === 'error') {
+          errorCount++;
+          document.getElementById('error-counter').textContent = errorCount;
+        }
+        
+        const debugContent = document.getElementById('debug-content');
+        const entryDiv = document.createElement('div');
+        entryDiv.className = `debug-entry debug-${type}`;
+        entryDiv.innerHTML = `<span class="debug-timestamp">${timestamp}</span> ${message}`;
+        
+        debugContent.appendChild(entryDiv);
+        debugContent.scrollTop = debugContent.scrollHeight;
+        
+        console.log(`[${type}]`, message);
+      }
+      
+      // Функция сброса камеры
+      window.resetCamera = function() {
+        if (camera && controls) {
+          camera.position.copy(defaultCameraPosition);
+          controls.target.copy(defaultCameraTarget);
+          controls.update();
+          addDebug('📷 Камера сброшена в исходное положение', 'success');
+        }
+      };
+      
+      // Инициализация Three.js
+      addDebug('Инициализация Three.js...', 'info');
+      
+      try {
+        const container = document.getElementById('canvas-container');
+        
+        // Сцена
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        
+        // Камера
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.copy(defaultCameraPosition);
+        camera.lookAt(defaultCameraTarget);
+        
+        // Рендерер
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.localClippingEnabled = true;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        addDebug('✓ Рендерер создан успешно', 'success');
+        
+        // Освещение
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(2, 5, 3);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+        
+        const fillLight = new THREE.PointLight(0x4466ff, 0.5);
+        fillLight.position.set(-2, 1, 2);
+        scene.add(fillLight);
+        
+        // Добавляем яркие отладочные источники света
+        const frontLight = new THREE.PointLight(0xffffff, 2);
+        frontLight.position.set(0, 2, 5);
+        scene.add(frontLight);
+        
+        const topLight = new THREE.PointLight(0xffffff, 1.5);
+        topLight.position.set(0, 5, 0);
+        scene.add(topLight);
+        
+        addDebug('💡 Добавлены отладочные источники света', 'info');
+        
+        // Вспомогательные элементы
+        const gridHelper = new THREE.GridHelper(10, 20, 0x88aaff, 0x335588);
+        scene.add(gridHelper);
+        
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+        
+        addDebug('✓ Сцена настроена, добавлены сетка и оси', 'success');
+        
+        // Управление
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.maxPolarAngle = Math.PI;
+        controls.target.copy(defaultCameraTarget);
+        
+        addDebug('✓ Управление настроено', 'success');
+        addDebug('✅ Сцена готова к работе', 'success');
+        
+      } catch (e) {
+        addDebug(`❌ Ошибка инициализации: ${e.message}`, 'error');
+      }
+      
+      // Функция загрузки локального файла
+      function loadLocalFile(file) {
+        addDebug(`📁 Загрузка файла: ${file.name}`, 'info');
+        addDebug(`📊 Размер: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          addDebug(`✅ Файл прочитан, размер данных: ${(e.target.result.byteLength / 1024 / 1024).toFixed(2)} MB`, 'success');
+          
+          const arrayBuffer = e.target.result;
+          
+          // Удаляем предыдущую модель
+          if (currentModel) {
+            scene.remove(currentModel);
+            currentModel = null;
+          }
+          
+          const loader = new THREE.GLTFLoader();
+          
+          addDebug('🔄 Парсинг GLB файла...', 'info');
+          
+          loader.parse(
+            arrayBuffer,
+            '',
+            function(gltf) {
+              addDebug('✅ Модель успешно загружена!', 'success');
+              
+              currentModel = gltf.scene;
+              
+              // Анализируем модель
+              analyzeModel(currentModel);
+              
+              // Проверяем и добавляем материалы если нужно
+              ensureMaterials(currentModel);
+              
+              // ВАЖНО: Принудительно размещаем модель в центре сцены
+              forceCenterModel(currentModel);
+              
+              // Масштабируем под размер сцены
+              autoFitModel(currentModel);
+              
+              // Добавляем модель в сцену
+              scene.add(currentModel);
+              
+              // Принудительно сбрасываем камеру на модель
+              fitCameraToObject(currentModel);
+              
+              // Включаем авто-вращение
+              controls.autoRotate = true;
+              
+              // Обновляем информацию
+              updateModelInfo(currentModel, file.name);
+              
+              document.getElementById('status').innerHTML = `✅ Загружено: ${file.name}`;
+            },
+            undefined,
+            function(error) {
+              addDebug(`❌ Ошибка парсинга: ${error.message}`, 'error');
+              console.error('Детали ошибки:', error);
+              document.getElementById('status').innerHTML = '❌ Ошибка загрузки';
+            }
+          );
+        };
+        
+        reader.onerror = function(error) {
+          addDebug(`❌ Ошибка чтения файла: ${error}`, 'error');
+          document.getElementById('status').innerHTML = '❌ Ошибка чтения файла';
+        };
+        
+        reader.readAsArrayBuffer(file);
+      }
+      window.loadFromDriveByName = function() {
+        const modelName = document.getElementById("drive-modelname").value.trim();
+        
+        if (!modelName) {
+          addDebug("❌ Не указано имя модели", "error");
+          return;
+        }
+
+        addDebug(`☁️ Запрос модели "${modelName}"...`, "info");
+        document.getElementById('status').innerHTML = `⏳ Загрузка ${modelName}...`;
+
+        google.script.run
+          .withSuccessHandler(function(base64Data) {
+            if (!base64Data || base64Data.length < 100) {
+              addDebug("❌ Файл не найден или пустой ответ", "error");
+              document.getElementById('status').innerHTML = '❌ Модель не найдена';
+              return;
+            }
+
+            addDebug("✅ Получен файл в base64", "success");
+
+            try {
+              const binary = atob(base64Data);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+
+              const loader = new THREE.GLTFLoader();
+              loader.parse(
+                bytes.buffer,
+                '',
+                function (gltf) {
+                  addDebug("✅ Модель успешно загружена!", "success");
+                  
+                  if (currentModel) scene.remove(currentModel);
+                  
+                  currentModel = gltf.scene;
+                  
+                  analyzeModel(currentModel);
+                  ensureMaterials(currentModel);
+                  forceCenterModel(currentModel);
+                  autoFitModel(currentModel);
+                  
+                  scene.add(currentModel);
+                  fitCameraToObject(currentModel);
+                  controls.autoRotate = true;
+                  
+                  updateModelInfo(currentModel, modelName + ".glb");
+                  document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
+                },
+                undefined,
+                function (error) {
+                  addDebug("❌ Ошибка парсинга: " + error.message, "error");
+                  document.getElementById('status').innerHTML = '❌ Ошибка парсинга';
+                }
+              );
+
+            } catch (e) {
+              addDebug("❌ Ошибка декодирования: " + e.message, "error");
+              document.getElementById('status').innerHTML = '❌ Ошибка декодирования';
+            }
+          })
+          .withFailureHandler(function(error) {
+            addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
+            document.getElementById('status').innerHTML = '❌ Ошибка сервера';
+          })
+          .getDriveGlbBase64ByModelName(modelName);
+      };
+
+      window.loadByNumber = function() {
+  const number = document.getElementById("drive-number").value.trim();
+
+  if (!number) {
+    addDebug("❌ Не указан номер", "error");
+    return;
+  }
+
+  addDebug(`☁️ Запрос модели по номеру "${number}"...`, "info");
+  document.getElementById('status').innerHTML = `⏳ Загрузка #${number}...`;
+
+  google.script.run
+    .withSuccessHandler(function(base64Data) {
+      if (!base64Data || base64Data.length < 100) {
+        addDebug("❌ Модель не найдена по номеру " + number, "error");
+        document.getElementById('status').innerHTML = '❌ Модель не найдена';
+        return;
+      }
+
+      addDebug("✅ Получен файл в base64", "success");
+
+      try {
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const loader = new THREE.GLTFLoader();
+        loader.parse(
+          bytes.buffer,
+          '',
+          function (gltf) {
+            addDebug("✅ Модель загружена!", "success");
+            if (currentModel) scene.remove(currentModel);
+            currentModel = gltf.scene;
+            analyzeModel(currentModel);
+            ensureMaterials(currentModel);
+            forceCenterModel(currentModel);
+            autoFitModel(currentModel);
+            scene.add(currentModel);
+            fitCameraToObject(currentModel);
+            controls.autoRotate = true;
+            updateModelInfo(currentModel, "Модель #" + number);
+            document.getElementById('status').innerHTML = `✅ Загружено: #${number}`;
+          },
+          undefined,
+          function (error) {
+            addDebug("❌ Ошибка парсинга: " + error.message, "error");
+            document.getElementById('status').innerHTML = '❌ Ошибка парсинга';
+          }
+        );
+      } catch (e) {
+        addDebug("❌ Ошибка декодирования: " + e.message, "error");
+        document.getElementById('status').innerHTML = '❌ Ошибка декодирования';
+      }
+    })
+    .withFailureHandler(function(error) {
+      addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
+      document.getElementById('status').innerHTML = '❌ Ошибка сервера';
+    })
+    .loadModelByNumber(number);
+};
+      // Новая функция для принудительного центрирования модели
+      function forceCenterModel(model) {
+        // Сначала вычисляем bounding box
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        
+        addDebug(`📍 Исходный центр модели: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`, 'info');
+        
+        // Создаем временную группу для перемещения всей модели
+        const tempGroup = new THREE.Group();
+        
+        // Сохраняем все дети
+        const children = model.children.slice();
+        
+        // Очищаем модель
+        while(model.children.length > 0) {
+          model.remove(model.children[0]);
+        }
+        
+        // Добавляем всех детей в группу
+        children.forEach(child => {
+          tempGroup.add(child);
+        });
+        
+        // Перемещаем группу так, чтобы центр был в 0
+        tempGroup.position.copy(center.clone().negate());
+        
+        // Добавляем группу обратно в модель
+        model.add(tempGroup);
+        
+        addDebug(`✅ Модель принудительно отцентрирована`, 'success');
+      }
+      
+      // Обработчик выбора файла
+      document.getElementById('file-input').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          loadLocalFile(file);
+        }
+      });
+      
+      // Тестовая модель
+      window.loadTestModel = function() {
+        addDebug('🧪 Загрузка тестовой модели...', 'info');
+        
+        try {
+          if (currentModel) {
+            scene.remove(currentModel);
+          }
+          
+          const group = new THREE.Group();
+          
+          // Красный куб
+          const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
+          const cubeMat = new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0x331111 });
+          const cube = new THREE.Mesh(cubeGeo, cubeMat);
+          cube.position.set(0, 0.5, 0);
+          group.add(cube);
+          
+          // Синяя сфера
+          const sphereGeo = new THREE.SphereGeometry(0.5, 32, 32);
+          const sphereMat = new THREE.MeshStandardMaterial({ color: 0x44aaff, emissive: 0x112233 });
+          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          sphere.position.set(1.5, 0.5, 0);
+          group.add(sphere);
+          
+          // Зеленый тор
+          const torusGeo = new THREE.TorusGeometry(0.8, 0.2, 16, 100);
+          const torusMat = new THREE.MeshStandardMaterial({ color: 0x88ff88, emissive: 0x113311 });
+          const torus = new THREE.Mesh(torusGeo, torusMat);
+          torus.position.set(-1.5, 0.5, 0);
+          torus.rotation.x = Math.PI / 2;
+          group.add(torus);
+          
+          currentModel = group;
+          scene.add(currentModel);
+          
+          // Сбрасываем камеру на тестовую модель
+          fitCameraToObject(currentModel);
+          
+          addDebug('✅ Тестовая модель загружена', 'success');
+          document.getElementById('status').innerHTML = '✅ Тестовая модель';
+          
+          updateModelInfo(currentModel, 'Тестовая модель');
+          controls.autoRotate = true;
+          
+        } catch (e) {
+          addDebug(`❌ Ошибка: ${e.message}`, 'error');
+        }
+      };
+      
+      // Очистка сцены
+      window.clearModel = function() {
+        if (currentModel) {
+          scene.remove(currentModel);
+          currentModel = null;
+          addDebug('🗑️ Модель удалена', 'info');
+          document.getElementById('status').innerHTML = '⚪ Сцена очищена';
+          document.getElementById('model-stats').innerHTML = 'Нет загруженной модели';
+          controls.autoRotate = false;
+          
+          // Сбрасываем камеру
+          resetCamera();
+        }
+      };
+      
+      // Анализ модели
+      function analyzeModel(model) {
+        let meshCount = 0;
+        let vertexCount = 0;
+        let materialCount = 0;
+        const materials = new Set();
+        
+        model.traverse(function(node) {
+          if (node.isMesh) {
+            meshCount++;
+            if (node.geometry) {
+              if (node.geometry.attributes.position) {
+                vertexCount += node.geometry.attributes.position.count;
+              }
+            }
+            if (node.material) {
+              if (Array.isArray(node.material)) {
+                node.material.forEach(m => materials.add(m.type));
+              } else {
+                materials.add(node.material.type);
+              }
+            }
+          }
+        });
+        
+        materialCount = materials.size;
+        
+        addDebug(`📊 Анализ модели:`, 'info');
+        addDebug(`  - Мешей: ${meshCount}`, 'info');
+        addDebug(`  - Вершин: ${vertexCount}`, 'info');
+        addDebug(`  - Материалов: ${materialCount}`, 'info');
+        
+        if (meshCount === 0) {
+          addDebug('⚠️ Модель не содержит мешей!', 'warning');
+        }
+      }
+      
+      // Проверка видимости модели
+      function debugModelVisibility(model) {
+        if (!model) {
+          addDebug('❌ Модель не существует', 'error');
+          return;
+        }
+        
+        addDebug('🔍 Проверка видимости модели:', 'info');
+        
+        // Проверяем позицию
+        addDebug(`  Позиция: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})`, 'info');
+        
+        // Проверяем масштаб
+        addDebug(`  Масштаб: (${model.scale.x.toFixed(2)}, ${model.scale.y.toFixed(2)}, ${model.scale.z.toFixed(2)})`, 'info');
+        
+        // Проверяем видимость
+        addDebug(`  Видимость: ${model.visible ? '✅' : '❌'}`, model.visible ? 'success' : 'error');
+        
+        // Проверяем bounding box
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        addDebug(`  Bounding box размер: (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`, 'info');
+        
+        // Проверяем материалы
+        let hasVisibleMaterial = false;
+        model.traverse(node => {
+          if (node.isMesh && node.material) {
+            if (Array.isArray(node.material)) {
+              node.material.forEach(mat => {
+                if (mat.visible) hasVisibleMaterial = true;
+              });
+            } else {
+              if (node.material.visible) hasVisibleMaterial = true;
+            }
+          }
+        });
+        
+        addDebug(`  Видимые материалы: ${hasVisibleMaterial ? '✅' : '❌'}`, hasVisibleMaterial ? 'success' : 'error');
+        
+        // Проверяем наличие геометрии
+        let hasGeometry = false;
+        model.traverse(node => {
+          if (node.isMesh && node.geometry) {
+            hasGeometry = true;
+          }
+        });
+        
+        addDebug(`  Наличие геометрии: ${hasGeometry ? '✅' : '❌'}`, hasGeometry ? 'success' : 'error');
+      }
+      
+      // Проверка и добавление материалов
+      function ensureMaterials(model) {
+        let materialsAdded = 0;
+        
+        model.traverse(function(node) {
+          if (node.isMesh) {
+            if (!node.material) {
+              node.material = new THREE.MeshStandardMaterial({ 
+                color: Math.random() * 0xffffff,
+                emissive: 0x222222
+              });
+              materialsAdded++;
+            }
+            node.castShadow = true;
+            node.receiveShadow = true;
+          }
+        });
+        
+        if (materialsAdded > 0) {
+          addDebug(`⚠️ Добавлено материалов: ${materialsAdded}`, 'warning');
+        }
+      }
+      
+      // Улучшенная функция автоматического масштабирования
+      function autoFitModel(model) {
+        try {
+          // Вычисляем bounding box модели
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          addDebug(`📐 Размер модели: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`, 'info');
+          addDebug(`📍 Центр модели: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`, 'info');
+          
+          if (size.x === 0 || size.y === 0 || size.z === 0) {
+            addDebug('⚠️ Модель имеет нулевой размер!', 'warning');
+            return;
+          }
+          
+          // Масштабируем модель
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const targetSize = 3;
+          const scale = targetSize / maxDim;
+          
+          model.scale.set(scale, scale, scale);
+          addDebug(`📏 Масштаб: ${scale.toFixed(3)}`, 'info');
+          
+        } catch (e) {
+          addDebug(`❌ Ошибка масштабирования: ${e.message}`, 'error');
+        }
+      }
+      
+      // Функция для настройки камеры на объект
+      function fitCameraToObject(object) {
+        try {
+          const box = new THREE.Box3().setFromObject(object);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          // Вычисляем расстояние до камеры
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const fov = camera.fov * (Math.PI / 180);
+          let distance = Math.abs(maxDim / Math.sin(fov / 2));
+          
+          // Добавляем запас
+          distance *= 1.5;
+          
+          // Проверяем на экстремальные значения
+          if (distance > 10000) distance = 10;
+          if (distance < 1) distance = 5;
+          if (isNaN(distance)) distance = 5;
+          
+          // Позиционируем камеру
+          camera.position.set(distance, distance * 0.5, distance);
+          camera.lookAt(center);
+          
+          // Настраиваем controls
+          if (controls) {
+            controls.target.copy(center);
+            controls.update();
+          }
+          
+          addDebug(`📷 Камера настроена: расстояние ${distance.toFixed(2)}`, 'success');
+          addDebug(`📷 Цель камеры: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+          
+        } catch (e) {
+          addDebug(`❌ Ошибка настройки камеры: ${e.message}`, 'error');
+          // В случае ошибки сбрасываем камеру
+          resetCamera();
+        }
+      }
+      
+      // Обновление информации о модели
+      function updateModelInfo(model, name) {
+        if (!model) return;
+        
+        let meshCount = 0;
+        let vertexCount = 0;
+        
+        model.traverse(node => {
+          if (node.isMesh) {
+            meshCount++;
+            if (node.geometry && node.geometry.attributes.position) {
+              vertexCount += node.geometry.attributes.position.count;
+            }
+          }
+        });
+        
+        document.getElementById('model-stats').innerHTML = `
+          📛 ${name}<br>
+          📦 Мешей: ${meshCount}<br>
+          🔷 Вершин: ${vertexCount}<br>
+          📏 Масштаб: ${model.scale.x.toFixed(2)}<br>
+          📍 Позиция: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})
+        `;
+      }
+            // автозагрузка модели из URL
+      window.addEventListener("load", function () {
+
+        if (MODEL_FROM_URL) {
+
+          addDebug("📦 Модель из URL: " + MODEL_FROM_URL, "info");
+
+          document.getElementById("drive-modelname").value = MODEL_FROM_URL;
+
+          window.loadFromDriveByName();
+
+        }
+
+      });
+      // Анимация
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        if (controls) {
+          controls.update();
+        }
+        
+        if (renderer && scene && camera) {
+          renderer.render(scene, camera);
+        }
+      }
+      animate();
+      
+      // Обработка изменения размера окна
+      window.addEventListener('resize', function() {
+        if (camera) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+        }
+        if (renderer) {
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+      
+      // Перетаскивание окна отладки
+      let isDragging = false;
+      let dragOffsetX, dragOffsetY;
+      
+      document.getElementById('debug-header').addEventListener('mousedown', function(e) {
+        isDragging = true;
+        const debugWindow = document.getElementById('debug-window');
+        dragOffsetX = e.clientX - debugWindow.offsetLeft;
+        dragOffsetY = e.clientY - debugWindow.offsetTop;
+      });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+          const debugWindow = document.getElementById('debug-window');
+          debugWindow.style.left = (e.clientX - dragOffsetX) + 'px';
+          debugWindow.style.top = (e.clientY - dragOffsetY) + 'px';
+          debugWindow.style.right = 'auto';
+        }
+      });
+      
+      document.addEventListener('mouseup', function() {
+        isDragging = false;
+      });
+      
+      addDebug('✅ Система готова. Выберите GLB файл для загрузки', 'success');
+      // управление срезами по осям
+
+document.getElementById("clipX").addEventListener("input", function(e){
+  clipPlanes.X1.constant = parseFloat(e.target.value);
+});
+
+document.getElementById("clipY").addEventListener("input", function(e){
+  clipPlanes.Y1.constant = parseFloat(e.target.value);
+});
+
+document.getElementById("clipZ").addEventListener("input", function(e){
+  clipPlanes.Z1.constant = parseFloat(e.target.value);
+});
+document.getElementById("clipX2").addEventListener("input", function(e){
+  clipPlanes.X2.constant = parseFloat(e.target.value);
+});
+
+document.getElementById("clipY2").addEventListener("input", function(e){
+  clipPlanes.Y2.constant = parseFloat(e.target.value);
+});
+
+document.getElementById("clipZ2").addEventListener("input", function(e){
+  clipPlanes.Z2.constant = parseFloat(e.target.value);
+});
+window.loadByNumberWithValue = function(value) {
+  if (!value) {
+    addDebug("❌ Нет значения для загрузки", "error");
+    return;
+  }
+
+  addDebug(`🔍 Поиск по идентификатору "${value}"`, "info");
+
+  google.script.run
+    .withSuccessHandler(function(base64Data) {
+      if (!base64Data) {
+        addDebug("❌ Пустой base64 от сервера", "error");
+        return;
+      }
+      addDebug("✅ Base64 получен, длина: " + base64Data.length, "success");
+
+      try {
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const loader = new THREE.GLTFLoader();
+        loader.parse(
+          bytes.buffer,
+          '',
+          function (gltf) {
+            addDebug("✅ Модель загружена и добавлена", "success");
+            if (currentModel) scene.remove(currentModel);
+            currentModel = gltf.scene;
+            analyzeModel(currentModel);
+            ensureMaterials(currentModel);
+            forceCenterModel(currentModel);
+            autoFitModel(currentModel);
+            scene.add(currentModel);
+            fitCameraToObject(currentModel);
+            controls.autoRotate = true;
+            updateModelInfo(currentModel, value);
+            document.getElementById('status').innerHTML = `✅ Загружено: ${value}`;
+          },
+          undefined,
+          function (error) {
+            addDebug("❌ Ошибка парсинга GLTF: " + error.message, "error");
+          }
+        );
+      } catch (e) {
+        addDebug("❌ Ошибка обработки base64: " + e.message, "error");
+      }
+    })
+    .withFailureHandler(function(error) {
+      addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
+    })
+    .loadModelByNumber(value);  // передаём строку как есть
+};
+// включение / выключение среза
+window.toggleClipping = function() {
+
+  clippingEnabled = !clippingEnabled;
+
+  if (!currentModel) return;
+
+  currentModel.traverse(function(node){
+
+    if(node.isMesh){
+
+      if(clippingEnabled){
+        node.material.clippingPlanes = [
+          clipPlanes.X1,
+          clipPlanes.X2,
+          clipPlanes.Y1,
+          clipPlanes.Y2,
+          clipPlanes.Z1,
+          clipPlanes.Z2
+        ];
+      } else {
+        node.material.clippingPlanes = null;
+      }
+
+      node.material.needsUpdate = true;
+
+    }
+
+  });
+
+};
+    </script>
+<script>
+// Автозагрузка по ?model=имя_файла (без .glb)
+document.addEventListener('DOMContentLoaded', function() {
+  addDebug('Проверка URL для автозагрузки по имени модели...', 'info');
+  
+  // Полный URL для отладки
+  addDebug('Полный URL: ' + window.location.href, 'info');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const modelName = urlParams.get('model');
+
+  if (modelName && modelName.trim() !== '') {
+    const trimmedName = modelName.trim();
+    addDebug(`Найден параметр model: "${trimmedName}"`, 'success');
+
+    const input = document.getElementById('drive-modelname');
+    if (input) {
+      input.value = trimmedName;
+      addDebug(`Поле #drive-modelname заполнено значением "${trimmedName}"`, 'info');
+    } else {
+      addDebug('Поле #drive-modelname не найдено, но попробуем загрузить напрямую', 'warning');
+    }
+
+    setTimeout(() => {
+      addDebug(`Автоматически запускаем loadFromDriveByName для "${trimmedName}"`, 'success');
+      document.getElementById('status').innerHTML = `⏳ Автозагрузка модели "${trimmedName}"...`;
+      
+      // Прямой вызов функции (даже если поля нет)
+      window.loadFromDriveByNameWithValue(trimmedName);
+    }, 1800);  // 1.8 секунды — обычно хватает для инициализации Three.js
+
+  } else {
+    addDebug('Параметр ?model= отсутствует или пустой', 'warning');
+  }
+});
+
+// Вспомогательная функция — загрузка по имени без зависимости от поля ввода
+window.loadFromDriveByNameWithValue = function(modelName) {
+  if (!modelName) {
+    addDebug("❌ Нет имени модели", "error");
+    return;
+  }
+
+  addDebug(`Прямая загрузка модели "${modelName}" из URL`, "info");
+
+  google.script.run
+    .withSuccessHandler(function(base64Data) {
+      if (!base64Data || base64Data.length < 100) {
+        addDebug("❌ Получен пустой или короткий base64", "error");
+        return;
+      }
+
+      addDebug("✅ Base64 получен (длина: " + base64Data.length + ")", "success");
+
+      try {
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const loader = new THREE.GLTFLoader();
+        loader.parse(
+          bytes.buffer,
+          '',
+          function (gltf) {
+            addDebug("✅ Модель успешно загружена и добавлена!", "success");
+            if (currentModel) scene.remove(currentModel);
+            currentModel = gltf.scene;
+            analyzeModel(currentModel);
+            ensureMaterials(currentModel);
+            forceCenterModel(currentModel);
+            autoFitModel(currentModel);
+            scene.add(currentModel);
+            fitCameraToObject(currentModel);
+            controls.autoRotate = true;
+            updateModelInfo(currentModel, modelName + ".glb");
+            document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
+          },
+          undefined,
+          function (error) {
+            addDebug("❌ Ошибка GLTF.parse: " + (error.message || error), "error");
+          }
+        );
+      } catch (e) {
+        addDebug("❌ Ошибка при обработке base64: " + e.message, "error");
+      }
+    })
+    .withFailureHandler(function(error) {
+      addDebug("❌ Ошибка от сервера: " + (error.message || JSON.stringify(error)), "error");
+    })
+    .getDriveGlbBase64ByModelName(modelName);
+};
+</script>
+  </body>
+</html>
