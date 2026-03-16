@@ -400,31 +400,31 @@
 
 <div>
 <label>Срез X (влево / вправо)</label>
-<input type="range" id="clipX" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipX" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Y (вверх / вниз)</label>
-<input type="range" id="clipY" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipY" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Z (вперёд / назад)</label>
-<input type="range" id="clipZ" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipZ" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 <div>
 <label>Срез X2 (справа)</label>
-<input type="range" id="clipX2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipX2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Y2 (сверху)</label>
-<input type="range" id="clipY2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipY2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Z2 (спереди)</label>
-<input type="range" id="clipZ2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipZ2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
 </div>
 </div>
 
@@ -600,14 +600,14 @@
         camera.lookAt(defaultCameraTarget);
         
         // Рендерер
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.localClippingEnabled = true;
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.setPixelRatio(window.devicePixelRatio);
-        container.appendChild(renderer.domElement);
-        
+		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.localClippingEnabled = true;  // ✅ сразу после создания
+		renderer.shadowMap.enabled = true;     // ✅ сразу после создания
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		renderer.setPixelRatio(window.devicePixelRatio);
+		container.appendChild(renderer.domElement);
+				
         addDebug('✓ Рендерер создан успешно', 'success');
         
         // Освещение
@@ -657,54 +657,8 @@
 		  Z1: 0x5555ff,   // синий
 		  Z2: 0x8888ff
 		};
-		function updatePlaneHelpers() {
-		  helpersGroup.clear();
-		  planeHelpers = [];
-
-		  if (!clippingEnabled) {
-			helpersGroup.visible = false;
-			return;
-		  }
-
-		  const planes = [
-			{ plane: clipPlanes.X1, key: 'X1' },
-			{ plane: clipPlanes.X2, key: 'X2' },
-			{ plane: clipPlanes.Y1, key: 'Y1' },
-			{ plane: clipPlanes.Y2, key: 'Y2' },
-			{ plane: clipPlanes.Z1, key: 'Z1' },
-			{ plane: clipPlanes.Z2, key: 'Z2' }
-		  ];
-
-		  let helperSize = 10;
-
-		  // Пытаемся адаптировать размер под сцену (если уже есть bounding box)
-		  if (v2 && v2.sceneSize && v2.sceneSize.length() > 0.1) {
-			helperSize = v2.sceneSize.length() * 1.5;
-		  } else if (currentModel) {
-			const box = new THREE.Box3().setFromObject(currentModel);
-			if (!box.isEmpty()) {
-			  helperSize = box.getSize(new THREE.Vector3()).length() * 1.2;
-			}
-		  }
-
-		  planes.forEach(({ plane, key }) => {
-			try {
-			  const helper = new THREE.PlaneHelper(plane, helperSize, helperColors[key]);
-			  helper.material.transparent = true;
-			  helper.material.opacity = 0.35;
-			  helper.material.depthWrite = false;
-			  helpersGroup.add(helper);
-			  planeHelpers.push(helper);
-			} catch (err) {
-			  console.error("Ошибка создания PlaneHelper:", err);
-			  addDebug("Ошибка PlaneHelper: " + err.message, 'error');
-			}
-		  });
-
-		  helpersGroup.visible = true;
-		  addDebug(`Плоскости визуализированы (${planeHelpers.length} шт, размер ≈${helperSize.toFixed(1)})`, 'success');
-		}
-        // Управление
+		function updatePlaneHelpers(){}
+		// Управление
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
