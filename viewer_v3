@@ -375,60 +375,54 @@
       </div>
 
       <div style="margin-top:15px;">
-      <label>☁️ Загрузка по номеру из таблицы (Google Drive):</label>
-      <input type="text" id="drive-number" placeholder="Номер" style="width:100%;">
-      <button class="btn" onclick="window.loadByNumber()">⬇️ Загрузить модель</button>
-      <div style="font-size:12px; color:#aaa; margin-top:5px;">
+        <label>☁️ Загрузка по номеру из таблицы (Google Drive):</label>
+        <input type="text" id="drive-number" placeholder="Номер" style="width:100%;">
+        <button class="btn" onclick="window.loadByNumber()">⬇️ Загрузить модель</button>
       </div>
+      
       <div style="margin-top:15px;">
-      <label>☁️ Загрузка по имени файла (без .glb):</label>
-      <input type="text" id="drive-modelname" placeholder="Например: -01_9-13_1 или robot_arm">
-      <button class="btn" onclick="window.loadFromDriveByName()">⬇️ Загрузить</button>
+        <label>☁️ Загрузка по имени файла (без .glb):</label>
+        <input type="text" id="drive-modelname" placeholder="Например: -01_9-13_1 или robot_arm">
+        <button class="btn" onclick="window.loadFromDriveByName()">⬇️ Загрузить</button>
       </div>
+      
       <div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
-      <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
+        <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
 
-      <div class="toggle-row">
-        <div class="toggle-label">Срез (clipping)</div>
-        <label class="toggle" title="Включить/выключить срез">
-          <input type="checkbox" id="clipEnabledToggle">
-          <span class="toggle-ui"></span>
-          <span class="toggle-state" id="clipEnabledState">OFF</span>
-        </label>
+        <div class="toggle-row">
+          <div class="toggle-label">Срез (clipping)</div>
+          <label class="toggle" title="Включить/выключить срез">
+            <input type="checkbox" id="clipEnabledToggle">
+            <span class="toggle-ui"></span>
+            <span class="toggle-state" id="clipEnabledState">OFF</span>
+          </label>
+        </div>
+
+		<div>
+		  <label>Срез X (справа)</label>
+		  <input type="range" id="clipX" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
+		<div>
+		  <label>Срез X2 (слева)</label>
+		  <input type="range" id="clipX2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
+		<div>
+		  <label>Срез Y (сверху)</label>
+		  <input type="range" id="clipY" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
+		<div>
+		  <label>Срез Y2 (снизу)</label>
+		  <input type="range" id="clipY2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
+		<div>
+		  <label>Срез Z (сзади)</label>
+		  <input type="range" id="clipZ" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
+		<div>
+		  <label>Срез Z2 (спереди)</label>
+		  <input type="range" id="clipZ2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		</div>
       </div>
-
-
-<div>
-<label>Срез X (влево / вправо)</label>
-<input type="range" id="clipX" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-
-<div>
-<label>Срез Y (вверх / вниз)</label>
-<input type="range" id="clipY" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-
-<div>
-<label>Срез Z (вперёд / назад)</label>
-<input type="range" id="clipZ" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-<div>
-<label>Срез X2 (справа)</label>
-<input type="range" id="clipX2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-
-<div>
-<label>Срез Y2 (сверху)</label>
-<input type="range" id="clipY2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-
-<div>
-<label>Срез Z2 (спереди)</label>
-<input type="range" id="clipZ2" min="-600" max="600" step="0.01" value="0" style="width:100%;">
-</div>
-</div>
-
-    </div>
           
       <div id="status">
         <span>⚪ Готов к загрузке</span>
@@ -494,7 +488,15 @@
         </div>
       </div>
     </div>
-    
+    <!-- Тумблер теней в правом верхнем углу -->
+	<div id="shadows-toggle-container" style="position: absolute; top: 20px; right: 430px; z-index: 999; background: rgba(30, 30, 40, 0.95); padding: 10px 15px; border-radius: 12px; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 12px;">
+	  <span style="color: #ddd; font-size: 14px;">💡 Тени</span>
+	  <label class="toggle" style="margin: 0;">
+		<input type="checkbox" id="shadowsEnabledToggle" checked>
+		<span class="toggle-ui"></span>
+		<span class="toggle-state" id="shadowsEnabledState" style="min-width: 42px; text-align: right; color: #aaa;">ON</span>
+	  </label>
+	</div>
     <div id="debug-window">
       <div id="debug-header">
         <h3>
@@ -518,39 +520,21 @@
       // Глобальные переменные
       const MODEL_FROM_URL = "<?= modelParam ?>";
       let scene, camera, renderer, controls, currentModel;
-
-      // система среза
-      let clipPlanes = {
-        X1: new THREE.Plane(new THREE.Vector3(1,0,0),100),
-        X2: new THREE.Plane(new THREE.Vector3(-1,0,0),100),
-
-        Y1: new THREE.Plane(new THREE.Vector3(0,1,0),100),
-        Y2: new THREE.Plane(new THREE.Vector3(0,-1,0),100),
-
-        Z1: new THREE.Plane(new THREE.Vector3(0,0,1),100),
-        Z2: new THREE.Plane(new THREE.Vector3(0,0,-1),100)
-      };
-	  let clippingEnabled = false;
-      let clipAxis = "Y";
-      let debugEntries = [];
       let errorCount = 0;
       let defaultCameraPosition = new THREE.Vector3(4, 3, 5);
       let defaultCameraTarget = new THREE.Vector3(0, 0, 0);
-      
-	  //Делаем функции глобальными
-      window.clearDebug = function() {
-        debugEntries = [];
-        errorCount = 0;
-        document.getElementById('error-counter').textContent = '0';
-        document.getElementById('debug-content').innerHTML = '';
-        addDebug('Окно отладки очищено', 'info');
-      };
-      
-      window.toggleDebug = function() {
-        const debugContent = document.getElementById('debug-content');
-        debugContent.style.display = debugContent.style.display === 'none' ? 'block' : 'none';
-      };
-      
+
+      // ===== ИСПРАВЛЕННАЯ СИСТЕМА СРЕЗА (CLIPPING) =====
+      let clippingEnabled = false;
+		let clipPlanes = {
+			X1: new THREE.Plane(new THREE.Vector3(-1, 0, 0), 300),
+			Y1: new THREE.Plane(new THREE.Vector3(0, -1, 0), 300),
+			Z1: new THREE.Plane(new THREE.Vector3(0, 0, 1), 300),
+			X2: new THREE.Plane(new THREE.Vector3(1, 0, 0), 300),
+			Y2: new THREE.Plane(new THREE.Vector3(0, 1, 0), 300),
+			Z2: new THREE.Plane(new THREE.Vector3(0, 0, -1), 300)
+		};
+
       // Функция для добавления сообщений в окно отладки
       function addDebug(message, type = 'info') {
         const date = new Date();
@@ -572,6 +556,19 @@
         console.log(`[${type}]`, message);
       }
       
+      // Делаем функции глобальными
+      window.clearDebug = function() {
+        document.getElementById('debug-content').innerHTML = '';
+        errorCount = 0;
+        document.getElementById('error-counter').textContent = '0';
+        addDebug('Окно отладки очищено', 'info');
+      };
+      
+      window.toggleDebug = function() {
+        const debugContent = document.getElementById('debug-content');
+        debugContent.style.display = debugContent.style.display === 'none' ? 'block' : 'none';
+      };
+      
       // Функция сброса камеры
       window.resetCamera = function() {
         if (camera && controls) {
@@ -582,7 +579,59 @@
         }
       };
       
-      // Инициализация Three.js
+      // ===== ФУНКЦИИ CLIPPING =====
+      function syncClipToggleUi() {
+        const toggle = document.getElementById('clipEnabledToggle');
+        const state = document.getElementById('clipEnabledState');
+        if (toggle) toggle.checked = clippingEnabled;
+        if (state) state.textContent = clippingEnabled ? 'ON' : 'OFF';
+      }
+
+      function applyClippingToAllModels() {
+        if (!scene || !renderer) return;
+
+        const activePlanes = clippingEnabled ? [
+            clipPlanes.X1, clipPlanes.X2,
+            clipPlanes.Y1, clipPlanes.Y2,
+            clipPlanes.Z1, clipPlanes.Z2
+        ] : null;
+
+        let materialsUpdated = 0;
+
+        scene.traverse((node) => {
+            if (node.isMesh && node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                
+                materials.forEach(mat => {
+                    if (mat) {
+                        mat.clippingPlanes = activePlanes;
+                        mat.clipIntersection = false;
+                        mat.clipShadows = true;
+                        mat.needsUpdate = true;
+                        materialsUpdated++;
+                    }
+                });
+            }
+        });
+
+        renderer.localClippingEnabled = clippingEnabled;
+        renderer.render(scene, camera);
+        
+        addDebug(`✂ Clipping ${clippingEnabled ? 'включен' : 'выключен'}, обновлено материалов: ${materialsUpdated}`, 'success');
+      }
+
+      window.toggleClipping = function(forceState) {
+        if (typeof forceState === 'boolean') {
+          clippingEnabled = forceState;
+        } else {
+          clippingEnabled = !clippingEnabled;
+        }
+        
+        syncClipToggleUi();
+        applyClippingToAllModels();
+      };
+
+      // ===== ИНИЦИАЛИЗАЦИЯ THREE.JS =====
       addDebug('Инициализация Three.js...', 'info');
       
       try {
@@ -592,22 +641,20 @@
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1a2e);
 
-        
         // Камера
-        // Делаем far большим: модели могут быть в любых единицах/масштабах
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
         camera.position.copy(defaultCameraPosition);
         camera.lookAt(defaultCameraTarget);
         
         // Рендерер
-		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		renderer.localClippingEnabled = true;  // ✅ сразу после создания
-		renderer.shadowMap.enabled = true;     // ✅ сразу после создания
-		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-		renderer.setPixelRatio(window.devicePixelRatio);
-		container.appendChild(renderer.domElement);
-				
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.localClippingEnabled = false;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+                
         addDebug('✓ Рендерер создан успешно', 'success');
         
         // Освещение
@@ -625,7 +672,6 @@
         fillLight.position.set(-2, 1, 2);
         scene.add(fillLight);
         
-        // Добавляем яркие отладочные источники света
         const frontLight = new THREE.PointLight(0xffffff, 2);
         frontLight.position.set(0, 2, 5);
         scene.add(frontLight);
@@ -634,7 +680,7 @@
         topLight.position.set(0, 5, 0);
         scene.add(topLight);
         
-        addDebug('💡 Добавлены отладочные источники света', 'info');
+        addDebug('💡 Добавлены источники света', 'info');
         
         // Вспомогательные элементы
         const gridHelper = new THREE.GridHelper(10, 20, 0x88aaff, 0x335588);
@@ -645,20 +691,7 @@
         
         addDebug('✓ Сцена настроена, добавлены сетка и оси', 'success');
         
-		let planeHelpers = [];
-		let helpersGroup = new THREE.Group();  // чтобы удобно включать/выключать все сразу
-		scene.add(helpersGroup);
-		helpersGroup.visible = false;  // по умолчанию скрыты
-		const helperColors = {
-		  X1: 0xff5555,   // красный
-		  X2: 0xff8888,
-		  Y1: 0x55ff55,   // зелёный
-		  Y2: 0x88ff88,
-		  Z1: 0x5555ff,   // синий
-		  Z2: 0x8888ff
-		};
-		function updatePlaneHelpers(){}
-		// Управление
+        // Управление
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -673,8 +706,56 @@
       } catch (e) {
         addDebug(`❌ Ошибка инициализации: ${e.message}`, 'error');
       }
+
+      // ===== ИНИЦИАЛИЗАЦИЯ CLIPPING =====
+      setTimeout(() => {
+        if (renderer) {
+          renderer.localClippingEnabled = false;
+          addDebug('🔄 Clipping система инициализирована', 'info');
+        }
+      }, 1000);
       
-      // Функция загрузки локального файла
+      // Настраиваем тумблер
+      const clipToggle = document.getElementById('clipEnabledToggle');
+      if (clipToggle) {
+        clipToggle.addEventListener('change', function(e) {
+          window.toggleClipping(e.target.checked);
+        });
+      }
+      
+      // Настраиваем слайдеры с правильными диапазонами
+		const sliderConfigs = [
+			{ id: 'clipX', plane: 'X1' },    // режет справа
+			{ id: 'clipX2', plane: 'X2' },   // режет слева
+			{ id: 'clipY', plane: 'Y1' },    // режет сверху
+			{ id: 'clipY2', plane: 'Y2' },   // режет снизу
+			{ id: 'clipZ', plane: 'Z1' },    // режет сзади
+			{ id: 'clipZ2', plane: 'Z2' }    // режет спереди
+		];
+      sliderConfigs.forEach(config => {
+        const slider = document.getElementById(config.id);
+        if (slider) {
+          slider.addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            clipPlanes[config.plane].constant = value;
+            
+            if (clippingEnabled) {
+              applyClippingToAllModels();
+            }
+          });
+        }
+      });
+      
+      // Устанавливаем начальные значения
+      Object.keys(clipPlanes).forEach(key => {
+        const sliderId = `clip${key}`;
+        const slider = document.getElementById(sliderId);
+        if (slider) {
+          slider.value = clipPlanes[key].constant;
+        }
+      });
+
+      // ===== ФУНКЦИИ ЗАГРУЗКИ МОДЕЛЕЙ =====
       function loadLocalFile(file) {
         addDebug(`📁 Загрузка файла: ${file.name}`, 'info');
         addDebug(`📊 Размер: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
@@ -686,7 +767,6 @@
           
           const arrayBuffer = e.target.result;
           
-          // Удаляем предыдущую модель
           if (currentModel) {
             scene.remove(currentModel);
             currentModel = null;
@@ -704,28 +784,21 @@
               
               currentModel = gltf.scene;
               
-              // Анализируем модель
               analyzeModel(currentModel);
-              
-              // Проверяем и добавляем материалы если нужно
               ensureMaterials(currentModel);
-              
-              // ВАЖНО: Принудительно размещаем модель в центре сцены
               forceCenterModel(currentModel);
-              
-              // Масштабируем под размер сцены
               autoFitModel(currentModel);
               
-              // Добавляем модель в сцену
               scene.add(currentModel);
-              applyClippingToAllModels();
-              // Принудительно сбрасываем камеру на модель
-              fitCameraToObject(currentModel);
               
-              // Включаем авто-вращение
+              // Применяем clipping если включен
+              if (clippingEnabled) {
+                setTimeout(applyClippingToAllModels, 100);
+              }
+              
+              fitCameraToObject(currentModel);
               controls.autoRotate = true;
               
-              // Обновляем информацию
               updateModelInfo(currentModel, file.name);
               
               document.getElementById('status').innerHTML = `✅ Загружено: ${file.name}`;
@@ -733,7 +806,6 @@
             undefined,
             function(error) {
               addDebug(`❌ Ошибка парсинга: ${error.message}`, 'error');
-              console.error('Детали ошибки:', error);
               document.getElementById('status').innerHTML = '❌ Ошибка загрузки';
             }
           );
@@ -746,6 +818,7 @@
         
         reader.readAsArrayBuffer(file);
       }
+
       window.loadFromDriveByName = function() {
         const modelName = document.getElementById("drive-modelname").value.trim();
         
@@ -791,7 +864,11 @@
                   autoFitModel(currentModel);
                   
                   scene.add(currentModel);
-				  applyClippingToAllModels();
+                  
+                  if (clippingEnabled) {
+                    setTimeout(applyClippingToAllModels, 100);
+                  }
+                  
                   fitCameraToObject(currentModel);
                   controls.autoRotate = true;
                   
@@ -818,102 +895,98 @@
       };
 
       window.loadByNumber = function() {
-  const number = document.getElementById("drive-number").value.trim();
+        const number = document.getElementById("drive-number").value.trim();
 
-  if (!number) {
-    addDebug("❌ Не указан номер", "error");
-    return;
-  }
-
-  addDebug(`☁️ Запрос модели по номеру "${number}"...`, "info");
-  document.getElementById('status').innerHTML = `⏳ Загрузка #${number}...`;
-
-  google.script.run
-    .withSuccessHandler(function(base64Data) {
-      if (!base64Data || base64Data.length < 100) {
-        addDebug("❌ Модель не найдена по номеру " + number, "error");
-        document.getElementById('status').innerHTML = '❌ Модель не найдена';
-        return;
-      }
-
-      addDebug("✅ Получен файл в base64", "success");
-
-      try {
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
+        if (!number) {
+          addDebug("❌ Не указан номер", "error");
+          return;
         }
 
-        const loader = new THREE.GLTFLoader();
-        loader.parse(
-          bytes.buffer,
-          '',
-          function (gltf) {
-            addDebug("✅ Модель загружена!", "success");
-            if (currentModel) scene.remove(currentModel);
-            currentModel = gltf.scene;
-            analyzeModel(currentModel);
-            ensureMaterials(currentModel);
-            forceCenterModel(currentModel);
-            autoFitModel(currentModel);
-            scene.add(currentModel);
-			applyClippingToAllModels();
-            fitCameraToObject(currentModel);
-            controls.autoRotate = true;
-            updateModelInfo(currentModel, "Модель #" + number);
-            document.getElementById('status').innerHTML = `✅ Загружено: #${number}`;
-          },
-          undefined,
-          function (error) {
-            addDebug("❌ Ошибка парсинга: " + error.message, "error");
-            document.getElementById('status').innerHTML = '❌ Ошибка парсинга';
-          }
-        );
-      } catch (e) {
-        addDebug("❌ Ошибка декодирования: " + e.message, "error");
-        document.getElementById('status').innerHTML = '❌ Ошибка декодирования';
-      }
-    })
-    .withFailureHandler(function(error) {
-      addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
-      document.getElementById('status').innerHTML = '❌ Ошибка сервера';
-    })
-    .loadModelByNumber(number);
-};
-      // Новая функция для принудительного центрирования модели
+        addDebug(`☁️ Запрос модели по номеру "${number}"...`, "info");
+        document.getElementById('status').innerHTML = `⏳ Загрузка #${number}...`;
+
+        google.script.run
+          .withSuccessHandler(function(base64Data) {
+            if (!base64Data || base64Data.length < 100) {
+              addDebug("❌ Модель не найдена по номеру " + number, "error");
+              document.getElementById('status').innerHTML = '❌ Модель не найдена';
+              return;
+            }
+
+            addDebug("✅ Получен файл в base64", "success");
+
+            try {
+              const binary = atob(base64Data);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+
+              const loader = new THREE.GLTFLoader();
+              loader.parse(
+                bytes.buffer,
+                '',
+                function (gltf) {
+                  addDebug("✅ Модель загружена!", "success");
+                  if (currentModel) scene.remove(currentModel);
+                  currentModel = gltf.scene;
+                  analyzeModel(currentModel);
+                  ensureMaterials(currentModel);
+                  forceCenterModel(currentModel);
+                  autoFitModel(currentModel);
+                  scene.add(currentModel);
+                  
+                  if (clippingEnabled) {
+                    setTimeout(applyClippingToAllModels, 100);
+                  }
+                  
+                  fitCameraToObject(currentModel);
+                  controls.autoRotate = true;
+                  updateModelInfo(currentModel, "Модель #" + number);
+                  document.getElementById('status').innerHTML = `✅ Загружено: #${number}`;
+                },
+                undefined,
+                function (error) {
+                  addDebug("❌ Ошибка парсинга: " + error.message, "error");
+                  document.getElementById('status').innerHTML = '❌ Ошибка парсинга';
+                }
+              );
+            } catch (e) {
+              addDebug("❌ Ошибка декодирования: " + e.message, "error");
+              document.getElementById('status').innerHTML = '❌ Ошибка декодирования';
+            }
+          })
+          .withFailureHandler(function(error) {
+            addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
+            document.getElementById('status').innerHTML = '❌ Ошибка сервера';
+          })
+          .loadModelByNumber(number);
+      };
+
       function forceCenterModel(model) {
-        // Сначала вычисляем bounding box
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         
         addDebug(`📍 Исходный центр модели: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`, 'info');
         
-        // Создаем временную группу для перемещения всей модели
         const tempGroup = new THREE.Group();
-        
-        // Сохраняем все дети
         const children = model.children.slice();
         
-        // Очищаем модель
         while(model.children.length > 0) {
           model.remove(model.children[0]);
         }
         
-        // Добавляем всех детей в группу
         children.forEach(child => {
           tempGroup.add(child);
         });
         
-        // Перемещаем группу так, чтобы центр был в 0
         tempGroup.position.copy(center.clone().negate());
         
-        // Добавляем группу обратно в модель
         model.add(tempGroup);
         
         addDebug(`✅ Модель принудительно отцентрирована`, 'success');
       }
-      
+
       // Обработчик выбора файла
       document.getElementById('file-input').addEventListener('change', function(event) {
         const file = event.target.files[0];
@@ -921,7 +994,7 @@
           loadLocalFile(file);
         }
       });
-      
+
       // Тестовая модель
       window.loadTestModel = function() {
         addDebug('🧪 Загрузка тестовой модели...', 'info');
@@ -933,21 +1006,18 @@
           
           const group = new THREE.Group();
           
-          // Красный куб
           const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
           const cubeMat = new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0x331111 });
           const cube = new THREE.Mesh(cubeGeo, cubeMat);
           cube.position.set(0, 0.5, 0);
           group.add(cube);
           
-          // Синяя сфера
           const sphereGeo = new THREE.SphereGeometry(0.5, 32, 32);
           const sphereMat = new THREE.MeshStandardMaterial({ color: 0x44aaff, emissive: 0x112233 });
           const sphere = new THREE.Mesh(sphereGeo, sphereMat);
           sphere.position.set(1.5, 0.5, 0);
           group.add(sphere);
           
-          // Зеленый тор
           const torusGeo = new THREE.TorusGeometry(0.8, 0.2, 16, 100);
           const torusMat = new THREE.MeshStandardMaterial({ color: 0x88ff88, emissive: 0x113311 });
           const torus = new THREE.Mesh(torusGeo, torusMat);
@@ -957,8 +1027,11 @@
           
           currentModel = group;
           scene.add(currentModel);
-          applyClippingToAllModels();
-          // Сбрасываем камеру на тестовую модель
+          
+          if (clippingEnabled) {
+            setTimeout(applyClippingToAllModels, 100);
+          }
+          
           fitCameraToObject(currentModel);
           
           addDebug('✅ Тестовая модель загружена', 'success');
@@ -971,7 +1044,7 @@
           addDebug(`❌ Ошибка: ${e.message}`, 'error');
         }
       };
-      
+
       // Очистка сцены
       window.clearModel = function() {
         if (currentModel) {
@@ -981,12 +1054,10 @@
           document.getElementById('status').innerHTML = '⚪ Сцена очищена';
           document.getElementById('model-stats').innerHTML = 'Нет загруженной модели';
           controls.autoRotate = false;
-          
-          // Сбрасываем камеру
           resetCamera();
         }
       };
-      
+
       // Анализ модели
       function analyzeModel(model) {
         let meshCount = 0;
@@ -1023,58 +1094,7 @@
           addDebug('⚠️ Модель не содержит мешей!', 'warning');
         }
       }
-      
-      // Проверка видимости модели
-      function debugModelVisibility(model) {
-        if (!model) {
-          addDebug('❌ Модель не существует', 'error');
-          return;
-        }
-        
-        addDebug('🔍 Проверка видимости модели:', 'info');
-        
-        // Проверяем позицию
-        addDebug(`  Позиция: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})`, 'info');
-        
-        // Проверяем масштаб
-        addDebug(`  Масштаб: (${model.scale.x.toFixed(2)}, ${model.scale.y.toFixed(2)}, ${model.scale.z.toFixed(2)})`, 'info');
-        
-        // Проверяем видимость
-        addDebug(`  Видимость: ${model.visible ? '✅' : '❌'}`, model.visible ? 'success' : 'error');
-        
-        // Проверяем bounding box
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        addDebug(`  Bounding box размер: (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`, 'info');
-        
-        // Проверяем материалы
-        let hasVisibleMaterial = false;
-        model.traverse(node => {
-          if (node.isMesh && node.material) {
-            if (Array.isArray(node.material)) {
-              node.material.forEach(mat => {
-                if (mat.visible) hasVisibleMaterial = true;
-              });
-            } else {
-              if (node.material.visible) hasVisibleMaterial = true;
-            }
-          }
-        });
-        
-        addDebug(`  Видимые материалы: ${hasVisibleMaterial ? '✅' : '❌'}`, hasVisibleMaterial ? 'success' : 'error');
-        
-        // Проверяем наличие геометрии
-        let hasGeometry = false;
-        model.traverse(node => {
-          if (node.isMesh && node.geometry) {
-            hasGeometry = true;
-          }
-        });
-        
-        addDebug(`  Наличие геометрии: ${hasGeometry ? '✅' : '❌'}`, hasGeometry ? 'success' : 'error');
-      }
-      
-      // Проверка и добавление материалов
+
       function ensureMaterials(model) {
         let materialsAdded = 0;
         
@@ -1096,11 +1116,9 @@
           addDebug(`⚠️ Добавлено материалов: ${materialsAdded}`, 'warning');
         }
       }
-      
-      // Улучшенная функция автоматического масштабирования
+
       function autoFitModel(model) {
         try {
-          // Вычисляем bounding box модели
           const box = new THREE.Box3().setFromObject(model);
           const size = box.getSize(new THREE.Vector3());
           const center = box.getCenter(new THREE.Vector3());
@@ -1113,7 +1131,6 @@
             return;
           }
           
-          // Масштабируем модель
           const maxDim = Math.max(size.x, size.y, size.z);
           const targetSize = 3;
           const scale = targetSize / maxDim;
@@ -1125,32 +1142,26 @@
           addDebug(`❌ Ошибка масштабирования: ${e.message}`, 'error');
         }
       }
-      
-      // Функция для настройки камеры на объект
+
       function fitCameraToObject(object) {
         try {
           const box = new THREE.Box3().setFromObject(object);
           const size = box.getSize(new THREE.Vector3());
           const center = box.getCenter(new THREE.Vector3());
           
-          // Вычисляем расстояние до камеры
           const maxDim = Math.max(size.x, size.y, size.z);
           const fov = camera.fov * (Math.PI / 180);
           let distance = Math.abs(maxDim / Math.sin(fov / 2));
           
-          // Добавляем запас
           distance *= 1.5;
           
-          // Проверяем на экстремальные значения
           if (distance > 10000) distance = 10;
           if (distance < 1) distance = 5;
           if (isNaN(distance)) distance = 5;
           
-          // Позиционируем камеру
           camera.position.set(distance, distance * 0.5, distance);
           camera.lookAt(center);
           
-          // Настраиваем controls
           if (controls) {
             controls.target.copy(center);
             controls.update();
@@ -1161,12 +1172,10 @@
           
         } catch (e) {
           addDebug(`❌ Ошибка настройки камеры: ${e.message}`, 'error');
-          // В случае ошибки сбрасываем камеру
           resetCamera();
         }
       }
-      
-      // Обновление информации о модели
+
       function updateModelInfo(model, name) {
         if (!model) return;
         
@@ -1190,20 +1199,7 @@
           📍 Позиция: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})
         `;
       }
-            // автозагрузка модели из URL
-      window.addEventListener("load", function () {
 
-        if (MODEL_FROM_URL) {
-
-          addDebug("📦 Модель из URL: " + MODEL_FROM_URL, "info");
-
-          document.getElementById("drive-modelname").value = MODEL_FROM_URL;
-
-          window.loadFromDriveByName();
-
-        }
-
-      });
       // Анимация
       function animate() {
         requestAnimationFrame(animate);
@@ -1217,7 +1213,7 @@
         }
       }
       animate();
-      
+
       // Обработка изменения размера окна
       window.addEventListener('resize', function() {
         if (camera) {
@@ -1228,18 +1224,18 @@
           renderer.setSize(window.innerWidth, window.innerHeight);
         }
       });
-      
+
       // Перетаскивание окна отладки
       let isDragging = false;
       let dragOffsetX, dragOffsetY;
-      
+
       document.getElementById('debug-header').addEventListener('mousedown', function(e) {
         isDragging = true;
         const debugWindow = document.getElementById('debug-window');
         dragOffsetX = e.clientX - debugWindow.offsetLeft;
         dragOffsetY = e.clientY - debugWindow.offsetTop;
       });
-      
+
       document.addEventListener('mousemove', function(e) {
         if (isDragging) {
           const debugWindow = document.getElementById('debug-window');
@@ -1248,1050 +1244,985 @@
           debugWindow.style.right = 'auto';
         }
       });
-      
+
       document.addEventListener('mouseup', function() {
         isDragging = false;
       });
-      
+
       addDebug('✅ Система готова. Выберите GLB файл для загрузки', 'success');
-      // управление срезами по осям
+    </script>
 
-document.getElementById("clipX").addEventListener("input", function(e){
-  clipPlanes.X1.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
+    <script>
+      // Автозагрузка по ?model=имя_файла (без .glb)
+      document.addEventListener('DOMContentLoaded', function() {
+        addDebug('Проверка URL для автозагрузки по имени модели...', 'info');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelName = urlParams.get('model');
 
-document.getElementById("clipY").addEventListener("input", function(e){
-  clipPlanes.Y1.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
+        if (modelName && modelName.trim() !== '') {
+          const trimmedName = modelName.trim();
+          addDebug(`Найден параметр model: "${trimmedName}"`, 'success');
 
-document.getElementById("clipZ").addEventListener("input", function(e){
-  clipPlanes.Z1.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
-document.getElementById("clipX2").addEventListener("input", function(e){
-  clipPlanes.X2.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
-
-document.getElementById("clipY2").addEventListener("input", function(e){
-  clipPlanes.Y2.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
-
-document.getElementById("clipZ2").addEventListener("input", function(e){
-  clipPlanes.Z2.constant = parseFloat(e.target.value);
-  applyClippingToAllModels();
-updatePlaneHelpers();
-});
-
-// тумблер "Срез (clipping)"
-(function initClipToggle() {
-  const t = document.getElementById('clipEnabledToggle');
-  if (!t) return;
-  // синхронизируем начальное состояние UI
-  try { syncClipToggleUi(); } catch (e) {}
-  t.addEventListener('change', function(e) {
-    window.toggleClipping(!!e.target.checked);
-  });
-})();
-window.loadByNumberWithValue = function(value) {
-  if (!value) {
-    addDebug("❌ Нет значения для загрузки", "error");
-    return;
-  }
-
-  addDebug(`🔍 Поиск по идентификатору "${value}"`, "info");
-
-  google.script.run
-    .withSuccessHandler(function(base64Data) {
-      if (!base64Data) {
-        addDebug("❌ Пустой base64 от сервера", "error");
-        return;
-      }
-      addDebug("✅ Base64 получен, длина: " + base64Data.length, "success");
-
-      try {
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const loader = new THREE.GLTFLoader();
-        loader.parse(
-          bytes.buffer,
-          '',
-          function (gltf) {
-            addDebug("✅ Модель загружена и добавлена", "success");
-            if (currentModel) scene.remove(currentModel);
-            currentModel = gltf.scene;
-            analyzeModel(currentModel);
-            ensureMaterials(currentModel);
-            forceCenterModel(currentModel);
-            autoFitModel(currentModel);
-            scene.add(currentModel);
-			applyClippingToAllModels();
-            fitCameraToObject(currentModel);
-            controls.autoRotate = true;
-            updateModelInfo(currentModel, value);
-            document.getElementById('status').innerHTML = `✅ Загружено: ${value}`;
-          },
-          undefined,
-          function (error) {
-            addDebug("❌ Ошибка парсинга GLTF: " + error.message, "error");
+          const input = document.getElementById('drive-modelname');
+          if (input) {
+            input.value = trimmedName;
           }
-        );
-      } catch (e) {
-        addDebug("❌ Ошибка обработки base64: " + e.message, "error");
-      }
-    })
-    .withFailureHandler(function(error) {
-      addDebug("❌ Ошибка сервера: " + (error.message || JSON.stringify(error)), "error");
-    })
-    .loadModelByNumber(value);  // передаём строку как есть
-};
-// включение / выключение среза
-function syncClipToggleUi() {
-  const t = document.getElementById('clipEnabledToggle');
-  const s = document.getElementById('clipEnabledState');
-  if (t) t.checked = !!clippingEnabled;
-  if (s) s.textContent = clippingEnabled ? 'ON' : 'OFF';
-}
 
-// Функция применения среза к одной модели
-function applyClippingToModel(model) {
-  if (!model) return;
-  
-  model.traverse(function(node) {
-    if (!node || !node.isMesh) return;
-    
-    // Пропускаем, если нет материала
-    if (!node.material) return;
-
-    const planes = clippingEnabled ? [
-      clipPlanes.X1,
-      clipPlanes.X2,
-      clipPlanes.Y1,
-      clipPlanes.Y2,
-      clipPlanes.Z1,
-      clipPlanes.Z2
-    ] : null;
-
-    // Обрабатываем случай с массивом материалов
-    if (Array.isArray(node.material)) {
-      node.material.forEach(mat => {
-        mat.clippingPlanes = planes;
-        mat.needsUpdate = true;
-      });
-    } else {
-      // Один материал
-      node.material.clippingPlanes = planes;
-      node.material.needsUpdate = true;
-    }
-  });
-}
-
-// Функция применения среза ко всем моделям
-function applyClippingToAllModels() {
-  if (!scene) return;
-
-  const activePlanes = clippingEnabled ? [
-    clipPlanes.X1, clipPlanes.X2,
-    clipPlanes.Y1, clipPlanes.Y2,
-    clipPlanes.Z1, clipPlanes.Z2
-  ] : null;
-
-  let count = 0;
-
-  scene.traverse((node) => {
-    if (node.isMesh && node.material) {
-
-      const mats = Array.isArray(node.material) ? node.material : [node.material];
-
-      mats.forEach(mat => {
-        if (!mat) return;
-
-        mat.clippingPlanes = activePlanes;
-        mat.clipIntersection = true;
-        mat.clipShadows = true;
-        mat.needsUpdate = true;
-
-        count++;
-      });
-
-    }
-  });
-
-  renderer.localClippingEnabled = clippingEnabled;
-
-  renderer.render(scene, camera);
-
-  addDebug(`Clipping применён к ${count} материалам`, 'success');
-}
-// Обновляем функцию toggleClipping
-window.toggleClipping = function(forceState) {
-  if (typeof forceState === 'boolean') {
-    clippingEnabled = forceState;
-  } else {
-    clippingEnabled = !clippingEnabled;
-  }
-
-  syncClipToggleUi();
-  applyClippingToAllModels();
-  
-  updatePlaneHelpers();
-  
-  addDebug(`✂ Срез ${clippingEnabled ? 'включен + видны плоскости' : 'выключен'}`, 'success');
-  
-  // Принудительно перерендерим
-  if (renderer) {
-    renderer.render(scene, camera);
-  }
-};
-// ────────────────────────────────────────────────
-// Вспомогательная функция для обновления визуализации при движении ползунков
-function updateClipFromSlider() {
-  if (clippingEnabled) {
-    updatePlaneHelpers();          // перестраиваем плоскости, чтобы они следовали за ползунками
-  }
-  // можно добавить принудительный рендер, если обновление тормозит
-  // renderer.render(scene, camera);
-}
-
-// Теперь переопределяем / дополняем существующие обработчики слайдеров
-
-// Находим все слайдеры один раз (чтобы не искать каждый раз)
-const clipSliders = {
-  clipX:  clipPlanes.X1,
-  clipY:  clipPlanes.Y1,
-  clipZ:  clipPlanes.Z1,
-  clipX2: clipPlanes.X2,
-  clipY2: clipPlanes.Y2,
-  clipZ2: clipPlanes.Z2
-};
-
-Object.keys(clipSliders).forEach(id => {
-  const slider = document.getElementById(id);
-  if (!slider) return;
-
-  // Сохраняем старый обработчик (если был)
-  const oldListener = slider.oninput;
-
-  slider.addEventListener("input", function(e) {
-    // обновляем значение плоскости
-    clipSliders[id].constant = parseFloat(e.target.value);
-
-    // вызываем нашу новую функцию
-    updateClipFromSlider();
-
-    // если был старый обработчик — тоже вызываем
-    if (oldListener) oldListener.call(this, e);
-  });
-});
-// Обновляем обработчики слайдеров
-document.getElementById("clipX").addEventListener("input", function(e){
-  clipPlanes.X1.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-document.getElementById("clipY").addEventListener("input", function(e){
-  clipPlanes.Y1.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-document.getElementById("clipZ").addEventListener("input", function(e){
-  clipPlanes.Z1.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-document.getElementById("clipX2").addEventListener("input", function(e){
-  clipPlanes.X2.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-document.getElementById("clipY2").addEventListener("input", function(e){
-  clipPlanes.Y2.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-document.getElementById("clipZ2").addEventListener("input", function(e){
-  clipPlanes.Z2.constant = parseFloat(e.target.value);
-  if (clippingEnabled) applyClippingToAllModels();
-});
-
-// Обновляем функцию v2_centerScene
-const originalCenterScene = window.v2_centerScene;
-if (originalCenterScene) {
-  window.v2_centerScene = function() {
-    originalCenterScene();
-    // После центрирования применяем clipping если он включен
-    if (clippingEnabled) {
-      setTimeout(() => applyClippingToAllModels(), 100);
-    }
-  };
-}
-
-// Добавляем функцию для применения clipping после загрузки моделей
-const originalV2Step2 = window.v2_step2_SelectAllFiles;
-if (originalV2Step2) {
-  window.v2_step2_SelectAllFiles = function() {
-    // Вызываем оригинальную функцию
-    originalV2Step2();
-    
-    // Добавляем наблюдатель за завершением загрузки
-    const checkInterval = setInterval(function() {
-      if (v2 && v2.hasModels) {
-        clearInterval(checkInterval);
-        setTimeout(() => {
-          if (clippingEnabled) {
-            applyClippingToAllModels();
-          }
-        }, 500);
-      }
-    }, 500);
-  };
-}
-
-// Инициализация clipping при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-  // Убеждаемся, что renderer.localClippingEnabled включен
-  if (renderer) {
-    renderer.localClippingEnabled = true;
-  }
-});
-</script>
-
-<script>
-// Автозагрузка по ?model=имя_файла (без .glb)
-document.addEventListener('DOMContentLoaded', function() {
-  addDebug('Проверка URL для автозагрузки по имени модели...', 'info');
-  
-  // Полный URL для отладки
-  addDebug('Полный URL: ' + window.location.href, 'info');
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const modelName = urlParams.get('model');
-
-  if (modelName && modelName.trim() !== '') {
-    const trimmedName = modelName.trim();
-    addDebug(`Найден параметр model: "${trimmedName}"`, 'success');
-
-    const input = document.getElementById('drive-modelname');
-    if (input) {
-      input.value = trimmedName;
-      addDebug(`Поле #drive-modelname заполнено значением "${trimmedName}"`, 'info');
-    } else {
-      addDebug('Поле #drive-modelname не найдено, но попробуем загрузить напрямую', 'warning');
-    }
-
-    setTimeout(() => {
-      addDebug(`Автоматически запускаем loadFromDriveByName для "${trimmedName}"`, 'success');
-      document.getElementById('status').innerHTML = `⏳ Автозагрузка модели "${trimmedName}"...`;
-      
-      // Прямой вызов функции (даже если поля нет)
-      window.loadFromDriveByNameWithValue(trimmedName);
-    }, 1800);  // 1.8 секунды — обычно хватает для инициализации Three.js
-
-  } else {
-    addDebug('Параметр ?model= отсутствует или пустой', 'warning');
-  }
-});
-
-// Вспомогательная функция — загрузка по имени без зависимости от поля ввода
-window.loadFromDriveByNameWithValue = function(modelName) {
-  if (!modelName) {
-    addDebug("❌ Нет имени модели", "error");
-    return;
-  }
-
-  addDebug(`Прямая загрузка модели "${modelName}" из URL`, "info");
-
-  google.script.run
-    .withSuccessHandler(function(base64Data) {
-      if (!base64Data || base64Data.length < 100) {
-        addDebug("❌ Получен пустой или короткий base64", "error");
-        return;
-      }
-
-      addDebug("✅ Base64 получен (длина: " + base64Data.length + ")", "success");
-
-      try {
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const loader = new THREE.GLTFLoader();
-        loader.parse(
-          bytes.buffer,
-          '',
-          function (gltf) {
-            addDebug("✅ Модель успешно загружена и добавлена!", "success");
-            if (currentModel) scene.remove(currentModel);
-            currentModel = gltf.scene;
-            analyzeModel(currentModel);
-            ensureMaterials(currentModel);
-            forceCenterModel(currentModel);
-            autoFitModel(currentModel);
-            scene.add(currentModel);
-			applyClippingToAllModels();
-            fitCameraToObject(currentModel);
-            controls.autoRotate = true;
-            updateModelInfo(currentModel, modelName + ".glb");
-            document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
-          },
-          undefined,
-          function (error) {
-            addDebug("❌ Ошибка GLTF.parse: " + (error.message || error), "error");
-          }
-        );
-      } catch (e) {
-        addDebug("❌ Ошибка при обработке base64: " + e.message, "error");
-      }
-    })
-    .withFailureHandler(function(error) {
-      addDebug("❌ Ошибка от сервера: " + (error.message || JSON.stringify(error)), "error");
-    })
-    .getDriveGlbBase64ByModelName(modelName);
-};
-</script>
-
-<script>
-// viewer_v2 logic - ФИЗИЧЕСКОЕ ПЕРЕМЕЩЕНИЕ МОДЕЛЕЙ В ЦЕНТР
-(function() {
-  const v2 = {
-    modelsMap: new Map(),
-    currentManifest: null,
-    loadingInProgress: false,
-    fileManager: { gltf: new Map(), bin: new Map() },
-    globalBoundingBox: new THREE.Box3(),
-    hasModels: false,
-    sceneCenter: new THREE.Vector3(0, 0, 0),
-    sceneSize: new THREE.Vector3(0, 0, 0),
-    multiGroup: null,
-    scale: 1
-  };
-
-  function el(id) { return document.getElementById(id); }
-
-  function safeSetHtml(id, html) {
-    const node = el(id);
-    if (node) node.innerHTML = html;
-  }
-
-  function safeShow(id, show) {
-    const node = el(id);
-    if (node) node.style.display = show ? 'block' : 'none';
-  }
-
-  function resetV2StatsUi() {
-    const fill = el('v2-progress-fill');
-    if (fill) fill.style.width = '0%';
-    safeSetHtml('v2-progress-text', '');
-  }
-
-  function setV2Scale(scale) {
-    const s = Number(scale);
-    if (!isFinite(s) || s <= 0) return;
-    
-    if (v2.multiGroup) {
-      v2.multiGroup.scale.set(s, s, s);
-      v2.scale = s;
-      
-      recalculateGlobalBoundingBox();
-      
-      const slider = el('v2-scale-slider');
-      const label = el('v2-scale-value');
-      if (slider) {
-        const logv = Math.log10(s);
-        if (isFinite(logv)) slider.value = String(logv);
-      }
-      if (label) label.textContent = `${s.toFixed(2)}×`;
-      
-      updateModelsList();
-      updateV2ModelStats();
-      updateCameraToCenter();
-    }
-  }
-
-  function ensureMultiGroup() {
-    if (v2.multiGroup && v2.multiGroup.parent === scene) return;
-    v2.multiGroup = new THREE.Group();
-    v2.multiGroup.name = 'v2_multi_gltf_group';
-    if (scene) scene.add(v2.multiGroup);
-    if (typeof currentModel !== 'undefined') {
-      currentModel = v2.multiGroup;
-    }
-  }
-
-  function recalculateGlobalBoundingBox() {
-    v2.globalBoundingBox = new THREE.Box3();
-    v2.hasModels = false;
-
-    v2.modelsMap.forEach(modelData => {
-      if (!modelData || !modelData.visible || !modelData.mesh) return;
-
-      const box = new THREE.Box3().setFromObject(modelData.mesh);
-      
-      if (!v2.hasModels) {
-        v2.globalBoundingBox.copy(box);
-        v2.hasModels = true;
-      } else {
-        v2.globalBoundingBox.union(box);
-      }
-    });
-
-    if (v2.hasModels) {
-      v2.sceneCenter.copy(v2.globalBoundingBox.getCenter(new THREE.Vector3()));
-      v2.sceneSize.copy(v2.globalBoundingBox.getSize(new THREE.Vector3()));
-    } else {
-      v2.sceneCenter.set(0, 0, 0);
-      v2.sceneSize.set(0, 0, 0);
-    }
-  }
-
-  function updateCameraToCenter() {
-    if (!v2.hasModels || !camera || !controls) return;
-    
-    const center = v2.sceneCenter.clone();
-    const size = v2.sceneSize.clone();
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const safeMaxDim = Math.max(maxDim, 0.1);
-    
-    const fov = camera.fov * (Math.PI / 180);
-    let distance = safeMaxDim / Math.sin(fov / 2);
-    distance *= 1.5;
-    distance = Math.min(Math.max(distance, 1), 100000);
-    
-    camera.position.set(
-      center.x + distance,
-      center.y + distance * 0.3,
-      center.z + distance
-    );
-    camera.lookAt(center.x, center.y, center.z);
-    
-    controls.target.copy(center);
-    controls.update();
-    
-    camera.near = Math.max(0.01, maxDim / 1000);
-    camera.far = Math.max(1000, distance * 10, maxDim * 10);
-    camera.updateProjectionMatrix();
-  }
-
-  function updateFileLists() {
-    const gltfList = el('v2-gltf-files-list');
-    const binList = el('v2-bin-files-list');
-    if (!gltfList || !binList) return;
-
-    gltfList.innerHTML = '';
-    v2.fileManager.gltf.forEach((file, name) => {
-      gltfList.innerHTML += `<div>📄 ${name}</div>`;
-    });
-
-    binList.innerHTML = '';
-    v2.fileManager.bin.forEach((file, name) => {
-      binList.innerHTML += `<div>💾 ${name}</div>`;
-    });
-  }
-
-  function updateProgress(loaded, total) {
-    const percent = total > 0 ? (loaded / total * 100) : 0;
-    const fill = el('v2-progress-fill');
-    const text = el('v2-progress-text');
-    if (fill) fill.style.width = `${percent.toFixed(0)}%`;
-    if (text) text.innerHTML = `${loaded}/${total} (${percent.toFixed(0)}%)`;
-  }
-
-  function updateModelsList() {
-    const container = el('v2-model-list');
-    if (!container) return;
-
-    if (v2.modelsMap.size === 0) {
-      container.innerHTML = 'Нет загруженных частей';
-      return;
-    }
-
-    let html = '';
-    v2.modelsMap.forEach((modelData, id) => {
-      const visible = !!modelData.visible;
-      html += `
-        <div class="v2-model-item ${visible ? 'active' : ''}" onclick="window.v2_toggleModelVisibility('${id}')">
-          <div class="v2-model-name">${modelData.name}</div>
-          <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-  }
-
-  function updateV2ModelStats() {
-    let meshes = 0, vertices = 0;
-    let visibleParts = 0;
-
-    v2.modelsMap.forEach(modelData => {
-      if (!modelData.mesh) return;
-      if (modelData.visible) visibleParts++;
-      modelData.mesh.traverse(node => {
-        if (node && node.isMesh) {
-          meshes++;
-          if (node.geometry && node.geometry.attributes && node.geometry.attributes.position) {
-            vertices += node.geometry.attributes.position.count;
-          }
+          setTimeout(() => {
+            addDebug(`Автоматически запускаем loadFromDriveByName для "${trimmedName}"`, 'success');
+            document.getElementById('status').innerHTML = `⏳ Автозагрузка модели "${trimmedName}"...`;
+            window.loadFromDriveByNameWithValue(trimmedName);
+          }, 1800);
+        } else {
+          addDebug('Параметр ?model= отсутствует или пустой', 'warning');
         }
       });
-    });
 
-    const statsNode = el('v2-model-stats');
-    if (statsNode) {
-      statsNode.innerHTML = `
-        Частей: ${v2.modelsMap.size} (видимых: ${visibleParts})<br>
-        Мешей: ${meshes}<br>
-        Вершин: ${vertices.toLocaleString()}<br>
-        Центр геометрии: X:${v2.sceneCenter.x.toFixed(1)} Y:${v2.sceneCenter.y.toFixed(1)} Z:${v2.sceneCenter.z.toFixed(1)}
-      `;
-    }
-  }
+      window.loadFromDriveByNameWithValue = function(modelName) {
+        if (!modelName) {
+          addDebug("❌ Нет имени модели", "error");
+          return;
+        }
 
-  // ИСПРАВЛЕННАЯ функция загрузки модели
-  function loadModelWithDependencies(gltfFile, modelName) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+        addDebug(`Прямая загрузка модели "${modelName}" из URL`, "info");
 
-      reader.onload = function(e) {
-        const arrayBuffer = e.target.result;
-        const loader = new THREE.GLTFLoader();
+        google.script.run
+          .withSuccessHandler(function(base64Data) {
+            if (!base64Data || base64Data.length < 100) {
+              addDebug("❌ Получен пустой или короткий base64", "error");
+              return;
+            }
 
-        const binUrls = new Map();
-        v2.fileManager.bin.forEach((file, name) => {
-          binUrls.set(name, URL.createObjectURL(file));
-        });
+            addDebug("✅ Base64 получен (длина: " + base64Data.length + ")", "success");
 
-        loader.manager.setURLModifier((url) => {
-          if (binUrls.has(url)) return binUrls.get(url);
-          return url;
-        });
+            try {
+              const binary = atob(base64Data);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
 
-        loader.parse(
-          arrayBuffer,
-          '',
-          function(gltf) {
-            binUrls.forEach(url => URL.revokeObjectURL(url));
-
-            const model = gltf.scene;
-            ensureMultiGroup();
-            
-            // Добавляем модель в группу
-            v2.multiGroup.add(model);
-			applyClippingToModel(model);
-
-            addDebug(`✅ Часть "${modelName}" добавлена в группу`, 'success');
-
-            const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
-            
-            // Временно сохраняем, но еще не считаем bounding box
-            v2.modelsMap.set(modelId, {
-              mesh: model,
-              name: modelName,
-              visible: true
-            });
-
-            resolve({ id: modelId });
-          },
-          undefined,
-          function(error) {
-            binUrls.forEach(url => URL.revokeObjectURL(url));
-            addDebug(`❌ Ошибка парсинга GLTF: ${error.message || error}`, 'error');
-            reject(error);
-          }
-        );
+              const loader = new THREE.GLTFLoader();
+              loader.parse(
+                bytes.buffer,
+                '',
+                function (gltf) {
+                  addDebug("✅ Модель успешно загружена и добавлена!", "success");
+                  if (currentModel) scene.remove(currentModel);
+                  currentModel = gltf.scene;
+                  analyzeModel(currentModel);
+                  ensureMaterials(currentModel);
+                  forceCenterModel(currentModel);
+                  autoFitModel(currentModel);
+                  scene.add(currentModel);
+                  
+                  if (clippingEnabled) {
+                    setTimeout(applyClippingToAllModels, 100);
+                  }
+                  
+                  fitCameraToObject(currentModel);
+                  controls.autoRotate = true;
+                  updateModelInfo(currentModel, modelName + ".glb");
+                  document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
+                },
+                undefined,
+                function (error) {
+                  addDebug("❌ Ошибка GLTF.parse: " + (error.message || error), "error");
+                }
+              );
+            } catch (e) {
+              addDebug("❌ Ошибка при обработке base64: " + e.message, "error");
+            }
+          })
+          .withFailureHandler(function(error) {
+            addDebug("❌ Ошибка от сервера: " + (error.message || JSON.stringify(error)), "error");
+          })
+          .getDriveGlbBase64ByModelName(modelName);
       };
+    </script>
 
-      reader.onerror = function(error) {
-        addDebug(`❌ Ошибка чтения файла GLTF`, 'error');
-        reject(error);
-      };
+    <script>
+      // viewer_v2 logic - ФИЗИЧЕСКОЕ ПЕРЕМЕЩЕНИЕ МОДЕЛЕЙ В ЦЕНТР
+      (function() {
+        const v2 = {
+          modelsMap: new Map(),
+          currentManifest: null,
+          loadingInProgress: false,
+          fileManager: { gltf: new Map(), bin: new Map() },
+          globalBoundingBox: new THREE.Box3(),
+          hasModels: false,
+          sceneCenter: new THREE.Vector3(0, 0, 0),
+          sceneSize: new THREE.Vector3(0, 0, 0),
+          multiGroup: null,
+          scale: 1
+        };
 
-      reader.readAsArrayBuffer(gltfFile);
-    });
-  }
+        function el(id) { return document.getElementById(id); }
 
-  window.v2_toggleModelVisibility = function(modelId) {
-    const modelData = v2.modelsMap.get(modelId);
-    if (!modelData || !modelData.mesh) return;
-
-    modelData.visible = !modelData.visible;
-    modelData.mesh.visible = modelData.visible;
-
-    recalculateGlobalBoundingBox();
-    updateModelsList();
-    updateV2ModelStats();
-    updateCameraToCenter();
-  };
-
-  // ИСПРАВЛЕННАЯ функция центрирования - ФИЗИЧЕСКИ ПЕРЕМЕЩАЕТ МОДЕЛИ
-  window.v2_centerScene = function() {
-    if (!v2.hasModels || !v2.multiGroup) {
-      if (typeof resetCamera === 'function') resetCamera();
-      return;
-    }
-
-    try {
-      addDebug('🎯 Физическое перемещение моделей в центр...', 'info');
-      
-      // 1) Сбрасываем трансформации группы
-      v2.multiGroup.position.set(0, 0, 0);
-      v2.multiGroup.scale.set(1, 1, 1);
-      v2.scale = 1;
-      
-      // Обновляем слайдер
-      const slider = document.getElementById('v2-scale-slider');
-      const label = document.getElementById('v2-scale-value');
-      if (slider) slider.value = '0';
-      if (label) label.textContent = '1.00×';
-      
-      // 2) Вычисляем общий bounding box всех моделей
-      recalculateGlobalBoundingBox();
-      
-      if (!v2.hasModels) return;
-
-      const center = v2.sceneCenter.clone();
-      const min = v2.globalBoundingBox.min.clone();
-      
-      addDebug(`📊 Общий центр: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
-      addDebug(`📉 Общий минимум: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}, ${min.z.toFixed(2)})`, 'info');
-      
-      // 3) ФИЗИЧЕСКИ ПЕРЕМЕЩАЕМ каждую модель внутри группы
-      v2.modelsMap.forEach(modelData => {
-        if (!modelData.mesh) return;
-        
-        // Сохраняем мировые координаты модели
-        const worldPos = modelData.mesh.position.clone();
-        
-        // Вычисляем смещение до центра
-        const offset = new THREE.Vector3(
-          -center.x,
-          -min.y, // Поднимаем так, чтобы низ был на 0
-          -center.z
-        );
-        
-        // Применяем смещение к модели
-        modelData.mesh.position.copy(worldPos.add(offset));
-        
-        addDebug(`📍 Модель "${modelData.name}" перемещена`, 'info');
-      });
-      
-      // 4) Пересчитываем bounding box после перемещения
-      recalculateGlobalBoundingBox();
-      
-      const finalCenter = v2.sceneCenter.clone();
-      const finalMin = v2.globalBoundingBox.min.clone();
-      const finalMax = v2.globalBoundingBox.max.clone();
-      
-      addDebug(`✅ Новый центр: (${finalCenter.x.toFixed(2)}, ${finalCenter.y.toFixed(2)}, ${finalCenter.z.toFixed(2)})`, 'success');
-      addDebug(`✅ Новый минимум: (${finalMin.x.toFixed(2)}, ${finalMin.y.toFixed(2)}, ${finalMin.z.toFixed(2)})`, 'success');
-      addDebug(`✅ Новый максимум: (${finalMax.x.toFixed(2)}, ${finalMax.y.toFixed(2)}, ${finalMax.z.toFixed(2)})`, 'success');
-
-      // 5) Обновляем камеру
-      updateCameraToCenter();
-      
-      updateModelsList();
-      updateV2ModelStats();
-      
-      addDebug('✅ Модели физически перемещены в центр', 'success');
-      
-    } catch (e) {
-      addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
-      console.error(e);
-    }
-  };
-
-  window.v2_setScale = function(scale) {
-    setV2Scale(scale);
-  };
-
-  window.v2_autoScaleToViewport = function() {
-    if (!v2.hasModels || !v2.multiGroup) return;
-    
-    try {
-      addDebug('⚖️ Автомасштабирование...', 'info');
-      
-      const currentPos = v2.multiGroup.position.clone();
-      
-      v2.multiGroup.scale.set(1, 1, 1);
-      
-      recalculateGlobalBoundingBox();
-      
-      const size = v2.sceneSize.clone();
-      const maxDim = Math.max(size.x, size.y, size.z);
-      
-      if (!isFinite(maxDim) || maxDim <= 0) return;
-      
-      const targetSize = 15;
-      let newScale = targetSize / maxDim;
-      newScale = Math.min(Math.max(newScale, 0.001), 100);
-      
-      addDebug(`📏 Размер: ${maxDim.toFixed(2)}, масштаб: ${newScale.toFixed(3)}`, 'info');
-      
-      v2.multiGroup.scale.set(newScale, newScale, newScale);
-      v2.scale = newScale;
-      
-      v2.multiGroup.position.copy(currentPos);
-      
-      const slider = el('v2-scale-slider');
-      const label = el('v2-scale-value');
-      if (slider) {
-        const logv = Math.log10(newScale);
-        if (isFinite(logv)) slider.value = String(logv);
-      }
-      if (label) label.textContent = `${newScale.toFixed(2)}×`;
-      
-      recalculateGlobalBoundingBox();
-      updateCameraToCenter();
-      
-      addDebug(`✅ Масштаб: ${newScale.toFixed(3)}×`, 'success');
-      
-    } catch (e) {
-      addDebug(`❌ Ошибка автомасштаба: ${e.message}`, 'error');
-    }
-  };
-
-  window.v2_resetView = function() {
-    window.v2_centerScene();
-  };
-
-  window.v2_clearAllModels = function(options) {
-    const opts = options || {};
-    try {
-      v2.modelsMap.forEach(modelData => {
-        if (modelData.mesh && modelData.mesh.parent) {
-          modelData.mesh.parent.remove(modelData.mesh);
+        function safeSetHtml(id, html) {
+          const node = el(id);
+          if (node) node.innerHTML = html;
         }
-      });
-      v2.modelsMap.clear();
-      v2.globalBoundingBox = new THREE.Box3();
-      v2.hasModels = false;
-      v2.sceneCenter.set(0, 0, 0);
-      v2.sceneSize.set(0, 0, 0);
 
-      if (v2.multiGroup && v2.multiGroup.parent) {
-        v2.multiGroup.parent.remove(v2.multiGroup);
-      }
-      v2.multiGroup = null;
-
-      updateModelsList();
-      resetV2StatsUi();
-      updateV2ModelStats();
-      if (!opts.keepUi) {
-        safeShow('v2-file-info', false);
-        safeShow('v2-manifest-info', false);
-      }
-
-      if (!opts.keepManifest) {
-        const step2 = el('v2-step2-btn');
-        if (step2) { step2.disabled = true; step2.style.opacity = '0.5'; }
-        v2.currentManifest = null;
-      }
-      v2.loadingInProgress = false;
-
-      addDebug('🗑️ Части (манифест) очищены', 'info');
-
-      if (typeof currentModel !== 'undefined' && currentModel && currentModel.name === 'v2_multi_gltf_group') {
-        currentModel = null;
-      }
-    } catch (e) {
-      addDebug(`❌ Ошибка очистки частей: ${e.message}`, 'error');
-    }
-  };
-
-  window.v2_step1_SelectManifest = function() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-
-    input.onchange = function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      addDebug(`📋 Загрузка манифеста: ${file.name}`, 'info');
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        try {
-          v2.currentManifest = JSON.parse(e.target.result);
-          const m = v2.currentManifest;
-
-          if (m && m.format === 'navis3dexporter-manifest' && Array.isArray(m.parts)) {
-            addDebug(`✅ Манифест содержит частей: ${m.parts.length}`, 'success');
-
-            safeShow('v2-manifest-info', true);
-            safeSetHtml('v2-manifest-details', `Файлов GLTF: ${m.parts.length}`);
-
-            const step2 = el('v2-step2-btn');
-            if (step2) { step2.disabled = false; step2.style.opacity = '1'; }
-
-            addDebug('👉 Теперь выберите ВСЕ файлы модели (.gltf + .bin)', 'success');
-          } else {
-            addDebug('❌ Неверный формат манифеста', 'error');
-          }
-        } catch (err) {
-          addDebug(`❌ Ошибка чтения JSON: ${err.message}`, 'error');
+        function safeShow(id, show) {
+          const node = el(id);
+          if (node) node.style.display = show ? 'block' : 'none';
         }
-      };
 
-      reader.readAsText(file);
-    };
+        function resetV2StatsUi() {
+          const fill = el('v2-progress-fill');
+          if (fill) fill.style.width = '0%';
+          safeSetHtml('v2-progress-text', '');
+        }
 
-    input.click();
-  };
-
-  window.v2_step2_SelectAllFiles = function() {
-    if (!v2.currentManifest) {
-      addDebug('❌ Сначала загрузите манифест', 'error');
-      return;
-    }
-
-    if (v2.loadingInProgress) {
-      addDebug('⏳ Загрузка уже выполняется, подождите...', 'warning');
-      return;
-    }
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = '.gltf,.bin';
-
-    input.onchange = function(e) {
-      const files = Array.from(e.target.files || []);
-      addDebug(`📁 Выбрано файлов: ${files.length}`, 'info');
-
-      v2.fileManager = { gltf: new Map(), bin: new Map() };
-
-      files.forEach(file => {
-        const ext = (file.name.split('.').pop() || '').toLowerCase();
-        if (ext === 'gltf') v2.fileManager.gltf.set(file.name, file);
-        if (ext === 'bin') v2.fileManager.bin.set(file.name, file);
-      });
-
-      window.v2_clearAllModels({ keepManifest: true, keepUi: true });
-
-      updateFileLists();
-      safeShow('v2-file-info', true);
-      resetV2StatsUi();
-
-      addDebug(`📊 GLTF: ${v2.fileManager.gltf.size}, BIN: ${v2.fileManager.bin.size}`, 'info');
-
-      const parts = v2.currentManifest.parts || [];
-      let loaded = 0;
-      const total = parts.length;
-      v2.loadingInProgress = true;
-
-      function finish() {
-        v2.loadingInProgress = false;
-        addDebug('✅ Все части обработаны', 'success');
-        safeSetHtml('status', '✅ Все части загружены');
-        
-        // Теперь, когда все модели загружены, ПЕРЕМЕЩАЕМ их в центр
-        setTimeout(() => {
-          // Сначала вычисляем hasModels
-          v2.hasModels = v2.modelsMap.size > 0;
+        function setV2Scale(scale) {
+          const s = Number(scale);
+          if (!isFinite(s) || s <= 0) return;
           
-          // Перемещаем в центр
-          window.v2_centerScene();
-		//if (clippingEnabled) {
-		//	  addDebug('↪ Принудительное применение clipping после полной загрузки v2', 'warning');
-		//	  applyClippingToAllModels();
-		//	  renderer.render(scene, camera);
-		//	}
-		  }, 300);
+          if (v2.multiGroup) {
+            v2.multiGroup.scale.set(s, s, s);
+            v2.scale = s;
+            
+            recalculateGlobalBoundingBox();
+            
+            const slider = el('v2-scale-slider');
+            const label = el('v2-scale-value');
+            if (slider) {
+              const logv = Math.log10(s);
+              if (isFinite(logv)) slider.value = String(logv);
+            }
+            if (label) label.textContent = `${s.toFixed(2)}×`;
+            
+            updateModelsList();
+            updateV2ModelStats();
+            updateCameraToCenter();
+          }
+        }
+
+        function ensureMultiGroup() {
+          if (v2.multiGroup && v2.multiGroup.parent === scene) return;
+          v2.multiGroup = new THREE.Group();
+          v2.multiGroup.name = 'v2_multi_gltf_group';
+          if (scene) scene.add(v2.multiGroup);
+          if (typeof currentModel !== 'undefined') {
+            currentModel = v2.multiGroup;
+          }
+        }
+
+        function recalculateGlobalBoundingBox() {
+          v2.globalBoundingBox = new THREE.Box3();
+          v2.hasModels = false;
+
+          v2.modelsMap.forEach(modelData => {
+            if (!modelData || !modelData.visible || !modelData.mesh) return;
+
+            const box = new THREE.Box3().setFromObject(modelData.mesh);
+            
+            if (!v2.hasModels) {
+              v2.globalBoundingBox.copy(box);
+              v2.hasModels = true;
+            } else {
+              v2.globalBoundingBox.union(box);
+            }
+          });
+
+          if (v2.hasModels) {
+            v2.sceneCenter.copy(v2.globalBoundingBox.getCenter(new THREE.Vector3()));
+            v2.sceneSize.copy(v2.globalBoundingBox.getSize(new THREE.Vector3()));
+          } else {
+            v2.sceneCenter.set(0, 0, 0);
+            v2.sceneSize.set(0, 0, 0);
+          }
+        }
+
+        function updateCameraToCenter() {
+          if (!v2.hasModels || !camera || !controls) return;
+          
+          const center = v2.sceneCenter.clone();
+          const size = v2.sceneSize.clone();
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const safeMaxDim = Math.max(maxDim, 0.1);
+          
+          const fov = camera.fov * (Math.PI / 180);
+          let distance = safeMaxDim / Math.sin(fov / 2);
+          distance *= 1.5;
+          distance = Math.min(Math.max(distance, 1), 100000);
+          
+          camera.position.set(
+            center.x + distance,
+            center.y + distance * 0.3,
+            center.z + distance
+          );
+          camera.lookAt(center.x, center.y, center.z);
+          
+          controls.target.copy(center);
+          controls.update();
+          
+          camera.near = Math.max(0.01, maxDim / 1000);
+          camera.far = Math.max(1000, distance * 10, maxDim * 10);
+          camera.updateProjectionMatrix();
+        }
+
+        function updateFileLists() {
+          const gltfList = el('v2-gltf-files-list');
+          const binList = el('v2-bin-files-list');
+          if (!gltfList || !binList) return;
+
+          gltfList.innerHTML = '';
+          v2.fileManager.gltf.forEach((file, name) => {
+            gltfList.innerHTML += `<div>📄 ${name}</div>`;
+          });
+
+          binList.innerHTML = '';
+          v2.fileManager.bin.forEach((file, name) => {
+            binList.innerHTML += `<div>💾 ${name}</div>`;
+          });
+        }
+
+        function updateProgress(loaded, total) {
+          const percent = total > 0 ? (loaded / total * 100) : 0;
+          const fill = el('v2-progress-fill');
+          const text = el('v2-progress-text');
+          if (fill) fill.style.width = `${percent.toFixed(0)}%`;
+          if (text) text.innerHTML = `${loaded}/${total} (${percent.toFixed(0)}%)`;
+        }
+
+        function updateModelsList() {
+          const container = el('v2-model-list');
+          if (!container) return;
+
+          if (v2.modelsMap.size === 0) {
+            container.innerHTML = 'Нет загруженных частей';
+            return;
+          }
+
+          let html = '';
+          v2.modelsMap.forEach((modelData, id) => {
+            const visible = !!modelData.visible;
+            html += `
+              <div class="v2-model-item ${visible ? 'active' : ''}" onclick="window.v2_toggleModelVisibility('${id}')">
+                <div class="v2-model-name">${modelData.name}</div>
+                <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
+              </div>
+            `;
+          });
+
+          container.innerHTML = html;
+        }
+
+        function updateV2ModelStats() {
+          let meshes = 0, vertices = 0;
+          let visibleParts = 0;
+
+          v2.modelsMap.forEach(modelData => {
+            if (!modelData.mesh) return;
+            if (modelData.visible) visibleParts++;
+            modelData.mesh.traverse(node => {
+              if (node && node.isMesh) {
+                meshes++;
+                if (node.geometry && node.geometry.attributes && node.geometry.attributes.position) {
+                  vertices += node.geometry.attributes.position.count;
+                }
+              }
+            });
+          });
+
+          const statsNode = el('v2-model-stats');
+          if (statsNode) {
+            statsNode.innerHTML = `
+              Частей: ${v2.modelsMap.size} (видимых: ${visibleParts})<br>
+              Мешей: ${meshes}<br>
+              Вершин: ${vertices.toLocaleString()}<br>
+              Центр геометрии: X:${v2.sceneCenter.x.toFixed(1)} Y:${v2.sceneCenter.y.toFixed(1)} Z:${v2.sceneCenter.z.toFixed(1)}
+            `;
+          }
+        }
+
+		function loadModelWithDependencies(gltfFile, modelName) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+
+				reader.onload = function(e) {
+					const arrayBuffer = e.target.result;
+					const loader = new THREE.GLTFLoader();
+
+					const binUrls = new Map();
+					v2.fileManager.bin.forEach((file, name) => {
+						binUrls.set(name, URL.createObjectURL(file));
+					});
+
+					loader.manager.setURLModifier((url) => {
+						if (binUrls.has(url)) return binUrls.get(url);
+						return url;
+					});
+
+					loader.parse(
+						arrayBuffer,
+						'',
+						function(gltf) {
+							binUrls.forEach(url => URL.revokeObjectURL(url));
+
+							const model = gltf.scene;
+							ensureMultiGroup();
+							
+							v2.multiGroup.add(model);
+
+							// СОЗДАЕМ modelId ПЕРВЫМ
+							const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+							
+							// ТЕПЕРЬ добавляем ссылку на модель в каждый меш (modelId уже существует)
+							model.traverse(node => {
+								if (node.isMesh) {
+									node.userData.parentModelName = modelName;
+									node.userData.parentModelId = modelId;
+									node.userData.modelName = modelName;
+								}
+							});
+
+							addDebug(`✅ Часть "${modelName}" добавлена в группу`, 'success');
+							
+							v2.modelsMap.set(modelId, {
+								mesh: model,
+								name: modelName,
+								visible: true
+							});
+
+							resolve({ id: modelId });
+						},
+						undefined,
+						function(error) {
+							binUrls.forEach(url => URL.revokeObjectURL(url));
+							addDebug(`❌ Ошибка парсинга GLTF: ${error.message || error}`, 'error');
+							reject(error);
+						}
+					);
+				};
+
+				reader.onerror = function(error) {
+					addDebug(`❌ Ошибка чтения файла GLTF`, 'error');
+					reject(error);
+				};
+
+				reader.readAsArrayBuffer(gltfFile);
+			});
 		}
+        window.v2_toggleModelVisibility = function(modelId) {
+          const modelData = v2.modelsMap.get(modelId);
+          if (!modelData || !modelData.mesh) return;
 
-      async function loadSequential() {
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          const fileName = part.file;
-          const label = part.label || fileName;
-          const gltfFile = v2.fileManager.gltf.get(fileName);
+          modelData.visible = !modelData.visible;
+          modelData.mesh.visible = modelData.visible;
 
-          safeSetHtml('status', `⏳ Загрузка части: ${label}`);
-          addDebug(`🔄 Загрузка ${i + 1}/${total}: ${label}`, 'info');
+          recalculateGlobalBoundingBox();
+          updateModelsList();
+          updateV2ModelStats();
+          updateCameraToCenter();
+        };
 
-          if (!gltfFile) {
-            addDebug(`⚠️ GLTF не найден: ${fileName}`, 'warning');
-            loaded++;
-            updateProgress(loaded, total);
-            continue;
+        window.v2_centerScene = function() {
+          if (!v2.hasModels || !v2.multiGroup) {
+            if (typeof resetCamera === 'function') resetCamera();
+            return;
           }
 
           try {
-            await loadModelWithDependencies(gltfFile, label);
-          } catch (err) {
-            addDebug(`❌ Ошибка загрузки: ${label}`, 'error');
-          } finally {
-            loaded++;
-            updateProgress(loaded, total);
+            addDebug('🎯 Физическое перемещение моделей в центр...', 'info');
+            
+            v2.multiGroup.position.set(0, 0, 0);
+            v2.multiGroup.scale.set(1, 1, 1);
+            v2.scale = 1;
+            
+            const slider = document.getElementById('v2-scale-slider');
+            const label = document.getElementById('v2-scale-value');
+            if (slider) slider.value = '0';
+            if (label) label.textContent = '1.00×';
+            
+            recalculateGlobalBoundingBox();
+            
+            if (!v2.hasModels) return;
+
+            const center = v2.sceneCenter.clone();
+            const min = v2.globalBoundingBox.min.clone();
+            
+            addDebug(`📊 Общий центр: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+            addDebug(`📉 Общий минимум: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}, ${min.z.toFixed(2)})`, 'info');
+            
+            v2.modelsMap.forEach(modelData => {
+              if (!modelData.mesh) return;
+              
+              const worldPos = modelData.mesh.position.clone();
+              
+              const offset = new THREE.Vector3(
+                -center.x,
+                -min.y,
+                -center.z
+              );
+              
+              modelData.mesh.position.copy(worldPos.add(offset));
+              
+              addDebug(`📍 Модель "${modelData.name}" перемещена`, 'info');
+            });
+            
+            recalculateGlobalBoundingBox();
+            
+            updateCameraToCenter();
+            
+            updateModelsList();
+            updateV2ModelStats();
+            
+            addDebug('✅ Модели физически перемещены в центр', 'success');
+            
+          } catch (e) {
+            addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
+            console.error(e);
           }
+        };
+
+        window.v2_setScale = function(scale) {
+          setV2Scale(scale);
+        };
+
+        window.v2_autoScaleToViewport = function() {
+          if (!v2.hasModels || !v2.multiGroup) return;
+          
+          try {
+            addDebug('⚖️ Автомасштабирование...', 'info');
+            
+            const currentPos = v2.multiGroup.position.clone();
+            
+            v2.multiGroup.scale.set(1, 1, 1);
+            
+            recalculateGlobalBoundingBox();
+            
+            const size = v2.sceneSize.clone();
+            const maxDim = Math.max(size.x, size.y, size.z);
+            
+            if (!isFinite(maxDim) || maxDim <= 0) return;
+            
+            const targetSize = 15;
+            let newScale = targetSize / maxDim;
+            newScale = Math.min(Math.max(newScale, 0.001), 100);
+            
+            addDebug(`📏 Размер: ${maxDim.toFixed(2)}, масштаб: ${newScale.toFixed(3)}`, 'info');
+            
+            v2.multiGroup.scale.set(newScale, newScale, newScale);
+            v2.scale = newScale;
+            
+            v2.multiGroup.position.copy(currentPos);
+            
+            const slider = el('v2-scale-slider');
+            const label = el('v2-scale-value');
+            if (slider) {
+              const logv = Math.log10(newScale);
+              if (isFinite(logv)) slider.value = String(logv);
+            }
+            if (label) label.textContent = `${newScale.toFixed(2)}×`;
+            
+            recalculateGlobalBoundingBox();
+            updateCameraToCenter();
+            
+            addDebug(`✅ Масштаб: ${newScale.toFixed(3)}×`, 'success');
+            
+          } catch (e) {
+            addDebug(`❌ Ошибка автомасштаба: ${e.message}`, 'error');
+          }
+        };
+
+        window.v2_resetView = function() {
+          window.v2_centerScene();
+        };
+
+        window.v2_clearAllModels = function(options) {
+          const opts = options || {};
+          try {
+            v2.modelsMap.forEach(modelData => {
+              if (modelData.mesh && modelData.mesh.parent) {
+                modelData.mesh.parent.remove(modelData.mesh);
+              }
+            });
+            v2.modelsMap.clear();
+            v2.globalBoundingBox = new THREE.Box3();
+            v2.hasModels = false;
+            v2.sceneCenter.set(0, 0, 0);
+            v2.sceneSize.set(0, 0, 0);
+
+            if (v2.multiGroup && v2.multiGroup.parent) {
+              v2.multiGroup.parent.remove(v2.multiGroup);
+            }
+            v2.multiGroup = null;
+
+            updateModelsList();
+            resetV2StatsUi();
+            updateV2ModelStats();
+            if (!opts.keepUi) {
+              safeShow('v2-file-info', false);
+              safeShow('v2-manifest-info', false);
+            }
+
+            if (!opts.keepManifest) {
+              const step2 = el('v2-step2-btn');
+              if (step2) { step2.disabled = true; step2.style.opacity = '0.5'; }
+              v2.currentManifest = null;
+            }
+            v2.loadingInProgress = false;
+
+            addDebug('🗑️ Части (манифест) очищены', 'info');
+
+            if (typeof currentModel !== 'undefined' && currentModel && currentModel.name === 'v2_multi_gltf_group') {
+              currentModel = null;
+            }
+          } catch (e) {
+            addDebug(`❌ Ошибка очистки частей: ${e.message}`, 'error');
+          }
+        };
+
+        window.v2_step1_SelectManifest = function() {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.json';
+
+          input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            addDebug(`📋 Загрузка манифеста: ${file.name}`, 'info');
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+              try {
+                v2.currentManifest = JSON.parse(e.target.result);
+                const m = v2.currentManifest;
+
+                if (m && m.format === 'navis3dexporter-manifest' && Array.isArray(m.parts)) {
+                  addDebug(`✅ Манифест содержит частей: ${m.parts.length}`, 'success');
+
+                  safeShow('v2-manifest-info', true);
+                  safeSetHtml('v2-manifest-details', `Файлов GLTF: ${m.parts.length}`);
+
+                  const step2 = el('v2-step2-btn');
+                  if (step2) { step2.disabled = false; step2.style.opacity = '1'; }
+
+                  addDebug('👉 Теперь выберите ВСЕ файлы модели (.gltf + .bin)', 'success');
+                } else {
+                  addDebug('❌ Неверный формат манифеста', 'error');
+                }
+              } catch (err) {
+                addDebug(`❌ Ошибка чтения JSON: ${err.message}`, 'error');
+              }
+            };
+
+            reader.readAsText(file);
+          };
+
+          input.click();
+        };
+
+        window.v2_step2_SelectAllFiles = function() {
+          if (!v2.currentManifest) {
+            addDebug('❌ Сначала загрузите манифест', 'error');
+            return;
+          }
+
+          if (v2.loadingInProgress) {
+            addDebug('⏳ Загрузка уже выполняется, подождите...', 'warning');
+            return;
+          }
+
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.multiple = true;
+          input.accept = '.gltf,.bin';
+
+          input.onchange = function(e) {
+            const files = Array.from(e.target.files || []);
+            addDebug(`📁 Выбрано файлов: ${files.length}`, 'info');
+
+            v2.fileManager = { gltf: new Map(), bin: new Map() };
+
+            files.forEach(file => {
+              const ext = (file.name.split('.').pop() || '').toLowerCase();
+              if (ext === 'gltf') v2.fileManager.gltf.set(file.name, file);
+              if (ext === 'bin') v2.fileManager.bin.set(file.name, file);
+            });
+
+            window.v2_clearAllModels({ keepManifest: true, keepUi: true });
+
+            updateFileLists();
+            safeShow('v2-file-info', true);
+            resetV2StatsUi();
+
+            addDebug(`📊 GLTF: ${v2.fileManager.gltf.size}, BIN: ${v2.fileManager.bin.size}`, 'info');
+
+            const parts = v2.currentManifest.parts || [];
+            let loaded = 0;
+            const total = parts.length;
+            v2.loadingInProgress = true;
+
+            function finish() {
+              v2.loadingInProgress = false;
+              addDebug('✅ Все части обработаны', 'success');
+              safeSetHtml('status', '✅ Все части загружены');
+              
+              setTimeout(() => {
+                v2.hasModels = v2.modelsMap.size > 0;
+                window.v2_centerScene();
+                
+                if (clippingEnabled) {
+                  setTimeout(applyClippingToAllModels, 100);
+                }
+              }, 300);
+            }
+
+            async function loadSequential() {
+              for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                const fileName = part.file;
+                const label = part.label || fileName;
+                const gltfFile = v2.fileManager.gltf.get(fileName);
+
+                safeSetHtml('status', `⏳ Загрузка части: ${label}`);
+                addDebug(`🔄 Загрузка ${i + 1}/${total}: ${label}`, 'info');
+
+                if (!gltfFile) {
+                  addDebug(`⚠️ GLTF не найден: ${fileName}`, 'warning');
+                  loaded++;
+                  updateProgress(loaded, total);
+                  continue;
+                }
+
+                try {
+                  await loadModelWithDependencies(gltfFile, label);
+                } catch (err) {
+                  addDebug(`❌ Ошибка загрузки: ${label}`, 'error');
+                } finally {
+                  loaded++;
+                  updateProgress(loaded, total);
+                }
+              }
+
+              finish();
+            }
+
+            loadSequential().catch(e2 => {
+              v2.loadingInProgress = false;
+              addDebug(`❌ Ошибка: ${e2.message || e2}`, 'error');
+            });
+          };
+
+          input.click();
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const slider = el('v2-scale-slider');
+          if (!slider) return;
+          slider.addEventListener('input', function(e) {
+            const logv = parseFloat(e.target.value);
+            const s = Math.pow(10, logv);
+            setV2Scale(s);
+          });
+          setV2Scale(1);
+        });
+      })();
+    </script>
+<script>
+// ===== ФУНКЦИЯ ДЛЯ ВЫБОРА ОБЪЕКТОВ ПО CTRL+ЛКМ =====
+setTimeout(function() {
+    if (!renderer || !scene || !camera) {
+        console.error('Renderer, scene or camera not found');
+        return;
+    }
+
+    console.log('Инициализация выбора объектов...');
+
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let selectedObject = null;
+    let isSelecting = false;
+
+    function clearHighlight() {
+        if (selectedObject) {
+            if (selectedObject.material) {
+                if (Array.isArray(selectedObject.material)) {
+                    selectedObject.material.forEach(mat => {
+                        if (mat.emissive) {
+                            mat.emissive.setHex(selectedObject.userData.originalEmissive || 0x000000);
+                        }
+                    });
+                } else if (selectedObject.material.emissive) {
+                    selectedObject.material.emissive.setHex(selectedObject.userData.originalEmissive || 0x000000);
+                }
+            }
+            selectedObject = null;
         }
+    }
 
-        finish();
-      }
-
-      loadSequential().catch(e2 => {
-        v2.loadingInProgress = false;
-        addDebug(`❌ Ошибка: ${e2.message || e2}`, 'error');
-      });
-    };
-
-    input.click();
-  };
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const slider = el('v2-scale-slider');
-    if (!slider) return;
-    slider.addEventListener('input', function(e) {
-      const logv = parseFloat(e.target.value);
-      const s = Math.pow(10, logv);
-      setV2Scale(s);
+    function highlightObject(object) {
+        clearHighlight();
+        
+        if (object && object.material) {
+            if (Array.isArray(object.material)) {
+                object.material.forEach(mat => {
+                    if (mat.emissive) {
+                        object.userData.originalEmissive = mat.emissive.getHex();
+                        mat.emissive.setHex(0x444444);
+                    }
+                });
+            } else if (object.material.emissive) {
+                object.userData.originalEmissive = object.material.emissive.getHex();
+                object.material.emissive.setHex(0x444444);
+            }
+            selectedObject = object;
+        }
+    }
+	function getObjectInfo(object) {
+		let info = {
+			name: object.name || 'Без имени',
+			type: object.type,
+			modelName: 'Неизвестно',
+			fullPath: ''
+		};
+		
+		// Собираем путь
+		let parent = object;
+		let path = [];
+		
+		while (parent) {
+			if (parent.name && parent.name !== '') {
+				path.unshift(parent.name);
+			}
+			parent = parent.parent;
+		}
+		
+		info.fullPath = path.join(' > ');
+		
+		// ПРОСТОЙ СПОСОБ: берем имя из userData
+		if (object.userData && object.userData.parentModelName) {
+			info.modelName = object.userData.parentModelName;
+			console.log('Найдено в userData:', object.userData.parentModelName);
+		}
+		
+		return info;
+	}
+	// Обработчик клика на canvas
+    renderer.domElement.addEventListener('click', function(event) {
+        if (event.ctrlKey) {
+            console.log('CTRL+Клик по canvas');
+            
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const meshes = [];
+            scene.traverse(node => {
+                if (node.isMesh) {
+                    meshes.push(node);
+                }
+            });
+            
+            const intersects = raycaster.intersectObjects(meshes);
+            
+            if (intersects.length > 0) {
+                const hitObject = intersects[0].object;
+                console.log('Попали в объект:', hitObject.name || 'без имени');
+                
+                if (selectedObject) clearHighlight();
+                highlightObject(hitObject);
+                
+                const info = getObjectInfo(hitObject);
+                
+                console.log('Найденная модель:', info.modelName);
+                console.log('Полный путь:', info.fullPath);
+                
+                if (typeof addDebug === 'function') {
+                    addDebug(`📦 Модель: ${info.modelName}`, 'info');
+                }
+                
+                document.getElementById('status').innerHTML = `Модель: ${info.modelName}`;
+                
+                // Автоматически вставляем имя модели в поле ввода
+                const input = document.getElementById('drive-modelname');
+                if (input && info.modelName !== 'Неизвестно') {
+                    // Убираем расширение .nwc если оно есть
+                    let modelName = info.modelName;
+                    if (modelName.endsWith('.nwc')) {
+                        modelName = modelName.slice(0, -4);
+                    }
+                    input.value = modelName;
+                }
+            } else {
+                console.log('Ничего не выбрано');
+                clearHighlight();
+                document.getElementById('status').innerHTML = '⚪ Готов к загрузке';
+            }
+        }
     });
-    setV2Scale(1);
-  });
-  // Обработчики для всех clipping-ползунков (добавляем/переопределяем)
-const clipSliderIds = ["clipX", "clipY", "clipZ", "clipX2", "clipY2", "clipZ2"];
-const clipPlaneRefs = [
-  clipPlanes.X1, clipPlanes.Y1, clipPlanes.Z1,
-  clipPlanes.X2, clipPlanes.Y2, clipPlanes.Z2
-];
 
-clipSliderIds.forEach((id, index) => {
-  const slider = document.getElementById(id);
-  if (!slider) return;
+    // Снимаем выделение при отпускании Ctrl
+    document.addEventListener('keyup', function(event) {
+        if (event.key === 'Control') {
+            clearHighlight();
+            document.getElementById('status').innerHTML = '⚪ Готов к загрузке';
+        }
+    });
 
-  // Удаляем старые обработчики, если они были (чтобы не дублировать)
-  slider.replaceWith(slider.cloneNode(true));
-  const newSlider = document.getElementById(id);
+    console.log('Система выбора объектов готова. Используйте CTRL+Клик');
+    
+}, 2000);
+</script>
+<script>
+// ===== ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ОТОБРАЖЕНИЯ =====
+let renderMode = '3d'; // '3d' или 'preview'
+let originalLights = []; // Для сохранения оригинальных источников света
 
-  newSlider.addEventListener("input", function(e) {
-    clipPlaneRefs[index].constant = parseFloat(e.target.value);
-
-    // Главное — обновляем и clipping, и визуализацию плоскостей
-    applyClippingToAllModels();
-    if (typeof updatePlaneHelpers === "function") {
-      updatePlaneHelpers();
+function setupPreviewMode() {
+    // Сохраняем текущие источники света если еще не сохраняли
+    if (originalLights.length === 0) {
+        scene.traverse(node => {
+            if (node.isLight) {
+                originalLights.push({
+                    light: node,
+                    intensity: node.intensity,
+                    visible: node.visible
+                });
+            }
+        });
     }
-    if (renderer && scene && camera) {
-      renderer.render(scene, camera);
+    
+    // Выключаем все существующие источники света
+    scene.traverse(node => {
+        if (node.isLight) {
+            node.visible = false;
+        }
+    });
+    
+    // Создаем яркое равномерное освещение
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Увеличено с 1.0 до 1.5
+    ambientLight.name = 'preview_ambient';
+    scene.add(ambientLight);
+    
+    // Добавляем яркие направленные источники со всех сторон
+    const light1 = new THREE.DirectionalLight(0xffffff, 1.2); // Увеличено с 0.8 до 1.2
+    light1.position.set(1, 1, 1);
+    light1.name = 'preview_light1';
+    scene.add(light1);
+    
+    const light2 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.5 до 1.0
+    light2.position.set(-1, -0.5, -1);
+    light2.name = 'preview_light2';
+    scene.add(light2);
+    
+    const light3 = new THREE.DirectionalLight(0xffffff, 0.8); // Увеличено с 0.3 до 0.8
+    light3.position.set(0, 1, 0);
+    light3.name = 'preview_light3';
+    scene.add(light3);
+    
+    // Добавляем свет снизу для подсветки теневых областей
+    const light4 = new THREE.DirectionalLight(0xffffff, 0.6);
+    light4.position.set(0, -1, 0);
+    light4.name = 'preview_light4';
+    scene.add(light4);
+    
+    // Добавляем свет сзади
+    const light5 = new THREE.DirectionalLight(0xffffff, 0.7);
+    light5.position.set(0, 0, 1);
+    light5.name = 'preview_light5';
+    scene.add(light5);
+    
+    // Выключаем тени у preview света
+    [light1, light2, light3, light4, light5].forEach(light => {
+        light.castShadow = false;
+    });
+    
+    // Выключаем тени в рендерере
+    renderer.shadowMap.enabled = false;
+    
+    // Убираем тени у всех объектов
+    scene.traverse(node => {
+        if (node.isMesh) {
+            node.castShadow = false;
+            node.receiveShadow = false;
+        }
+    });
+}
+
+function setup3dMode() {
+    // Удаляем preview освещение
+    const previewLights = [];
+    scene.traverse(node => {
+        if (node.name && node.name.startsWith('preview_')) {
+            previewLights.push(node);
+        }
+    });
+    
+    previewLights.forEach(light => {
+        scene.remove(light);
+    });
+    
+    // Восстанавливаем оригинальные источники света
+    originalLights.forEach(item => {
+        if (item.light) {
+            item.light.visible = true;
+            item.light.intensity = item.intensity;
+        }
+    });
+    
+    // Включаем тени
+    renderer.shadowMap.enabled = true;
+    
+    // Восстанавливаем тени у объектов
+    scene.traverse(node => {
+        if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+        }
+    });
+}
+
+function toggleRenderMode(enable3d) {
+    if (enable3d) {
+        renderMode = '3d';
+        setup3dMode();
+    } else {
+        renderMode = 'preview';
+        setupPreviewMode();
     }
-  });
-});
-})();
+    
+    // Обновляем UI
+    const toggle = document.getElementById('shadowsEnabledToggle');
+    const state = document.getElementById('shadowsEnabledState');
+    if (toggle) toggle.checked = enable3d;
+    if (state) state.textContent = enable3d ? '3D' : 'Preview';
+    
+    // Принудительный рендер
+    if (renderer) {
+        renderer.render(scene, camera);
+    }
+    
+    if (typeof addDebug === 'function') {
+        addDebug(`🎨 Режим отображения: ${enable3d ? '3D (с тенями)' : 'Preview (яркое освещение)'}`, 'success');
+    }
+}
+
+// Инициализация
+setTimeout(() => {
+    const modeToggle = document.getElementById('shadowsEnabledToggle');
+    if (modeToggle) {
+        modeToggle.addEventListener('change', function(e) {
+            toggleRenderMode(e.target.checked);
+        });
+    }
+    
+    // Начальное состояние - 3D режим
+    renderMode = '3d';
+    
+    if (typeof addDebug === 'function') {
+        addDebug('🎨 Переключение режимов отображения инициализировано', 'info');
+        addDebug('💡 ON = 3D режим (с тенями), OFF = Preview режим (яркое равномерное освещение)', 'info');
+    }
+}, 2000);
 </script>
   </body>
 </html>
