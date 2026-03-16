@@ -400,31 +400,31 @@
 
 <div>
 <label>Срез X (влево / вправо)</label>
-<input type="range" id="clipX" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipX" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Y (вверх / вниз)</label>
-<input type="range" id="clipY" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipY" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Z (вперёд / назад)</label>
-<input type="range" id="clipZ" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipZ" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 <div>
 <label>Срез X2 (справа)</label>
-<input type="range" id="clipX2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipX2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Y2 (сверху)</label>
-<input type="range" id="clipY2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipY2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 
 <div>
 <label>Срез Z2 (спереди)</label>
-<input type="range" id="clipZ2" min="-5" max="5" step="0.01" value="0" style="width:100%;">
+<input type="range" id="clipZ2" min="-10" max="10" step="0.01" value="0" style="width:100%;">
 </div>
 </div>
 
@@ -445,8 +445,10 @@
         <div style="margin: 10px 0;">
           <button class="btn" onclick="window.v2_step1_SelectManifest()">📋 ШАГ 1: Выбрать JSON манифест</button>
           <button class="btn" onclick="window.v2_step2_SelectAllFiles()" id="v2-step2-btn" disabled style="opacity: 0.5;">📁 ШАГ 2: Выбрать ВСЕ файлы (.gltf + .bin)</button>
-          <button class="btn warning" onclick="window.v2_centerScene()">🎯 Центрировать сцену (все части)</button>
-          <button class="btn danger" onclick="window.v2_clearAllModels()">🗑️ Очистить части (манифест)</button>
+          <button class="btn warning" onclick="window.v2_centerScene()">🎯 Центрировать сцену</button>
+          <button class="btn success" onclick="window.v2_autoScaleToViewport()">⚖️ Автомасштаб</button>
+          <button class="btn" onclick="window.v2_resetView()">🔄 Сбросить вид</button>
+          <button class="btn danger" onclick="window.v2_clearAllModels()">🗑️ Очистить части</button>
         </div>
 
         <div style="margin-top: 10px; padding: 10px; background: #1e1e2e; border-radius: 6px; border: 1px solid #3a3a5a;">
@@ -454,14 +456,10 @@
             <label style="font-size: 12px; color: #ccc;">📏 Масштаб частей</label>
             <div style="font-size: 12px; color: #88aaff;" id="v2-scale-value">1.00×</div>
           </div>
-          <!-- Лог-шкала: значение = log10(scale). Диапазон 1e-6 .. 1e2 -->
           <input type="range" id="v2-scale-slider" min="-6" max="2" step="0.01" value="0" style="width:100%;">
           <div style="display:flex; gap: 8px; margin-top: 8px;">
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_autoScaleToViewport()">⚖️ Авто</button>
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_setScale(1)">1×</button>
-          </div>
-          <div style="font-size: 11px; color:#aaa; margin-top:6px;">
-            Масштаб влияет на удобство просмотра и на “шаг” среза.
           </div>
         </div>
 
@@ -532,14 +530,14 @@
         Z1: new THREE.Plane(new THREE.Vector3(0,0,1),100),
         Z2: new THREE.Plane(new THREE.Vector3(0,0,-1),100)
       };
-      let clippingEnabled = false;
+	  let clippingEnabled = false;
       let clipAxis = "Y";
       let debugEntries = [];
       let errorCount = 0;
       let defaultCameraPosition = new THREE.Vector3(4, 3, 5);
       let defaultCameraTarget = new THREE.Vector3(0, 0, 0);
       
-      // Делаем функции глобальными
+	  //Делаем функции глобальными
       window.clearDebug = function() {
         debugEntries = [];
         errorCount = 0;
@@ -647,6 +645,65 @@
         
         addDebug('✓ Сцена настроена, добавлены сетка и оси', 'success');
         
+		let planeHelpers = [];
+		let helpersGroup = new THREE.Group();  // чтобы удобно включать/выключать все сразу
+		scene.add(helpersGroup);
+		helpersGroup.visible = false;  // по умолчанию скрыты
+		const helperColors = {
+		  X1: 0xff5555,   // красный
+		  X2: 0xff8888,
+		  Y1: 0x55ff55,   // зелёный
+		  Y2: 0x88ff88,
+		  Z1: 0x5555ff,   // синий
+		  Z2: 0x8888ff
+		};
+		function updatePlaneHelpers() {
+		  helpersGroup.clear();
+		  planeHelpers = [];
+
+		  if (!clippingEnabled) {
+			helpersGroup.visible = false;
+			return;
+		  }
+
+		  const planes = [
+			{ plane: clipPlanes.X1, key: 'X1' },
+			{ plane: clipPlanes.X2, key: 'X2' },
+			{ plane: clipPlanes.Y1, key: 'Y1' },
+			{ plane: clipPlanes.Y2, key: 'Y2' },
+			{ plane: clipPlanes.Z1, key: 'Z1' },
+			{ plane: clipPlanes.Z2, key: 'Z2' }
+		  ];
+
+		  let helperSize = 10;
+
+		  // Пытаемся адаптировать размер под сцену (если уже есть bounding box)
+		  if (v2 && v2.sceneSize && v2.sceneSize.length() > 0.1) {
+			helperSize = v2.sceneSize.length() * 1.5;
+		  } else if (currentModel) {
+			const box = new THREE.Box3().setFromObject(currentModel);
+			if (!box.isEmpty()) {
+			  helperSize = box.getSize(new THREE.Vector3()).length() * 1.2;
+			}
+		  }
+
+		  planes.forEach(({ plane, key }) => {
+			try {
+			  const helper = new THREE.PlaneHelper(plane, helperSize, helperColors[key]);
+			  helper.material.transparent = true;
+			  helper.material.opacity = 0.35;
+			  helper.material.depthWrite = false;
+			  helpersGroup.add(helper);
+			  planeHelpers.push(helper);
+			} catch (err) {
+			  console.error("Ошибка создания PlaneHelper:", err);
+			  addDebug("Ошибка PlaneHelper: " + err.message, 'error');
+			}
+		  });
+
+		  helpersGroup.visible = true;
+		  addDebug(`Плоскости визуализированы (${planeHelpers.length} шт, размер ≈${helperSize.toFixed(1)})`, 'success');
+		}
         // Управление
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -707,7 +764,7 @@
               
               // Добавляем модель в сцену
               scene.add(currentModel);
-              
+              applyClippingToAllModels();
               // Принудительно сбрасываем камеру на модель
               fitCameraToObject(currentModel);
               
@@ -780,6 +837,7 @@
                   autoFitModel(currentModel);
                   
                   scene.add(currentModel);
+				  applyClippingToAllModels();
                   fitCameraToObject(currentModel);
                   controls.autoRotate = true;
                   
@@ -846,6 +904,7 @@
             forceCenterModel(currentModel);
             autoFitModel(currentModel);
             scene.add(currentModel);
+			applyClippingToAllModels();
             fitCameraToObject(currentModel);
             controls.autoRotate = true;
             updateModelInfo(currentModel, "Модель #" + number);
@@ -944,7 +1003,7 @@
           
           currentModel = group;
           scene.add(currentModel);
-          
+          applyClippingToAllModels();
           // Сбрасываем камеру на тестовую модель
           fitCameraToObject(currentModel);
           
@@ -1245,25 +1304,37 @@
 
 document.getElementById("clipX").addEventListener("input", function(e){
   clipPlanes.X1.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 
 document.getElementById("clipY").addEventListener("input", function(e){
   clipPlanes.Y1.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 
 document.getElementById("clipZ").addEventListener("input", function(e){
   clipPlanes.Z1.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 document.getElementById("clipX2").addEventListener("input", function(e){
   clipPlanes.X2.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 
 document.getElementById("clipY2").addEventListener("input", function(e){
   clipPlanes.Y2.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 
 document.getElementById("clipZ2").addEventListener("input", function(e){
   clipPlanes.Z2.constant = parseFloat(e.target.value);
+  applyClippingToAllModels();
+updatePlaneHelpers();
 });
 
 // тумблер "Срез (clipping)"
@@ -1312,6 +1383,7 @@ window.loadByNumberWithValue = function(value) {
             forceCenterModel(currentModel);
             autoFitModel(currentModel);
             scene.add(currentModel);
+			applyClippingToAllModels();
             fitCameraToObject(currentModel);
             controls.autoRotate = true;
             updateModelInfo(currentModel, value);
@@ -1339,27 +1411,77 @@ function syncClipToggleUi() {
   if (s) s.textContent = clippingEnabled ? 'ON' : 'OFF';
 }
 
+// Функция применения среза к одной модели
 function applyClippingToModel(model) {
   if (!model) return;
+  
   model.traverse(function(node) {
-    if (!node || !node.isMesh || !node.material) return;
+    if (!node || !node.isMesh) return;
+    
+    // Пропускаем, если нет материала
+    if (!node.material) return;
 
-    if (clippingEnabled) {
-      node.material.clippingPlanes = [
-        clipPlanes.X1,
-        clipPlanes.X2,
-        clipPlanes.Y1,
-        clipPlanes.Y2,
-        clipPlanes.Z1,
-        clipPlanes.Z2
-      ];
+    const planes = clippingEnabled ? [
+      clipPlanes.X1,
+      clipPlanes.X2,
+      clipPlanes.Y1,
+      clipPlanes.Y2,
+      clipPlanes.Z1,
+      clipPlanes.Z2
+    ] : null;
+
+    // Обрабатываем случай с массивом материалов
+    if (Array.isArray(node.material)) {
+      node.material.forEach(mat => {
+        mat.clippingPlanes = planes;
+        mat.needsUpdate = true;
+      });
     } else {
-      node.material.clippingPlanes = null;
+      // Один материал
+      node.material.clippingPlanes = planes;
+      node.material.needsUpdate = true;
     }
-    node.material.needsUpdate = true;
   });
 }
 
+// Функция применения среза ко всем моделям
+function applyClippingToAllModels() {
+  if (!scene) return;
+
+  const activePlanes = clippingEnabled ? [
+    clipPlanes.X1, clipPlanes.X2,
+    clipPlanes.Y1, clipPlanes.Y2,
+    clipPlanes.Z1, clipPlanes.Z2
+  ] : null;
+
+  let count = 0;
+
+  scene.traverse((node) => {
+    if (node.isMesh && node.material) {
+
+      const mats = Array.isArray(node.material) ? node.material : [node.material];
+
+      mats.forEach(mat => {
+        if (!mat) return;
+
+        mat.clippingPlanes = activePlanes;
+        mat.clipIntersection = true;
+        mat.clipShadows = true;
+        mat.needsUpdate = true;
+
+        count++;
+      });
+
+    }
+  });
+
+  renderer.localClippingEnabled = clippingEnabled;
+
+  renderer.render(scene, camera);
+
+  addDebug(`Clipping применён к ${count} материалам`, 'success');
+}
+// Обновляем функцию toggleClipping
 window.toggleClipping = function(forceState) {
   if (typeof forceState === 'boolean') {
     clippingEnabled = forceState;
@@ -1368,10 +1490,130 @@ window.toggleClipping = function(forceState) {
   }
 
   syncClipToggleUi();
-  if (!currentModel) return;
-  applyClippingToModel(currentModel);
+  applyClippingToAllModels();
+  
+  updatePlaneHelpers();
+  
+  addDebug(`✂ Срез ${clippingEnabled ? 'включен + видны плоскости' : 'выключен'}`, 'success');
+  
+  // Принудительно перерендерим
+  if (renderer) {
+    renderer.render(scene, camera);
+  }
 };
-    </script>
+// ────────────────────────────────────────────────
+// Вспомогательная функция для обновления визуализации при движении ползунков
+function updateClipFromSlider() {
+  if (clippingEnabled) {
+    updatePlaneHelpers();          // перестраиваем плоскости, чтобы они следовали за ползунками
+  }
+  // можно добавить принудительный рендер, если обновление тормозит
+  // renderer.render(scene, camera);
+}
+
+// Теперь переопределяем / дополняем существующие обработчики слайдеров
+
+// Находим все слайдеры один раз (чтобы не искать каждый раз)
+const clipSliders = {
+  clipX:  clipPlanes.X1,
+  clipY:  clipPlanes.Y1,
+  clipZ:  clipPlanes.Z1,
+  clipX2: clipPlanes.X2,
+  clipY2: clipPlanes.Y2,
+  clipZ2: clipPlanes.Z2
+};
+
+Object.keys(clipSliders).forEach(id => {
+  const slider = document.getElementById(id);
+  if (!slider) return;
+
+  // Сохраняем старый обработчик (если был)
+  const oldListener = slider.oninput;
+
+  slider.addEventListener("input", function(e) {
+    // обновляем значение плоскости
+    clipSliders[id].constant = parseFloat(e.target.value);
+
+    // вызываем нашу новую функцию
+    updateClipFromSlider();
+
+    // если был старый обработчик — тоже вызываем
+    if (oldListener) oldListener.call(this, e);
+  });
+});
+// Обновляем обработчики слайдеров
+document.getElementById("clipX").addEventListener("input", function(e){
+  clipPlanes.X1.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+document.getElementById("clipY").addEventListener("input", function(e){
+  clipPlanes.Y1.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+document.getElementById("clipZ").addEventListener("input", function(e){
+  clipPlanes.Z1.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+document.getElementById("clipX2").addEventListener("input", function(e){
+  clipPlanes.X2.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+document.getElementById("clipY2").addEventListener("input", function(e){
+  clipPlanes.Y2.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+document.getElementById("clipZ2").addEventListener("input", function(e){
+  clipPlanes.Z2.constant = parseFloat(e.target.value);
+  if (clippingEnabled) applyClippingToAllModels();
+});
+
+// Обновляем функцию v2_centerScene
+const originalCenterScene = window.v2_centerScene;
+if (originalCenterScene) {
+  window.v2_centerScene = function() {
+    originalCenterScene();
+    // После центрирования применяем clipping если он включен
+    if (clippingEnabled) {
+      setTimeout(() => applyClippingToAllModels(), 100);
+    }
+  };
+}
+
+// Добавляем функцию для применения clipping после загрузки моделей
+const originalV2Step2 = window.v2_step2_SelectAllFiles;
+if (originalV2Step2) {
+  window.v2_step2_SelectAllFiles = function() {
+    // Вызываем оригинальную функцию
+    originalV2Step2();
+    
+    // Добавляем наблюдатель за завершением загрузки
+    const checkInterval = setInterval(function() {
+      if (v2 && v2.hasModels) {
+        clearInterval(checkInterval);
+        setTimeout(() => {
+          if (clippingEnabled) {
+            applyClippingToAllModels();
+          }
+        }, 500);
+      }
+    }, 500);
+  };
+}
+
+// Инициализация clipping при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+  // Убеждаемся, что renderer.localClippingEnabled включен
+  if (renderer) {
+    renderer.localClippingEnabled = true;
+  }
+});
+</script>
+
 <script>
 // Автозагрузка по ?model=имя_файла (без .glb)
 document.addEventListener('DOMContentLoaded', function() {
@@ -1446,6 +1688,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
             forceCenterModel(currentModel);
             autoFitModel(currentModel);
             scene.add(currentModel);
+			applyClippingToAllModels();
             fitCameraToObject(currentModel);
             controls.autoRotate = true;
             updateModelInfo(currentModel, modelName + ".glb");
@@ -1468,7 +1711,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 </script>
 
 <script>
-// viewer_v2 logic ported into viewer_v1 (added; does not remove existing logic)
+// viewer_v2 logic - ФИЗИЧЕСКОЕ ПЕРЕМЕЩЕНИЕ МОДЕЛЕЙ В ЦЕНТР
 (function() {
   const v2 = {
     modelsMap: new Map(),
@@ -1504,22 +1747,24 @@ window.loadFromDriveByNameWithValue = function(modelName) {
   function setV2Scale(scale) {
     const s = Number(scale);
     if (!isFinite(s) || s <= 0) return;
-    v2.scale = s;
-
-    const slider = el('v2-scale-slider');
-    const label = el('v2-scale-value');
-    // slider хранит log10(scale)
-    if (slider) {
-      const logv = Math.log10(s);
-      if (isFinite(logv)) slider.value = String(logv);
-    }
-    if (label) label.textContent = `${s.toFixed(2)}×`;
-
+    
     if (v2.multiGroup) {
       v2.multiGroup.scale.set(s, s, s);
+      v2.scale = s;
+      
       recalculateGlobalBoundingBox();
+      
+      const slider = el('v2-scale-slider');
+      const label = el('v2-scale-value');
+      if (slider) {
+        const logv = Math.log10(s);
+        if (isFinite(logv)) slider.value = String(logv);
+      }
+      if (label) label.textContent = `${s.toFixed(2)}×`;
+      
       updateModelsList();
       updateV2ModelStats();
+      updateCameraToCenter();
     }
   }
 
@@ -1528,8 +1773,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     v2.multiGroup = new THREE.Group();
     v2.multiGroup.name = 'v2_multi_gltf_group';
     if (scene) scene.add(v2.multiGroup);
-    // Для совместимости с существующей логикой viewer_v1
-    // (clipping/clearModel/fitCameraToObject и т.п. работают по currentModel)
     if (typeof currentModel !== 'undefined') {
       currentModel = v2.multiGroup;
     }
@@ -1542,12 +1785,8 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     v2.modelsMap.forEach(modelData => {
       if (!modelData || !modelData.visible || !modelData.mesh) return;
 
-      // Всегда пересчитываем bbox по реальному объекту (с учётом transform группы)
       const box = new THREE.Box3().setFromObject(modelData.mesh);
-      modelData.box = box.clone();
-      modelData.center = box.getCenter(new THREE.Vector3());
-      modelData.size = box.getSize(new THREE.Vector3());
-
+      
       if (!v2.hasModels) {
         v2.globalBoundingBox.copy(box);
         v2.hasModels = true;
@@ -1563,6 +1802,34 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       v2.sceneCenter.set(0, 0, 0);
       v2.sceneSize.set(0, 0, 0);
     }
+  }
+
+  function updateCameraToCenter() {
+    if (!v2.hasModels || !camera || !controls) return;
+    
+    const center = v2.sceneCenter.clone();
+    const size = v2.sceneSize.clone();
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const safeMaxDim = Math.max(maxDim, 0.1);
+    
+    const fov = camera.fov * (Math.PI / 180);
+    let distance = safeMaxDim / Math.sin(fov / 2);
+    distance *= 1.5;
+    distance = Math.min(Math.max(distance, 1), 100000);
+    
+    camera.position.set(
+      center.x + distance,
+      center.y + distance * 0.3,
+      center.z + distance
+    );
+    camera.lookAt(center.x, center.y, center.z);
+    
+    controls.target.copy(center);
+    controls.update();
+    
+    camera.near = Math.max(0.01, maxDim / 1000);
+    camera.far = Math.max(1000, distance * 10, maxDim * 10);
+    camera.updateProjectionMatrix();
   }
 
   function updateFileLists() {
@@ -1600,12 +1867,10 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
     let html = '';
     v2.modelsMap.forEach((modelData, id) => {
-      const center = modelData.center || { x: 0, y: 0, z: 0 };
       const visible = !!modelData.visible;
       html += `
         <div class="v2-model-item ${visible ? 'active' : ''}" onclick="window.v2_toggleModelVisibility('${id}')">
           <div class="v2-model-name">${modelData.name}</div>
-          <div class="v2-model-position">📍 X:${center.x.toFixed(1)} Y:${center.y.toFixed(1)} Z:${center.z.toFixed(1)}</div>
           <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
         </div>
       `;
@@ -1637,11 +1902,12 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         Частей: ${v2.modelsMap.size} (видимых: ${visibleParts})<br>
         Мешей: ${meshes}<br>
         Вершин: ${vertices.toLocaleString()}<br>
-        Центр: X:${v2.sceneCenter.x.toFixed(1)} Y:${v2.sceneCenter.y.toFixed(1)} Z:${v2.sceneCenter.z.toFixed(1)}
+        Центр геометрии: X:${v2.sceneCenter.x.toFixed(1)} Y:${v2.sceneCenter.y.toFixed(1)} Z:${v2.sceneCenter.z.toFixed(1)}
       `;
     }
   }
 
+  // ИСПРАВЛЕННАЯ функция загрузки модели
   function loadModelWithDependencies(gltfFile, modelName) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1650,13 +1916,11 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         const arrayBuffer = e.target.result;
         const loader = new THREE.GLTFLoader();
 
-        // URLs для BIN файлов
         const binUrls = new Map();
         v2.fileManager.bin.forEach((file, name) => {
           binUrls.set(name, URL.createObjectURL(file));
         });
 
-        // Перехват загрузки ресурсов (BIN)
         loader.manager.setURLModifier((url) => {
           if (binUrls.has(url)) return binUrls.get(url);
           return url;
@@ -1666,36 +1930,27 @@ window.loadFromDriveByNameWithValue = function(modelName) {
           arrayBuffer,
           '',
           function(gltf) {
-            // cleanup URLs
             binUrls.forEach(url => URL.revokeObjectURL(url));
 
             const model = gltf.scene;
             ensureMultiGroup();
+            
+            // Добавляем модель в группу
             v2.multiGroup.add(model);
+			applyClippingToModel(model);
 
-            // Bounding box модели
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-
-            addDebug(`📐 Часть "${modelName}" размер: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`, 'info');
-            addDebug(`📍 Позиция: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+            addDebug(`✅ Часть "${modelName}" добавлена в группу`, 'success');
 
             const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+            
+            // Временно сохраняем, но еще не считаем bounding box
             v2.modelsMap.set(modelId, {
               mesh: model,
               name: modelName,
-              visible: true,
-              box: box.clone(),
-              center: center.clone(),
-              size: size.clone()
+              visible: true
             });
 
-            recalculateGlobalBoundingBox();
-            updateModelsList();
-            updateV2ModelStats();
-
-            resolve({ box, center, size, id: modelId });
+            resolve({ id: modelId });
           },
           undefined,
           function(error) {
@@ -1725,80 +1980,83 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     recalculateGlobalBoundingBox();
     updateModelsList();
     updateV2ModelStats();
-    window.v2_centerScene();
+    updateCameraToCenter();
   };
 
+  // ИСПРАВЛЕННАЯ функция центрирования - ФИЗИЧЕСКИ ПЕРЕМЕЩАЕТ МОДЕЛИ
   window.v2_centerScene = function() {
-    if (!v2.hasModels) {
+    if (!v2.hasModels || !v2.multiGroup) {
       if (typeof resetCamera === 'function') resetCamera();
       return;
     }
 
     try {
-      // 1) Центрируем сами модели (сдвиг группы так, чтобы центр оказался в (0,0,0))
-      // Это сохраняет взаимное положение частей, но перемещает сцену к началу координат.
-      if (v2.multiGroup) {
-        // Перед сдвигом пересчитываем bbox по реальным объектам (иначе возможен “улёт” из-за кэша)
-        recalculateGlobalBoundingBox();
-        const centerShift = v2.globalBoundingBox.getCenter(new THREE.Vector3());
-
-        // Сдвигаем группу (если уже центрировано — shift близок к 0)
-        v2.multiGroup.position.sub(centerShift);
-      }
-
-      // Пересчитываем глобальный bbox после сдвига
+      addDebug('🎯 Физическое перемещение моделей в центр...', 'info');
+      
+      // 1) Сбрасываем трансформации группы
+      v2.multiGroup.position.set(0, 0, 0);
+      v2.multiGroup.scale.set(1, 1, 1);
+      v2.scale = 1;
+      
+      // Обновляем слайдер
+      const slider = document.getElementById('v2-scale-slider');
+      const label = document.getElementById('v2-scale-value');
+      if (slider) slider.value = '0';
+      if (label) label.textContent = '1.00×';
+      
+      // 2) Вычисляем общий bounding box всех моделей
       recalculateGlobalBoundingBox();
+      
+      if (!v2.hasModels) return;
 
-      // 2) “Ставим на землю”: поднимаем так, чтобы нижняя точка была на Y=0 (уровень сетки)
-      // Это важно для удобства и для предсказуемости срезов.
-      if (v2.multiGroup && v2.hasModels) {
-        const minY = v2.globalBoundingBox.min.y;
-        if (isFinite(minY) && Math.abs(minY) > 1e-9) {
-          v2.multiGroup.position.y -= minY; // если minY<0 — поднимем; если >0 — опустим
-          recalculateGlobalBoundingBox();
-        }
-      }
+      const center = v2.sceneCenter.clone();
+      const min = v2.globalBoundingBox.min.clone();
+      
+      addDebug(`📊 Общий центр: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+      addDebug(`📉 Общий минимум: (${min.x.toFixed(2)}, ${min.y.toFixed(2)}, ${min.z.toFixed(2)})`, 'info');
+      
+      // 3) ФИЗИЧЕСКИ ПЕРЕМЕЩАЕМ каждую модель внутри группы
+      v2.modelsMap.forEach(modelData => {
+        if (!modelData.mesh) return;
+        
+        // Сохраняем мировые координаты модели
+        const worldPos = modelData.mesh.position.clone();
+        
+        // Вычисляем смещение до центра
+        const offset = new THREE.Vector3(
+          -center.x,
+          -min.y, // Поднимаем так, чтобы низ был на 0
+          -center.z
+        );
+        
+        // Применяем смещение к модели
+        modelData.mesh.position.copy(worldPos.add(offset));
+        
+        addDebug(`📍 Модель "${modelData.name}" перемещена`, 'info');
+      });
+      
+      // 4) Пересчитываем bounding box после перемещения
+      recalculateGlobalBoundingBox();
+      
+      const finalCenter = v2.sceneCenter.clone();
+      const finalMin = v2.globalBoundingBox.min.clone();
+      const finalMax = v2.globalBoundingBox.max.clone();
+      
+      addDebug(`✅ Новый центр: (${finalCenter.x.toFixed(2)}, ${finalCenter.y.toFixed(2)}, ${finalCenter.z.toFixed(2)})`, 'success');
+      addDebug(`✅ Новый минимум: (${finalMin.x.toFixed(2)}, ${finalMin.y.toFixed(2)}, ${finalMin.z.toFixed(2)})`, 'success');
+      addDebug(`✅ Новый максимум: (${finalMax.x.toFixed(2)}, ${finalMax.y.toFixed(2)}, ${finalMax.z.toFixed(2)})`, 'success');
 
+      // 5) Обновляем камеру
+      updateCameraToCenter();
+      
       updateModelsList();
       updateV2ModelStats();
-
-      const center = v2.globalBoundingBox.getCenter(new THREE.Vector3());
-      const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-
-      // fallback
-      const distance = Math.max(maxDim * 1.5, 10);
-      if (camera) {
-        // Динамически подстраиваем near/far, чтобы огромные модели не “обрезались” дальностью камеры
-        camera.near = Math.max(0.01, maxDim / 1000);
-        camera.far = Math.max(1000, distance * 10, maxDim * 10);
-        camera.updateProjectionMatrix();
-        camera.position.set(
-          center.x + distance,
-          center.y + distance * 0.5,
-          center.z + distance
-        );
-        camera.lookAt(center);
-      }
-      if (controls) {
-        controls.target.copy(center);
-        controls.update();
-      }
-
-      // Обновляем "дефолт" камеры под текущую сцену, чтобы resetCamera возвращал
-      // к удобному виду (особенно для манифеста/частей и больших моделей).
-      try {
-        if (typeof defaultCameraTarget !== 'undefined' && defaultCameraTarget) {
-          defaultCameraTarget.copy(center);
-        }
-        if (typeof defaultCameraPosition !== 'undefined' && defaultCameraPosition && camera) {
-          defaultCameraPosition.copy(camera.position);
-        }
-      } catch (e) {}
-
-      addDebug('🎯 Части отцентрированы к (0,0,0) и камера обновлена', 'success');
+      
+      addDebug('✅ Модели физически перемещены в центр', 'success');
+      
     } catch (e) {
       addDebug(`❌ Ошибка центрирования: ${e.message}`, 'error');
+      console.error(e);
     }
   };
 
@@ -1807,33 +2065,56 @@ window.loadFromDriveByNameWithValue = function(modelName) {
   };
 
   window.v2_autoScaleToViewport = function() {
-    if (!v2.hasModels) return;
+    if (!v2.hasModels || !v2.multiGroup) return;
+    
     try {
-      // Подгоняем так, чтобы максимальный размер сцены стал около targetSize “единиц”
-      // (срезы в viewer_v3 по умолчанию -5..5, поэтому targetSize ~ 8-12 удобно)
-      const targetSize = 10;
-      const size = v2.globalBoundingBox.getSize(new THREE.Vector3());
+      addDebug('⚖️ Автомасштабирование...', 'info');
+      
+      const currentPos = v2.multiGroup.position.clone();
+      
+      v2.multiGroup.scale.set(1, 1, 1);
+      
+      recalculateGlobalBoundingBox();
+      
+      const size = v2.sceneSize.clone();
       const maxDim = Math.max(size.x, size.y, size.z);
+      
       if (!isFinite(maxDim) || maxDim <= 0) return;
-
-      const newScale = targetSize / maxDim;
-      // Ограничим, чтобы слайдер оставался адекватным
-      const clamped = Math.min(100, Math.max(1e-6, newScale));
-      setV2Scale(clamped);
-      addDebug(`⚖️ Автомасштаб: ${clamped.toFixed(3)}× (maxDim=${maxDim.toFixed(2)})`, 'success');
-
-      // После автомасштаба — чуть обновим камеру под новый размер
-      window.v2_centerScene();
+      
+      const targetSize = 15;
+      let newScale = targetSize / maxDim;
+      newScale = Math.min(Math.max(newScale, 0.001), 100);
+      
+      addDebug(`📏 Размер: ${maxDim.toFixed(2)}, масштаб: ${newScale.toFixed(3)}`, 'info');
+      
+      v2.multiGroup.scale.set(newScale, newScale, newScale);
+      v2.scale = newScale;
+      
+      v2.multiGroup.position.copy(currentPos);
+      
+      const slider = el('v2-scale-slider');
+      const label = el('v2-scale-value');
+      if (slider) {
+        const logv = Math.log10(newScale);
+        if (isFinite(logv)) slider.value = String(logv);
+      }
+      if (label) label.textContent = `${newScale.toFixed(2)}×`;
+      
+      recalculateGlobalBoundingBox();
+      updateCameraToCenter();
+      
+      addDebug(`✅ Масштаб: ${newScale.toFixed(3)}×`, 'success');
+      
     } catch (e) {
       addDebug(`❌ Ошибка автомасштаба: ${e.message}`, 'error');
     }
   };
 
+  window.v2_resetView = function() {
+    window.v2_centerScene();
+  };
+
   window.v2_clearAllModels = function(options) {
-    // Удаляем только части, загруженные через манифест
-    // options:
-    // - keepManifest: не сбрасывать манифест/кнопки
-    // - keepUi: не скрывать блоки UI
     const opts = options || {};
     try {
       v2.modelsMap.forEach(modelData => {
@@ -1869,7 +2150,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       addDebug('🗑️ Части (манифест) очищены', 'info');
 
-      // Совместимость: если currentModel указывал на группу частей — сбросим
       if (typeof currentModel !== 'undefined' && currentModel && currentModel.name === 'v2_multi_gltf_group') {
         currentModel = null;
       }
@@ -1878,7 +2158,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     }
   };
 
-  // STEP 1: choose manifest
   window.v2_step1_SelectManifest = function() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -1920,7 +2199,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
     input.click();
   };
 
-  // STEP 2: choose all files
   window.v2_step2_SelectAllFiles = function() {
     if (!v2.currentManifest) {
       addDebug('❌ Сначала загрузите манифест', 'error');
@@ -1949,7 +2227,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
         if (ext === 'bin') v2.fileManager.bin.set(file.name, file);
       });
 
-      // Сбрасываем старые части (чтобы не смешивать загрузки), но не трогаем манифест/кнопки/UI
       window.v2_clearAllModels({ keepManifest: true, keepUi: true });
 
       updateFileLists();
@@ -1958,7 +2235,6 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       addDebug(`📊 GLTF: ${v2.fileManager.gltf.size}, BIN: ${v2.fileManager.bin.size}`, 'info');
 
-      // Начинаем загрузку по манифесту
       const parts = v2.currentManifest.parts || [];
       let loaded = 0;
       const total = parts.length;
@@ -1967,13 +2243,22 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       function finish() {
         v2.loadingInProgress = false;
         addDebug('✅ Все части обработаны', 'success');
-        safeSetHtml('status', '✅ Все части загружены (манифест)');
-        // Автоподгон масштаба под вьюпорт/срезы, затем центрирование
+        safeSetHtml('status', '✅ Все части загружены');
+        
+        // Теперь, когда все модели загружены, ПЕРЕМЕЩАЕМ их в центр
         setTimeout(() => {
-          window.v2_autoScaleToViewport();
+          // Сначала вычисляем hasModels
+          v2.hasModels = v2.modelsMap.size > 0;
+          
+          // Перемещаем в центр
           window.v2_centerScene();
-        }, 200);
-      }
+		//if (clippingEnabled) {
+		//	  addDebug('↪ Принудительное применение clipping после полной загрузки v2', 'warning');
+		//	  applyClippingToAllModels();
+		//	  renderer.render(scene, camera);
+		//	}
+		  }, 300);
+		}
 
       async function loadSequential() {
         for (let i = 0; i < parts.length; i++) {
@@ -1986,7 +2271,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
           addDebug(`🔄 Загрузка ${i + 1}/${total}: ${label}`, 'info');
 
           if (!gltfFile) {
-            addDebug(`⚠️ GLTF не найден среди выбранных файлов: ${fileName}`, 'warning');
+            addDebug(`⚠️ GLTF не найден: ${fileName}`, 'warning');
             loaded++;
             updateProgress(loaded, total);
             continue;
@@ -1995,7 +2280,7 @@ window.loadFromDriveByNameWithValue = function(modelName) {
           try {
             await loadModelWithDependencies(gltfFile, label);
           } catch (err) {
-            addDebug(`❌ Ошибка загрузки части: ${label}`, 'error');
+            addDebug(`❌ Ошибка загрузки: ${label}`, 'error');
           } finally {
             loaded++;
             updateProgress(loaded, total);
@@ -2007,14 +2292,13 @@ window.loadFromDriveByNameWithValue = function(modelName) {
 
       loadSequential().catch(e2 => {
         v2.loadingInProgress = false;
-        addDebug(`❌ Ошибка загрузки (sequence): ${e2.message || e2}`, 'error');
+        addDebug(`❌ Ошибка: ${e2.message || e2}`, 'error');
       });
     };
 
     input.click();
   };
 
-  // Слайдер масштаба
   document.addEventListener('DOMContentLoaded', function() {
     const slider = el('v2-scale-slider');
     if (!slider) return;
@@ -2023,9 +2307,36 @@ window.loadFromDriveByNameWithValue = function(modelName) {
       const s = Math.pow(10, logv);
       setV2Scale(s);
     });
-    // Инициализация UI
     setV2Scale(1);
   });
+  // Обработчики для всех clipping-ползунков (добавляем/переопределяем)
+const clipSliderIds = ["clipX", "clipY", "clipZ", "clipX2", "clipY2", "clipZ2"];
+const clipPlaneRefs = [
+  clipPlanes.X1, clipPlanes.Y1, clipPlanes.Z1,
+  clipPlanes.X2, clipPlanes.Y2, clipPlanes.Z2
+];
+
+clipSliderIds.forEach((id, index) => {
+  const slider = document.getElementById(id);
+  if (!slider) return;
+
+  // Удаляем старые обработчики, если они были (чтобы не дублировать)
+  slider.replaceWith(slider.cloneNode(true));
+  const newSlider = document.getElementById(id);
+
+  newSlider.addEventListener("input", function(e) {
+    clipPlaneRefs[index].constant = parseFloat(e.target.value);
+
+    // Главное — обновляем и clipping, и визуализацию плоскостей
+    applyClippingToAllModels();
+    if (typeof updatePlaneHelpers === "function") {
+      updatePlaneHelpers();
+    }
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
+    }
+  });
+});
 })();
 </script>
   </body>
