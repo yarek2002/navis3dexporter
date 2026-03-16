@@ -440,7 +440,6 @@
           <button class="btn" onclick="window.v2_step1_SelectManifest()">📋 ШАГ 1: Выбрать JSON манифест</button>
           <button class="btn" onclick="window.v2_step2_SelectAllFiles()" id="v2-step2-btn" disabled style="opacity: 0.5;">📁 ШАГ 2: Выбрать ВСЕ файлы (.gltf + .bin)</button>
           <button class="btn warning" onclick="window.v2_centerScene()">🎯 Центрировать сцену</button>
-          <button class="btn success" onclick="window.v2_autoScaleToViewport()">⚖️ Автомасштаб</button>
           <button class="btn" onclick="window.v2_resetView()">🔄 Сбросить вид</button>
           <button class="btn danger" onclick="window.v2_clearAllModels()">🗑️ Очистить части</button>
         </div>
@@ -1259,6 +1258,8 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         const modelName = urlParams.get('model');
+		
+		
 
         if (modelName && modelName.trim() !== '') {
           const trimmedName = modelName.trim();
@@ -1340,6 +1341,32 @@
           })
           .getDriveGlbBase64ByModelName(modelName);
       };
+	  // ===== АВТОЗАГРУЗКА ЧЕРЕЗ СЕРВЕРНЫЙ ПАРАМЕТР =====
+		window.addEventListener('load', function() {
+		  // Используем MODEL_FROM_URL из первого скрипта
+		  if (MODEL_FROM_URL && MODEL_FROM_URL.trim() !== '') {
+			const modelName = MODEL_FROM_URL.trim();
+			addDebug(`📦 Модель из серверного параметра: "${modelName}"`, 'success');
+			
+			// Заполняем поле
+			const input = document.getElementById('drive-modelname');
+			if (input) {
+			  input.value = modelName;
+			}
+			
+			// Загружаем через существующую функцию
+			setTimeout(() => {
+			  addDebug(`🔄 Загрузка "${modelName}"...`, 'info');
+			  document.getElementById('status').innerHTML = `⏳ Загрузка ${modelName}...`;
+			  
+			  if (typeof window.loadFromDriveByNameWithValue === 'function') {
+				window.loadFromDriveByNameWithValue(modelName);
+			  } else {
+				addDebug('❌ Функция загрузки не найдена', 'error');
+			  }
+			}, 1000);
+		  }
+		});
     </script>
 
     <script>
