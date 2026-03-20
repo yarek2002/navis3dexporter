@@ -18,8 +18,6 @@ namespace Navis3dExporter
         {
             _document = document ?? throw new ArgumentNullException(nameof(document));
             InitializeComponent();
-            this.Width = 1200;
-            this.Height = 200;
 
         }
 
