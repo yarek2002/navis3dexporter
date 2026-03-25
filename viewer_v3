@@ -129,7 +129,9 @@
         font-size: 11px;
         margin-right: 8px;
       }
-      
+      #debug-content {
+		display: none; /* Контент скрыт по умолчанию */
+		}
       #status {
         margin: 10px 0;
         padding: 10px;
@@ -352,6 +354,62 @@
         color: #aaa;
         margin-top: 4px;
       }
+	  /* Тёмное поле ввода номера модели */
+		#drive-number {
+			background: #1e1e2e;           /* очень тёмный фон */
+			color: #e0e0ff;                /* светлый текст для читаемости */
+			border: 1px solid #4a6fa5;     /* синяя рамка в стиле твоего дизайна */
+			border-radius: 6px;
+			padding: 10px 12px;
+			font-size: 15px;
+			width: 100%;
+			box-sizing: border-box;
+			transition: all 0.2s;
+		}
+
+		#drive-number:focus {
+			outline: none;
+			border-color: #88aaff;         /* ярче при фокусе */
+			box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.3);
+			background: #25253a;           /* чуть светлее при фокусе */
+		}
+
+		#drive-number::placeholder {
+			color: #777799;                /* приглушённый плейсхолдер */
+		}
+		/* Chrome, Edge, Safari (WebKit) */
+		::-webkit-scrollbar {
+		  width: 10px;          /* ширина вертикального скроллбара */
+		  height: 10px;         /* высота горизонтального */
+		}
+
+		::-webkit-scrollbar-track {
+		  background: #1e1e2e;  /* фон трека (тёмный) */
+		  border-radius: 5px;
+		}
+
+		::-webkit-scrollbar-thumb {
+		  background: #4a6fa5;  /* цвет ползунка — в твоём стиле */
+		  border-radius: 5px;
+		  border: 2px solid #1e1e2e; /* рамка, чтобы ползунок не сливался */
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+		  background: #5f8bc9;  /* светлее при наведении */
+		}
+
+		/* Firefox (стандартные свойства) */
+		* {
+		  scrollbar-width: thin;                /* thin / auto / none */
+		  scrollbar-color: #4a6fa5 #1e1e2e;    /* thumb   track */
+		}
+		.btn-full {
+		  width: 100%;
+		  margin-right: 0; /* обнуляем отступ справа, чтобы не вылезала за край */
+		  display: block;  /* гарантирует правильное отображение ширины */
+		  box-sizing: border-box; /* учитывает внутренние отступы в ширине */
+		}
+
     </style>
   </head>
   <body>
@@ -361,36 +419,36 @@
       <h3 style="margin-top: 0; color: #4a6fa5;">🎮 Управление 3D</h3>
       
       <div style="margin: 15px 0;">
-        <button class="btn success" onclick="window.loadTestModel()">🧪 Тестовая модель</button>
         <button class="btn warning" onclick="window.resetCamera()">📷 Сбросить камеру</button>
         <button class="btn danger" onclick="window.clearModel()">🗑️ Очистить</button>
-      </div>
-      
-      <div>
-        <label>📁 Загрузите локальный GLB файл:</label>
-        <input type="file" id="file-input" accept=".glb,.gltf">
-        <div style="font-size: 12px; color: #aaa; margin-top: 5px;">
-          Поддерживаются форматы: .glb, .gltf
-        </div>
       </div>
 
       <div style="margin-top:15px;">
         <label>☁️ Загрузка по номеру из таблицы (Google Drive):</label>
-        <input type="text" id="drive-number" placeholder="Номер" style="width:100%;">
+		<div style="margin-top:10px;">
+        <input type="text" id="drive-number" placeholder="Номер (Например: -01_9-13_1)" style="width:100%;">
+		</div>
+		<div style="margin-top:10px;">
         <button class="btn" onclick="window.loadByNumber()">⬇️ Загрузить модель</button>
+		</div>
       </div>
       
-      <div style="margin-top:15px;">
-        <label>☁️ Загрузка по имени файла (без .glb):</label>
-        <input type="text" id="drive-modelname" placeholder="Например: -01_9-13_1 или robot_arm">
-        <button class="btn" onclick="window.loadFromDriveByName()">⬇️ Загрузить</button>
-      </div>
-      
+      	<div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
+		  <button id="measure-btn" class="btn" onclick="window.toggleRuler()">📏 Линейка (выкл)</button>
+		  <div id="ruler-result" style="margin-top: 10px; font-size: 14px; color: #aaffaa; min-height: 1.5em; word-break: break-all;"></div>
+		</div>
       <div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
         <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
-
+		<div class="toggle-row">
+		  <div class="toggle-label">Показывать плоскости среза</div>
+		  <label class="toggle" title="Включить/выключить видимость плоскостей">
+			<input type="checkbox" id="showClipPlanesToggle">
+			<span class="toggle-ui"></span>
+			<span class="toggle-state" id="showClipPlanesState">OFF</span>
+		  </label>
+		</div>
         <div class="toggle-row">
-          <div class="toggle-label">Срез (clipping)</div>
+          <div class="toggle-label">Срез</div>
           <label class="toggle" title="Включить/выключить срез">
             <input type="checkbox" id="clipEnabledToggle">
             <span class="toggle-ui"></span>
@@ -400,27 +458,27 @@
 
 		<div>
 		  <label>Срез X (справа)</label>
-		  <input type="range" id="clipX" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipX" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
 		  <label>Срез X2 (слева)</label>
-		  <input type="range" id="clipX2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipX2" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
 		  <label>Срез Y (сверху)</label>
-		  <input type="range" id="clipY" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipY" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
 		  <label>Срез Y2 (снизу)</label>
-		  <input type="range" id="clipY2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipY2" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
 		  <label>Срез Z (сзади)</label>
-		  <input type="range" id="clipZ" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipZ" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
 		  <label>Срез Z2 (спереди)</label>
-		  <input type="range" id="clipZ2" min="-300" max="300" step="0.01" value="0" style="width:100%;">
+		  <input type="range" id="clipZ2" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
       </div>
           
@@ -432,10 +490,27 @@
         <div>📊 Информация о модели:</div>
         <div id="model-stats">Нет загруженной модели</div>
       </div>
-
-      <div class="v2-section">
-        <h3 style="color:#9b59b6; margin: 0 0 10px 0;">📦 Загрузка GLTF (манифест + BIN)</h3>
-
+	  
+	<details>
+	  <summary style="cursor: pointer; font-weight: bold;">📁 Загрузить локальный GLB файл</summary>
+	  <div style="margin-top: 10px; padding-left: 10px; border-left: 2px solid #ccc;">
+		<input type="file" id="file-input" accept=".glb,.gltf">
+		<div style="font-size: 12px; color: #aaa; margin-top: 5px;">
+		  Поддерживаются форматы: .glb, .gltf
+		</div>
+	  </div>
+	</details>
+	
+	<details>
+	  <summary style="cursor: pointer; font-weight: bold;">☁️ Загрузка по имени файла (без .glb):</summary>
+        <input type="text" id="drive-modelname" placeholder="Например: -01_9-13_1 или robot_arm">
+        <button class="btn" onclick="window.loadFromDriveByName()">⬇️ Загрузить</button>
+	 </details> 
+	  
+	
+	<details>
+        <summary style="color:#9b59b6; cursor: pointer; font-weight: bold;">📦 Загрузка GLTF (манифест + BIN)</summary>
+		<div class="v2-section">
         <div style="margin: 10px 0;">
           <button class="btn" onclick="window.v2_step1_SelectManifest()">📋 ШАГ 1: Выбрать JSON манифест</button>
           <button class="btn" onclick="window.v2_step2_SelectAllFiles()" id="v2-step2-btn" disabled style="opacity: 0.5;">📁 ШАГ 2: Выбрать ВСЕ файлы (.gltf + .bin)</button>
@@ -447,9 +522,9 @@
         <div style="margin-top: 10px; padding: 10px; background: #1e1e2e; border-radius: 6px; border: 1px solid #3a3a5a;">
           <div style="display:flex; justify-content: space-between; align-items: baseline; gap: 10px;">
             <label style="font-size: 12px; color: #ccc;">📏 Масштаб частей</label>
-            <div style="font-size: 12px; color: #88aaff;" id="v2-scale-value">1.00×</div>
+            <div style="font-size: 12px; color: #88aaff;" id="v2-scale-value">1.000×</div>
           </div>
-          <input type="range" id="v2-scale-slider" min="-6" max="2" step="0.01" value="0" style="width:100%;">
+          <input type="range" id="v2-scale-slider" min="-6" max="2" step="0.001" value="0" style="width:100%;">
           <div style="display:flex; gap: 8px; margin-top: 8px;">
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_autoScaleToViewport()">⚖️ Авто</button>
             <button class="btn" style="width:auto; margin:0; padding: 8px 10px;" onclick="window.v2_setScale(1)">1×</button>
@@ -476,17 +551,34 @@
           <div id="v2-progress-text" style="font-size: 11px; text-align: right;"></div>
         </div>
 
-        <div class="v2-model-list">
-          <h4 style="margin: 0 0 10px 0; color: #4a6fa5;">📋 Загруженные части</h4>
-          <div id="v2-model-list">Нет загруженных частей</div>
-        </div>
+		<div class="v2-model-list">
+		  <h4 style="margin: 0 0 10px 0; color: #4a6fa5; display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+			  onclick="openLargeModelList()">
+			<span>📋 Загруженные части</span>
+			<span style="font-size: 18px; color: #88aaff;" title="Открыть в большом окне">↗</span>
+		  </h4>
+		  <div id="v2-model-list">Нет загруженных частей</div>
+		</div>
 
         <div class="model-info" style="margin-top: 10px;">
           <div>📊 Статистика частей:</div>
           <div id="v2-model-stats">Нет данных</div>
         </div>
+		<div>
+
+		<button class="btn success btn-full" onclick="autoAssignContrastingColors()" style="display: inline-block; margin: 5px;">
+			🎨 Авто-цвет
+		</button>
+		</div>
+		<button class="btn success" onclick="loadColorsFromJsonFile()" style="display: inline-block; margin: 5px;">
+			📂 Загрузить цвета
+        </button>
+		<button class="btn" onclick="saveColorsToJsonFile()" style="display: inline-block;">
+			💾 Сохранить цвета
+		</button>
       </div>
-    </div>
+	  </div>
+	</details>
     <!-- Тумблер теней в правом верхнем углу -->
 	<div id="shadows-toggle-container" style="position: absolute; top: 20px; right: 430px; z-index: 999; background: rgba(30, 30, 40, 0.95); padding: 10px 15px; border-radius: 12px; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 12px;">
 	  <span style="color: #ddd; font-size: 14px;">💡 Тени</span>
@@ -496,6 +588,37 @@
 		<span class="toggle-state" id="shadowsEnabledState" style="min-width: 42px; text-align: right; color: #aaa;">ON</span>
 	  </label>
 	</div>
+	<!-- Кнопка "Информация" в правом верхнем углу -->
+<div id="info-toggle-container" style="position: absolute; bottom: 20px; right: 20px; z-index: 1000; background: rgba(30, 30, 40, 0.95); padding: 8px 12px; border-radius: 50%; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.6);">
+  <span style="color: #88aaff; font-size: 24px; font-weight: bold; line-height: 1;">ℹ️</span>
+</div>
+
+<!-- Модальное окно / панель справки (скрыто по умолчанию) -->
+<div id="info-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 600px; background: rgba(20, 20, 35, 0.98); color: #ddd; padding: 24px; border-radius: 16px; border: 2px solid #4a6fa5; box-shadow: 0 8px 40px rgba(0,0,0,0.7); z-index: 2000; backdrop-filter: blur(8px); font-family: 'Segoe UI', Arial;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="margin: 0; color: #88aaff;">Справка по управлению 3D-viewer</h3>
+    <button onclick="document.getElementById('info-panel').style.display='none'" style="background: none; border: none; color: #ff8888; font-size: 24px; cursor: pointer;">×</button>
+  </div>
+  
+  <ul style="line-height: 1.6; padding-left: 20px; margin: 0;">
+    <li><strong>Вращение</strong> — зажатая левая кнопка мыши + движение</li>
+    <li><strong>Перемещение</strong> — зажатая правая кнопка мыши + движение</li>
+    <li><strong>Масштаб</strong> — колесо мыши или pinch на тач-устройствах</li>
+    <li><strong>Сброс вида</strong> — кнопка «📷 Сбросить камеру»</li>
+    <li><strong>Измерение расстояния</strong> — включи «📏 Линейка», кликни две точки на модели</li>
+    <li><strong>Срез модели</strong> — включи тумблер «Срез» и двигай ползунки X/Y/Z</li>
+    <li><strong>Тени / режим просмотра</strong> — тумблер «💡 Тени» (ON = реалистичные тени, OFF = яркий preview)</li>
+    <li><strong>Загрузка модели</strong> — через номер, имя файла или локальный .glb / .gltf</li>
+    <li><strong>Выбор частей</strong> — Ctrl + клик по объекту (показывает имя модели)</li>
+    <li><strong>Очистка</strong> — кнопка «🗑️ Очистить»</li>
+	<li><strong>Сетка имеет размер 1x1 метр</strong></li>
+  </ul>
+  
+  <div style="margin-top: 20px; text-align: center; color: #aaa; font-size: 13px;">
+    Viewer version: 2026_v4 • Control based on Three.js + OrbitControls • Developed by: Chasovskoy Y.A.
+  </div>
+</div>
+
     <div id="debug-window">
       <div id="debug-header">
         <h3>
@@ -514,26 +637,135 @@
         </div>
       </div>
     </div>
-    
+    <!-- Большое модальное окно для списка моделей -->
+	<div id="large-model-list-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:3000; backdrop-filter:blur(4px);">
+	  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:1100px; max-height:85vh; background:rgba(20,20,35,0.97); border:2px solid #4a6fa5; border-radius:16px; box-shadow:0 10px 60px rgba(0,0,0,0.8); overflow:hidden; display:flex; flex-direction:column;">
+		
+		<!-- Заголовок модалки -->
+		<div style="padding:16px 24px; background:#2a2a3a; border-bottom:1px solid #4a6fa5; display:flex; justify-content:space-between; align-items:center; color:#88aaff;">
+		  <h3 style="margin:0; font-size:1.3rem;">📋 Все загруженные части</h3>
+		  <button onclick="closeLargeModelList()" style="background:none; border:none; color:#ff8888; font-size:28px; cursor:pointer; line-height:1;">×</button>
+		</div>
+		
+		<!-- Контент (будет копироваться динамически) -->
+		<div id="large-model-list-content" style="padding:20px; overflow-y:auto; flex:1; color:#ddd; font-size:14px;">
+		  <!-- сюда будет вставляться содержимое -->
+		</div>
+	  </div>
+	</div>
     <script>
       // Глобальные переменные
       const MODEL_FROM_URL = "<?= modelParam ?>";
+	  let clipPlaneHelpers = {
+		X1: null, X2: null,
+		Y1: null, Y2: null,
+	  	Z1: null, Z2: null
+	  };
+	  let showClipPlanes = false;   // тумблер видимости плоскостей
       let scene, camera, renderer, controls, currentModel;
       let errorCount = 0;
       let defaultCameraPosition = new THREE.Vector3(4, 3, 5);
       let defaultCameraTarget = new THREE.Vector3(0, 0, 0);
+	  let clippingEnabled = false;
+	  
+	  	// Константа конвертации футов в метры
+	const FEET_TO_METERS = 0.3048;
 
-      // ===== ИСПРАВЛЕННАЯ СИСТЕМА СРЕЗА (CLIPPING) =====
-      let clippingEnabled = false;
-		let clipPlanes = {
-			X1: new THREE.Plane(new THREE.Vector3(-1, 0, 0), 300),
-			Y1: new THREE.Plane(new THREE.Vector3(0, -1, 0), 300),
-			Z1: new THREE.Plane(new THREE.Vector3(0, 0, 1), 300),
-			X2: new THREE.Plane(new THREE.Vector3(1, 0, 0), 300),
-			Y2: new THREE.Plane(new THREE.Vector3(0, 1, 0), 300),
-			Z2: new THREE.Plane(new THREE.Vector3(0, 0, -1), 300)
-		};
+	// Функция конвертации модели из футов в метры
+	function convertModelFromFeetToMeters(model) {
+		if (!model) return;
+		
+		// Применяем масштаб для конвертации футов в метры
+		model.scale.set(FEET_TO_METERS, FEET_TO_METERS, FEET_TO_METERS);
+		
+		addDebug(`📏 Конвертация единиц:`, 'success');
+		addDebug(`  Модель была в ФУТАХ`, 'info');
+		addDebug(`  1 фут = ${FEET_TO_METERS} метра`, 'info');
+		addDebug(`  Масштаб: ${FEET_TO_METERS}×`, 'info');
+		
+		// Вычисляем и показываем реальные размеры в метрах
+		const box = new THREE.Box3().setFromObject(model);
+		const size = box.getSize(new THREE.Vector3());
+		
+		addDebug(`📐 Размеры модели в МЕТРАХ:`, 'success');
+		addDebug(`  X: ${size.x.toFixed(2)} м (${(size.x / FEET_TO_METERS).toFixed(1)} футов)`, 'info');
+		addDebug(`  Y: ${size.y.toFixed(2)} м (${(size.y / FEET_TO_METERS).toFixed(1)} футов)`, 'info');
+		addDebug(`  Z: ${size.z.toFixed(2)} м (${(size.z / FEET_TO_METERS).toFixed(1)} футов)`, 'info');
+		addDebug(`  `, 'info');
+		addDebug(`✅ Теперь 1 клетка сетки = 1 метр`, 'success');
+	}
 
+
+// ===== ИСПРАВЛЕННАЯ СИСТЕМА СРЕЗА =====
+let clipPlanes = {
+    // X — горизонтальная ось (вправо/влево)
+    X1: new THREE.Plane(new THREE.Vector3( 1, 0, 0), 5),   // правая плоскость
+    X2: new THREE.Plane(new THREE.Vector3(-1, 0, 0), -5),  // левая плоскость
+    
+    // Y — вертикальная ось (вверх/вниз)
+    Y1: new THREE.Plane(new THREE.Vector3( 0,  1, 0), 5),  // верхняя плоскость
+    Y2: new THREE.Plane(new THREE.Vector3( 0, -1, 0), -5), // нижняя плоскость
+    
+    // Z — глубина (вперёд/назад)
+    Z1: new THREE.Plane(new THREE.Vector3( 0, 0,  1), 5),  // задняя плоскость
+    Z2: new THREE.Plane(new THREE.Vector3( 0, 0, -1), -5)  // передняя плоскость
+};
+// Настройка слайдеров
+const sliderConfigs = [
+    { id: 'clipX1', plane: 'X1', side: 'right' },
+    { id: 'clipX2', plane: 'X2', side: 'left' },
+    { id: 'clipY1', plane: 'Y1', side: 'top' },
+    { id: 'clipY2', plane: 'Y2', side: 'bottom' },
+    { id: 'clipZ1', plane: 'Z1', side: 'back' },
+    { id: 'clipZ2', plane: 'Z2', side: 'front' }
+];
+
+sliderConfigs.forEach(config => {
+    const slider = document.getElementById(config.id);
+    if (slider) {
+        // Меняем только диапазон на -10 до 10
+        slider.min = -10;
+        slider.max = 10;
+        // НЕ меняем slider.value! Оставляем то значение, что установлено в HTML
+        
+function updatePlane(value) {
+
+    if (config.side === 'right') {
+        clipPlanes.X1.constant = -value;   // ← ВАЖНО
+    } 
+    else if (config.side === 'left') {
+        clipPlanes.X2.constant = value;
+    }
+    else if (config.side === 'top') {
+        clipPlanes.Y1.constant = -value;   // ← ВАЖНО
+    }
+    else if (config.side === 'bottom') {
+        clipPlanes.Y2.constant = value;
+    }
+    else if (config.side === 'back') {
+        clipPlanes.Z1.constant = -value;   // ← ВАЖНО
+    }
+    else if (config.side === 'front') {
+        clipPlanes.Z2.constant = value;
+    }
+    
+    if (clippingEnabled) {
+        applyClippingToAllModels();
+    }
+
+    if (showClipPlanes) {
+        updateClipPlaneHelpers();
+    }
+}
+        
+        // Вызываем с текущим значением слайдера
+        updatePlane(parseFloat(slider.value));
+        
+        slider.addEventListener('input', function(e) {
+            updatePlane(parseFloat(e.target.value));
+        });
+    }
+});
       // Функция для добавления сообщений в окно отладки
       function addDebug(message, type = 'info') {
         const date = new Date();
@@ -563,10 +795,15 @@
         addDebug('Окно отладки очищено', 'info');
       };
       
-      window.toggleDebug = function() {
-        const debugContent = document.getElementById('debug-content');
-        debugContent.style.display = debugContent.style.display === 'none' ? 'block' : 'none';
-      };
+	window.toggleDebug = function() {
+	  const content = document.getElementById('debug-content');
+	  if (content.style.display === 'none' || content.style.display === '') {
+		content.style.display = 'block';
+	  } else {
+		content.style.display = 'none';
+	  }
+	};
+
       
       // Функция сброса камеры
       window.resetCamera = function() {
@@ -587,37 +824,37 @@
       }
 
       function applyClippingToAllModels() {
-        if (!scene || !renderer) return;
+    if (!scene || !renderer) return;
 
-        const activePlanes = clippingEnabled ? [
-            clipPlanes.X1, clipPlanes.X2,
-            clipPlanes.Y1, clipPlanes.Y2,
-            clipPlanes.Z1, clipPlanes.Z2
-        ] : null;
+    const activePlanes = clippingEnabled ? [
+        clipPlanes.X1, clipPlanes.X2,
+        clipPlanes.Y1, clipPlanes.Y2,
+        clipPlanes.Z1, clipPlanes.Z2
+    ] : null;
 
-        let materialsUpdated = 0;
+    let materialsUpdated = 0;
 
-        scene.traverse((node) => {
-            if (node.isMesh && node.material) {
-                const materials = Array.isArray(node.material) ? node.material : [node.material];
-                
-                materials.forEach(mat => {
-                    if (mat) {
-                        mat.clippingPlanes = activePlanes;
-                        mat.clipIntersection = false;
-                        mat.clipShadows = true;
-                        mat.needsUpdate = true;
-                        materialsUpdated++;
-                    }
-                });
-            }
-        });
+    scene.traverse((node) => {
+        if (node.isMesh && node.material) {
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            
+            materials.forEach(mat => {
+                if (mat) {
+                    mat.clippingPlanes = activePlanes;
+                    mat.clipIntersection = false;        // важно оставить false
+                    mat.clipShadows = true;
+                    mat.needsUpdate = true;
+                    materialsUpdated++;
+                }
+            });
+        }
+    });
 
-        renderer.localClippingEnabled = clippingEnabled;
-        renderer.render(scene, camera);
-        
-        addDebug(`✂ Clipping ${clippingEnabled ? 'включен' : 'выключен'}, обновлено материалов: ${materialsUpdated}`, 'success');
-      }
+    renderer.localClippingEnabled = clippingEnabled;
+    renderer.render(scene, camera);
+    
+    addDebug(`✂ Clipping ${clippingEnabled ? 'включен' : 'выключен'}, обновлено материалов: ${materialsUpdated}`, 'success');
+}
 
       window.toggleClipping = function(forceState) {
         if (typeof forceState === 'boolean') {
@@ -629,6 +866,7 @@
         syncClipToggleUi();
         applyClippingToAllModels();
       };
+
 
       // ===== ИНИЦИАЛИЗАЦИЯ THREE.JS =====
       addDebug('Инициализация Three.js...', 'info');
@@ -681,9 +919,9 @@
         
         addDebug('💡 Добавлены источники света', 'info');
         
-        // Вспомогательные элементы
-        const gridHelper = new THREE.GridHelper(10, 20, 0x88aaff, 0x335588);
-        scene.add(gridHelper);
+		const gridHelper = new THREE.GridHelper(20, 20, 0x88aaff, 0x335588);
+		gridHelper.position.y = -0.01; // чуть ниже, чтобы не мешать моделям
+		scene.add(gridHelper);
         
         const axesHelper = new THREE.AxesHelper(3);
         scene.add(axesHelper);
@@ -722,39 +960,65 @@
         });
       }
       
-      // Настраиваем слайдеры с правильными диапазонами
-		const sliderConfigs = [
-			{ id: 'clipX', plane: 'X1' },    // режет справа
-			{ id: 'clipX2', plane: 'X2' },   // режет слева
-			{ id: 'clipY', plane: 'Y1' },    // режет сверху
-			{ id: 'clipY2', plane: 'Y2' },   // режет снизу
-			{ id: 'clipZ', plane: 'Z1' },    // режет сзади
-			{ id: 'clipZ2', plane: 'Z2' }    // режет спереди
-		];
-      sliderConfigs.forEach(config => {
-        const slider = document.getElementById(config.id);
-        if (slider) {
-          slider.addEventListener('input', function(e) {
-            const value = parseFloat(e.target.value);
-            clipPlanes[config.plane].constant = value;
-            
-            if (clippingEnabled) {
-              applyClippingToAllModels();
-            }
-          });
-        }
-      });
-      
-      // Устанавливаем начальные значения
-      Object.keys(clipPlanes).forEach(key => {
-        const sliderId = `clip${key}`;
-        const slider = document.getElementById(sliderId);
-        if (slider) {
-          slider.value = clipPlanes[key].constant;
-        }
-      });
 
-      // ===== ФУНКЦИИ ЗАГРУЗКИ МОДЕЛЕЙ =====
+		// Тумблер видимости плоскостей среза
+		const showClipToggle = document.getElementById('showClipPlanesToggle');
+		if (showClipToggle) {
+			showClipToggle.addEventListener('change', function(e) {
+				showClipPlanes = e.target.checked;
+				document.getElementById('showClipPlanesState').textContent = showClipPlanes ? 'ON' : 'OFF';
+				updateClipPlaneHelpers();
+				addDebug(`Плоскости среза ${showClipPlanes ? 'включены' : 'выключены'}`, 'info');
+			});
+		}
+      
+function updateClipPlaneHelpers() {
+    const planeSize = 10; // Сделайте чуть больше, чтобы было заметно
+    const opacity = 0.35;
+
+    const colors = {
+        X1: 0xff4444, X2: 0xff8888,
+        Y1: 0x44ff44, Y2: 0x88ff88,
+        Z1: 0x4444ff, Z2: 0x88ff88
+    };
+
+    Object.keys(clipPlanes).forEach(key => {
+        const plane = clipPlanes[key];
+        let helper = clipPlaneHelpers[key];
+
+        if (!helper) {
+            const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+            const material = new THREE.MeshBasicMaterial({
+                color: colors[key],
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: opacity,
+                depthWrite: false
+            });
+            helper = new THREE.Mesh(geometry, material);
+            scene.add(helper);
+            clipPlaneHelpers[key] = helper;
+        }
+
+        if (!showClipPlanes) {
+            helper.visible = false;
+            return;
+        }
+
+        helper.visible = true;
+
+        // 1. Позиция: плоскость в Three.js определяется как (Normal * Constant)
+        // Для визуализации ставим меш в точку: normal * -constant
+        helper.position.set(0, 0, 0); // сброс
+        helper.position.addScaledVector(plane.normal, -plane.constant);
+
+        // 2. Поворот: меш должен смотреть вдоль нормали плоскости
+        const lookAtPoint = new THREE.Vector3().addVectors(helper.position, plane.normal);
+        helper.lookAt(lookAtPoint);
+    });
+}
+
+// ===== ФУНКЦИИ ЗАГРУЗКИ МОДЕЛЕЙ =====
       function loadLocalFile(file) {
         addDebug(`📁 Загрузка файла: ${file.name}`, 'info');
         addDebug(`📊 Размер: ${(file.size / 1024 / 1024).toFixed(2)} MB`, 'info');
@@ -786,7 +1050,7 @@
               analyzeModel(currentModel);
               ensureMaterials(currentModel);
               forceCenterModel(currentModel);
-              autoFitModel(currentModel);
+              convertModelFromFeetToMeters(currentModel);
               
               scene.add(currentModel);
               
@@ -796,7 +1060,7 @@
               }
               
               fitCameraToObject(currentModel);
-              controls.autoRotate = true;
+              controls.autoRotate = false;
               
               updateModelInfo(currentModel, file.name);
               
@@ -860,7 +1124,7 @@
                   analyzeModel(currentModel);
                   ensureMaterials(currentModel);
                   forceCenterModel(currentModel);
-                  autoFitModel(currentModel);
+                  convertModelFromFeetToMeters(currentModel);
                   
                   scene.add(currentModel);
                   
@@ -869,7 +1133,7 @@
                   }
                   
                   fitCameraToObject(currentModel);
-                  controls.autoRotate = true;
+                  controls.autoRotate = false;
                   
                   updateModelInfo(currentModel, modelName + ".glb");
                   document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
@@ -932,7 +1196,7 @@
                   analyzeModel(currentModel);
                   ensureMaterials(currentModel);
                   forceCenterModel(currentModel);
-                  autoFitModel(currentModel);
+                  convertModelFromFeetToMeters(currentModel);
                   scene.add(currentModel);
                   
                   if (clippingEnabled) {
@@ -940,7 +1204,7 @@
                   }
                   
                   fitCameraToObject(currentModel);
-                  controls.autoRotate = true;
+                  controls.autoRotate = false;
                   updateModelInfo(currentModel, "Модель #" + number);
                   document.getElementById('status').innerHTML = `✅ Загружено: #${number}`;
                 },
@@ -1037,7 +1301,7 @@
           document.getElementById('status').innerHTML = '✅ Тестовая модель';
           
           updateModelInfo(currentModel, 'Тестовая модель');
-          controls.autoRotate = true;
+          controls.autoRotate = false;
           
         } catch (e) {
           addDebug(`❌ Ошибка: ${e.message}`, 'error');
@@ -1206,7 +1470,9 @@
         if (controls) {
           controls.update();
         }
-        
+        if (showClipPlanes) {
+			updateClipPlaneHelpers();
+		}
         if (renderer && scene && camera) {
           renderer.render(scene, camera);
         }
@@ -1315,7 +1581,7 @@
                   analyzeModel(currentModel);
                   ensureMaterials(currentModel);
                   forceCenterModel(currentModel);
-                  autoFitModel(currentModel);
+                  convertModelFromFeetToMeters(currentModel);
                   scene.add(currentModel);
                   
                   if (clippingEnabled) {
@@ -1323,7 +1589,7 @@
                   }
                   
                   fitCameraToObject(currentModel);
-                  controls.autoRotate = true;
+                  controls.autoRotate = false;
                   updateModelInfo(currentModel, modelName + ".glb");
                   document.getElementById('status').innerHTML = `✅ Загружено: ${modelName}`;
                 },
@@ -1372,7 +1638,7 @@
     <script>
       // viewer_v2 logic - ФИЗИЧЕСКОЕ ПЕРЕМЕЩЕНИЕ МОДЕЛЕЙ В ЦЕНТР
       (function() {
-        const v2 = {
+        window.v2 = {
           modelsMap: new Map(),
           currentManifest: null,
           loadingInProgress: false,
@@ -1515,28 +1781,141 @@
           if (text) text.innerHTML = `${loaded}/${total} (${percent.toFixed(0)}%)`;
         }
 
-        function updateModelsList() {
-          const container = el('v2-model-list');
-          if (!container) return;
+        // ←←← ИСПРАВЛЕННАЯ функция переключения видимости ←←←
+        window.v2_toggleModelVisibility = function(modelId) {
+            const modelData = v2.modelsMap.get(modelId);
+            if (!modelData || !modelData.mesh) {
+                addDebug(`Не найдена модель для переключения: ${modelId}`, 'warning');
+                return;
+            }
 
-          if (v2.modelsMap.size === 0) {
-            container.innerHTML = 'Нет загруженных частей';
-            return;
-          }
+            // Переключаем видимость
+            modelData.visible = !modelData.visible;
+            modelData.mesh.visible = modelData.visible;
 
-          let html = '';
-          v2.modelsMap.forEach((modelData, id) => {
-            const visible = !!modelData.visible;
-            html += `
-              <div class="v2-model-item ${visible ? 'active' : ''}" onclick="window.v2_toggleModelVisibility('${id}')">
-                <div class="v2-model-name">${modelData.name}</div>
-                <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
-              </div>
-            `;
-          });
+            // Обновляем bounding box и камеру только если модель стала видимой
+            if (modelData.visible) {
+                recalculateGlobalBoundingBox();
+                updateCameraToCenter();
+            }
 
-          container.innerHTML = html;
+            // Обновляем списки
+            updateModelsList();
+            updateV2ModelStats();
+
+            if (typeof syncLargeModalIfOpen === 'function') {
+                syncLargeModalIfOpen();
+            }
+
+            addDebug(`👁️ ${modelData.visible ? 'Показана' : 'Скрыта'} часть: ${modelData.name}`, 
+                     modelData.visible ? 'success' : 'info');
+        };
+
+		function updateModelsList() {
+		  const container = document.getElementById('v2-model-list');
+		  if (!container) return;
+
+		  if (v2.modelsMap.size === 0) {
+			container.innerHTML = 'Нет загруженных частей';
+			return;
+		  }
+
+		  let html = '';
+		  v2.modelsMap.forEach((modelData, id) => {
+			const visible = !!modelData.visible;
+			const currentColor = getModelColor(modelData.mesh) || '#ffffff'; // вспомогательная функция ниже
+
+			html += `
+			  <div class="v2-model-item ${visible ? 'active' : ''}" 
+				   onclick="window.v2_toggleModelVisibility('${id}')"
+				   style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+
+				<!-- Левая часть -->
+				<div style="flex:1;">
+				  <div class="v2-model-name">${modelData.name}</div>
+				  <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
+				</div>
+
+				<!-- Правая часть (цвет + удаление) -->
+				<div style="display:flex; align-items:center; gap:8px;">
+
+				  <!-- Color picker -->
+				  <input type="color" 
+						 value="${currentColor}" 
+						 onchange="changePartColor('${id}', this.value)"
+						 onclick="event.stopPropagation()"
+						 title="Изменить цвет части"
+						 style="width:32px; height:32px; padding:0; border:none; border-radius:6px; cursor:pointer; background:transparent;">
+
+				  <!-- Кнопка удаления -->
+				  <button class="btn danger" 
+						  style="padding:4px 8px; font-size:12px;"
+						  onclick="event.stopPropagation(); removeModel('${id}')">
+					🗑️
+				  </button>
+
+				</div>
+
+			  </div>
+			`;
+		  });
+
+		  container.innerHTML = html;
+		}
+
+// Получаем текущий цвет первой найденной mesh в части
+function getModelColor(meshGroup) {
+    let color = '#ffffff';
+    
+    if (!meshGroup) return color;
+
+    meshGroup.traverse(node => {
+        if (node.isMesh && node.material) {
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            
+            for (let mat of materials) {
+                if (mat && mat.color) {
+                    // Важно: используем SRGBColorSpace для корректного отображения
+                    color = '#' + mat.color.getHexString(THREE.SRGBColorSpace);
+                    return false; // выходим после первого найденного
+                }
+            }
         }
+    });
+    
+    return color;
+}
+
+		// Меняем цвет всей части
+		window.changePartColor = function(modelId, hexColor) {
+		  const modelData = v2.modelsMap.get(modelId);
+		  if (!modelData || !modelData.mesh) return;
+
+		  const color = new THREE.Color(hexColor);
+
+		  let changedCount = 0;
+
+		  modelData.mesh.traverse(node => {
+			if (node.isMesh && node.material) {
+			  // Клонируем материал, если он общий
+			  if (node.material === node.material) { // проверка на shared
+				node.material = node.material.clone();
+			  }
+			  
+			  if (node.material.color) {
+				node.material.color.copy(color);
+				node.material.needsUpdate = true;
+				changedCount++;
+			  }
+			}
+		  });
+
+		  addDebug(`Цвет части "${modelData.name}" изменён (${changedCount} материалов)`, 'success');
+
+		  // Обновляем UI (маленький и большой список)
+		  updateModelsList();
+		  syncLargeModalIfOpen(); // если у вас есть эта функция из предыдущего разговора
+		};
 
         function updateV2ModelStats() {
           let meshes = 0, vertices = 0;
@@ -1634,18 +2013,86 @@
 				reader.readAsArrayBuffer(gltfFile);
 			});
 		}
-        window.v2_toggleModelVisibility = function(modelId) {
-          const modelData = v2.modelsMap.get(modelId);
-          if (!modelData || !modelData.mesh) return;
+window.removeModel = function(id) {
+    const modelData = v2.modelsMap.get(id);
+    if (!modelData) {
+        addDebug(`Модель с id ${id} не найдена`, 'warning');
+        return;
+    }
 
-          modelData.visible = !modelData.visible;
-          modelData.mesh.visible = modelData.visible;
+    const mesh = modelData.mesh;           // ← это корневой Group/Object3D части
 
-          recalculateGlobalBoundingBox();
-          updateModelsList();
-          updateV2ModelStats();
-          updateCameraToCenter();
-        };
+    if (mesh) {
+        // 1. Удаляем из multiGroup (главное!)
+        if (mesh.parent) {
+            mesh.parent.remove(mesh);
+        } else if (v2.multiGroup) {
+            v2.multiGroup.remove(mesh);
+        }
+
+        // 2. Полная очистка памяти (очень важно для GLTF)
+        disposeObject(mesh);
+    }
+
+    // 3. Удаляем из карты
+    v2.modelsMap.delete(id);
+
+    // 4. Обновляем всё остальное
+    recalculateGlobalBoundingBox();
+    updateModelsList();
+    updateV2ModelStats();
+    updateCameraToCenter();   // если нужно
+
+    if (typeof syncLargeModalIfOpen === 'function') syncLargeModalIfOpen();
+
+    addDebug(`🗑️ Удалена часть: ${modelData.name} (id: ${id})`, 'success');
+};
+
+function disposeObject(object) {
+    if (!object) return;
+
+    object.traverse((node) => {
+        if (node.isMesh) {
+            // Геометрия
+            if (node.geometry) {
+                node.geometry.dispose();
+            }
+
+            // Материалы
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            materials.forEach((mat) => {
+                if (!mat) return;
+
+                // Текстуры
+                if (mat.map) mat.map.dispose();
+                if (mat.normalMap) mat.normalMap.dispose();
+                if (mat.roughnessMap) mat.roughnessMap.dispose();
+                if (mat.metalnessMap) mat.metalnessMap.dispose();
+                if (mat.emissiveMap) mat.emissiveMap.dispose();
+                // ... добавь другие карты, если используешь
+
+                mat.dispose();
+            });
+        }
+    });
+
+    // Если это анимированная модель — можно очистить анимации
+    if (object.animations) {
+        object.animations.length = 0;
+    }
+}
+
+function syncLargeModalIfOpen() {
+  const modal = document.getElementById('large-model-list-modal');
+  if (!modal || modal.style.display !== 'block') return;  // модалка закрыта → ничего не делаем
+
+  const smallList = document.getElementById('v2-model-list');
+  const largeContent = document.getElementById('large-model-list-content');
+
+  if (smallList && largeContent) {
+    largeContent.innerHTML = smallList.innerHTML;
+  }
+}
 
         window.v2_centerScene = function() {
           if (!v2.hasModels || !v2.multiGroup) {
@@ -1984,6 +2431,7 @@ setTimeout(function() {
         }
     }
 
+
     function highlightObject(object) {
         clearHighlight();
         
@@ -2131,7 +2579,7 @@ function setupPreviewMode() {
     scene.add(ambientLight);
     
     // Добавляем яркие направленные источники со всех сторон
-    const light1 = new THREE.DirectionalLight(0xffffff, 1.2); // Увеличено с 0.8 до 1.2
+    const light1 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.8 до 1.2
     light1.position.set(1, 1, 1);
     light1.name = 'preview_light1';
     scene.add(light1);
@@ -2141,19 +2589,19 @@ function setupPreviewMode() {
     light2.name = 'preview_light2';
     scene.add(light2);
     
-    const light3 = new THREE.DirectionalLight(0xffffff, 0.8); // Увеличено с 0.3 до 0.8
+    const light3 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.3 до 0.8
     light3.position.set(0, 1, 0);
     light3.name = 'preview_light3';
     scene.add(light3);
     
     // Добавляем свет снизу для подсветки теневых областей
-    const light4 = new THREE.DirectionalLight(0xffffff, 0.6);
+    const light4 = new THREE.DirectionalLight(0xffffff, 1.0);
     light4.position.set(0, -1, 0);
     light4.name = 'preview_light4';
     scene.add(light4);
     
     // Добавляем свет сзади
-    const light5 = new THREE.DirectionalLight(0xffffff, 0.7);
+    const light5 = new THREE.DirectionalLight(0xffffff, 1.0);
     light5.position.set(0, 0, 1);
     light5.name = 'preview_light5';
     scene.add(light5);
@@ -2250,6 +2698,560 @@ setTimeout(() => {
         addDebug('💡 ON = 3D режим (с тенями), OFF = Preview режим (яркое равномерное освещение)', 'info');
     }
 }, 2000);
+</script>
+<script>
+// ==================== Режим линейки (вариант 2) ====================
+let rulerActive = false;
+let rulerPoints = [];
+let rulerLine = null;
+let rulerStartSphere = null;
+let rulerEndSphere = null;
+let rulerTextSprite = null;   // для текста в 3D (опционально)
+
+function clearRuler() {
+    if (rulerLine)           { scene.remove(rulerLine);           rulerLine = null; }
+    if (rulerStartSphere)    { scene.remove(rulerStartSphere);    rulerStartSphere = null; }
+    if (rulerEndSphere)      { scene.remove(rulerEndSphere);      rulerEndSphere = null; }
+    if (rulerTextSprite)     { scene.remove(rulerTextSprite);     rulerTextSprite = null; }
+    rulerPoints = [];
+    document.getElementById('ruler-result').innerHTML = '';
+}
+
+function createMeasurePoint(pos, isStart = true) {
+    const geometry = new THREE.SphereGeometry(0.09, 16, 12);
+    const material = new THREE.MeshBasicMaterial({
+        color: isStart ? 0x44ff88 : 0xffaa44,
+        transparent: true,
+        opacity: 0.85
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.copy(pos);
+    scene.add(sphere);
+    return sphere;
+}
+function drawRulerLine() {
+    if (rulerPoints.length < 2) return;
+
+    if (rulerLine) {
+        scene.remove(rulerLine);
+        rulerLine.geometry.dispose();
+        rulerLine = null;
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(rulerPoints);
+
+    const material = new THREE.LineBasicMaterial({
+        color: 0xffff00,           // жёлтый / любой яркий цвет
+        linewidth: 4,              // можно 3–6, в зависимости от вкуса
+        transparent: true,         // ← важно!
+        opacity: 1.0,              // можно чуть снизить до 0.9–0.95, если хочешь лёгкую полупрозрачность
+        depthTest: false,          // ← ключевая строка! отключает проверку глубины
+        depthWrite: false          // ← предотвращает запись в буфер глубины (часто нужно вместе с depthTest)
+    });
+
+    rulerLine = new THREE.Line(geometry, material);
+    rulerLine.renderOrder = 999;   // ← высокий приоритет рендеринга (на всякий случай)
+
+    scene.add(rulerLine);
+}
+
+function showDistance() {
+    if (rulerPoints.length < 2) return;
+
+    const p1 = rulerPoints[0];
+    const p2 = rulerPoints[1];
+
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dz = p2.z - p1.z;
+
+    const dist = p1.distanceTo(p2);
+
+    const html = `
+        <strong style="color:#ffdd66;">Расстояние: ${dist.toFixed(3)} м</strong><br>
+        <span style="color:#ff5555;">X:</span> ${dx.toFixed(3)} м<br>
+        <span style="color:#55ff55;">Y:</span> ${dy.toFixed(3)} м<br>
+        <span style="color:#4488ff;">Z:</span> ${dz.toFixed(3)} м
+    `;
+
+    document.getElementById('ruler-result').innerHTML = html;
+}
+
+window.toggleRuler = function() {
+    rulerActive = !rulerActive;
+    
+    const btn = document.getElementById('measure-btn');
+    if (btn) {
+        btn.textContent = `📏 Линейка (${rulerActive ? 'вкл' : 'выкл'})`;
+        btn.className = rulerActive ? 'btn success' : 'btn';
+    }
+
+    if (!rulerActive) {
+        clearRuler();
+        addDebug('Линейка выключена', 'info');
+    } else {
+        clearRuler(); // на всякий случай при включении
+        document.getElementById('ruler-result').innerHTML = 'Кликните первую точку...';
+        addDebug('Линейка включена — кликните по модели', 'success');
+    }
+};
+
+// ─── Обработчик клика по canvas ─────────────────────────────────────
+renderer.domElement.addEventListener('click', function(event) {
+    // Пропускаем если зажат Ctrl (чтобы не мешать существующему выделению)
+    if (event.ctrlKey || !rulerActive) return;
+
+    // Предотвращаем конфликт с orbit controls, если нужно
+    // event.preventDefault();  // можно включить, если мешает
+
+    const rect = renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    // Собираем все меши (можно оптимизировать, если моделей много)
+    const meshes = [];
+    scene.traverse(node => {
+        if (node.isMesh) meshes.push(node);
+    });
+
+    const intersects = raycaster.intersectObjects(meshes, false);
+
+    if (intersects.length > 0) {
+        const point = intersects[0].point.clone();
+
+        rulerPoints.push(point);
+
+        if (rulerPoints.length === 1) {
+            rulerStartSphere = createMeasurePoint(point, true);
+            document.getElementById('ruler-result').innerHTML = 'Теперь вторую точку...';
+        }
+        else if (rulerPoints.length === 2) {
+            rulerEndSphere = createMeasurePoint(point, false);
+            drawRulerLine();
+            showDistance();
+
+            // Можно оставить измерение и ждать выключения режима,
+            // либо автоматически очистить после показа:
+            // setTimeout(clearRuler, 8000); // авто-очистка через 8 сек
+        }
+        else {
+            // третий и последующие клики → новая линейка
+            clearRuler();
+            rulerPoints.push(point);
+            rulerStartSphere = createMeasurePoint(point, true);
+            document.getElementById('ruler-result').innerHTML = 'Теперь вторую точку...';
+        }
+    }
+});
+
+// Очищаем линейку при полной очистке сцены
+const originalClearModel = window.clearModel;
+window.clearModel = function() {
+    clearRuler();
+    if (originalClearModel) originalClearModel();
+};
+
+const originalV2Clear = window.v2_clearAllModels;
+window.v2_clearAllModels = function(...args) {
+    clearRuler();
+    if (originalV2Clear) originalV2Clear(...args);
+};
+
+addDebug('Инструмент линейки (вариант 2) загружен', 'info');
+// Показ/скрытие панели информации
+document.getElementById('info-toggle-container').addEventListener('click', function() {
+  const panel = document.getElementById('info-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+// Закрытие по клику вне панели (опционально)
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('info-panel');
+  const button = document.getElementById('info-toggle-container');
+  if (panel.style.display === 'block' && !panel.contains(e.target) && !button.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
+
+addDebug('Кнопка справки добавлена в правый верхний угол', 'success');
+
+let originalParent = null;
+
+function openLargeModelList() {
+  const smallContainer = document.getElementById('v2-model-list');
+  if (!smallContainer) return;
+
+  const modal = document.getElementById('large-model-list-modal');
+  const largeContent = document.getElementById('large-model-list-content');
+
+  // Сохраняем родителя и перемещаем содержимое
+  originalParent = smallContainer.parentNode;
+  while (smallContainer.firstChild) {
+    largeContent.appendChild(smallContainer.firstChild);
+  }
+
+  modal.style.display = 'block';
+  setTimeout(() => { modal.style.opacity = '1'; }, 10);
+}
+
+function closeLargeModelList() {
+  const modal = document.getElementById('large-model-list-modal');
+  const largeContent = document.getElementById('large-model-list-content');
+  const smallContainer = document.getElementById('v2-model-list');
+
+  if (!smallContainer || !originalParent) return;
+
+  // Возвращаем содержимое обратно
+  while (largeContent.firstChild) {
+    smallContainer.appendChild(largeContent.firstChild);
+  }
+
+  modal.style.opacity = '0';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 300);
+
+  originalParent = null;
+}
+// Генерирует n контрастных цветов в hex-формате
+function generateContrastingColors(count) {
+  const colors = [];
+  const goldenRatio = 0.618033988749895; // для равномерного распределения по цветовому кругу
+  
+  for (let i = 0; i < count; i++) {
+    // Hue — золотое сечение для максимальной разницы
+    const hue = (i * goldenRatio) % 1;
+    
+    // Насыщенность и яркость — фиксированные, чтобы цвета были яркими и различимыми
+    const saturation = 0.85 + Math.random() * 0.15;  // 85–100%
+    const value = 0.70 + Math.random() * 0.25;       // 70–95%
+    
+    // Преобразование HSV → RGB → Hex
+    const [r, g, b] = hsvToRgb(hue, saturation, value);
+    colors.push(`#${rgbToHex(r, g, b)}`);
+  }
+  
+  return colors;
+}
+
+// Вспомогательные функции HSV → RGB → Hex
+function hsvToRgb(h, s, v) {
+  let r, g, b;
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = v * (1 - s);
+  const q = v * (1 - f * s);
+  const t = v * (1 - (1 - f) * s);
+  
+  switch (i % 6) {
+    case 0: r = v; g = t; b = p; break;
+    case 1: r = q; g = v; b = p; break;
+    case 2: r = p; g = v; b = t; break;
+    case 3: r = p; g = q; b = v; break;
+    case 4: r = t; g = p; b = v; break;
+    case 5: r = v; g = p; b = q; break;
+  }
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function rgbToHex(r, g, b) {
+  return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+window.autoAssignContrastingColors = function() {
+  if (v2.modelsMap.size === 0) {
+    addDebug("Нет загруженных частей для раскрашивания", "warning");
+    return;
+  }
+
+  const parts = Array.from(v2.modelsMap.values());
+  const count = parts.length;
+  
+  // Генерируем столько контрастных цветов, сколько частей
+  const colors = generateContrastingColors(count);
+  
+  let i = 0;
+  v2.modelsMap.forEach((modelData, id) => {
+    const colorHex = colors[i % colors.length]; // на случай если цветов меньше
+    const color = new THREE.Color(colorHex);
+    
+    let changed = 0;
+    
+    modelData.mesh.traverse(node => {
+      if (node.isMesh && node.material) {
+        // Клонируем материал, если он общий (чтобы не менять другие части)
+        if (!node.material.userData?.isCloned) {
+          node.material = node.material.clone();
+          node.material.userData = node.material.userData || {};
+          node.material.userData.isCloned = true;
+        }
+        
+        if (node.material.color) {
+          node.material.color.copy(color);
+          node.material.needsUpdate = true;
+          changed++;
+        }
+      }
+    });
+    
+    addDebug(`Часть "${modelData.name}" → цвет ${colorHex} (${changed} материалов)`, "success");
+    i++;
+  });
+  
+  // Обновляем списки (маленький и большой)
+  updateModelsList();
+  syncLargeModalIfOpen();   // если у вас есть эта функция
+  
+  addDebug(`Авто-раскраска завершена: ${count} частей`, "success");
+};
+// ===== УПРАВЛЕНИЕ ЦВЕТАМИ МОДЕЛЕЙ (JSON) =====
+const colorManager = {
+    colors: {},
+    
+    // Загрузить цвета из JSON строки
+    loadFromJson: function(jsonData) {
+        try {
+            this.colors = JSON.parse(jsonData);
+            const count = Object.keys(this.colors).length;
+            addDebug(`✅ Загружено ${count} цветов из JSON`, 'success');
+            return true;
+        } catch(e) {
+            addDebug(`❌ Ошибка парсинга JSON: ${e.message}`, 'error');
+            return false;
+        }
+    },
+    
+    // Получить цвет для модели
+    getColor: function(modelName) {
+        return this.colors[modelName] || null;
+    },
+    
+    // Сохранить цвет (в память)
+    setColor: function(modelName, colorHex) {
+        this.colors[modelName] = colorHex;
+    },
+    
+    // Экспортировать в JSON строку
+    exportToJson: function() {
+        return JSON.stringify(this.colors, null, 2);
+    },
+    
+    // Применить цвет к модели
+    applyColorToModel: function(model, colorHex) {
+        if (!model) return false;
+        const color = new THREE.Color(colorHex);
+        let changedCount = 0;
+        model.traverse(node => {
+            if (node.isMesh && node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                materials.forEach(mat => {
+                    if (mat.color) {
+                        mat.color.copy(color);
+                        mat.needsUpdate = true;
+                        changedCount++;
+                    }
+                });
+            }
+        });
+        return changedCount > 0;
+    },
+    
+    // Применить цвета ко всем загруженным моделям
+    applyToCurrentModels: function() {
+        let applied = 0;
+        
+        if (window.currentModel && window.lastLoadedModelName) {
+            const color = this.getColor(window.lastLoadedModelName);
+            if (color && this.applyColorToModel(window.currentModel, color)) applied++;
+        }
+        
+        if (window.v2 && window.v2.modelsMap) {
+            window.v2.modelsMap.forEach((modelData) => {
+                const color = this.getColor(modelData.name);
+                if (color && this.applyColorToModel(modelData.mesh, color)) applied++;
+            });
+        }
+        
+        // ←←← ДОБАВЛЕНО: сразу обновляем UI список
+        if (applied > 0) {
+            if (typeof updateModelsList === 'function') updateModelsList();
+            if (typeof syncLargeModalIfOpen === 'function') syncLargeModalIfOpen();
+        }
+        
+        if (applied > 0) addDebug(`✅ Применено ${applied} цветов к моделям`, 'success');
+        return applied;
+    },
+    
+    // СОБРАТЬ ЦВЕТА С ТЕКУЩИХ МОДЕЛЕЙ (исправлено название)
+    collectColorsFromCurrentModels: function() {
+        const newColors = {};
+        
+        // Для одиночной модели
+        if (window.currentModel && window.lastLoadedModelName) {
+            let colorHex = null;
+            window.currentModel.traverse(node => {
+                if (!colorHex && node.isMesh && node.material) {
+                    const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+                    if (mat.color) colorHex = '#' + mat.color.getHexString();
+                }
+            });
+            if (colorHex) newColors[window.lastLoadedModelName] = colorHex;
+        }
+        
+        // Для составных моделей v2
+        if (window.v2 && window.v2.modelsMap) {
+            window.v2.modelsMap.forEach((modelData) => {
+                let colorHex = null;
+                modelData.mesh.traverse(node => {
+                    if (!colorHex && node.isMesh && node.material) {
+                        const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+                        if (mat.color) colorHex = '#' + mat.color.getHexString();
+                    }
+                });
+                if (colorHex) newColors[modelData.name] = colorHex;
+            });
+        }
+        
+        return newColors;
+    }
+};
+
+// ===== СОХРАНИТЬ ВСЕ ЦВЕТА В JSON (СОБИРАЕТ АВТОМАТИЧЕСКИ) =====
+window.saveColorsToJsonFile = function() {
+    // Собираем цвета с текущих моделей (ИСПРАВЛЕНО!)
+    const currentColors = colorManager.collectColorsFromCurrentModels();
+    const count = Object.keys(currentColors).length;
+    
+    if (count === 0) {
+        addDebug('⚠️ Нет загруженных моделей с цветами для сохранения', 'warning');
+        const infoDiv = document.getElementById('json-file-info');
+        if (infoDiv) infoDiv.innerHTML = '⚠️ Нет моделей с цветами';
+        return;
+    }
+    
+    // Сохраняем в память
+    colorManager.colors = currentColors;
+    
+    // Создаем и скачиваем JSON
+    const jsonStr = colorManager.exportToJson();
+    const blob = new Blob([jsonStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'model_colors.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    const infoDiv = document.getElementById('json-file-info');
+    if (infoDiv) infoDiv.innerHTML = `✅ Сохранено ${count} цветов в model_colors.json`;
+    
+    addDebug(`💾 Сохранено ${count} цветов (собрано с текущих моделей)`, 'success');
+};
+
+// ===== ЗАГРУЗИТЬ ЦВЕТА ИЗ JSON — ИСПРАВЛЕННАЯ ВЕРСИЯ =====
+window.loadColorsFromJsonFile = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        addDebug(`📂 Загрузка цветов: ${file.name}...`, 'info');
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const success = colorManager.loadFromJson(event.target.result);
+            
+            if (success) {
+                colorManager.applyToCurrentModels();
+
+                // Обновляем список и пикеры
+                setTimeout(() => {
+                    window.updateModelsListGlobal();   // используем глобальную обёртку
+                    forceUpdateColorPickers();
+                    if (typeof syncLargeModalIfOpen === 'function') syncLargeModalIfOpen();
+                    
+                    addDebug(`✅ Цвета загружены и список обновлён`, 'success');
+                }, 50);
+            } else {
+                addDebug(`❌ Ошибка парсинга JSON`, 'error');
+            }
+        };
+        
+        reader.onerror = function() {
+            addDebug(`❌ Ошибка чтения файла`, 'error');
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+};
+
+// Принудительно обновляет значение всех color picker в списке
+function forceUpdateColorPickers() {
+    if (!v2 || !v2.modelsMap) return;
+
+    v2.modelsMap.forEach((modelData, id) => {
+        const colorHex = colorManager.getColor(modelData.name) || getModelColor(modelData.mesh) || '#ffffff';
+        
+        // Обновляем в маленьком списке
+        const smallPicker = document.querySelector(`input[onchange="changePartColor('${id}', this.value)"]`);
+        if (smallPicker) {
+            smallPicker.value = colorHex;
+        }
+
+        // Обновляем в большом модальном окне (если открыто)
+        const largePicker = document.querySelector(`#large-model-list-content input[onchange="changePartColor('${id}', this.value)"]`);
+        if (largePicker) {
+            largePicker.value = colorHex;
+        }
+    });
+}
+// Глобальная обёртка для updateModelsList
+window.updateModelsListGlobal = function() {
+    if (typeof updateModelsList === 'function') {
+        updateModelsList();
+    } else {
+        console.warn("updateModelsList is still not accessible");
+    }
+};
+// ===== АВТОМАТИЧЕСКАЯ ЗАГРУЗКА ПРИ СТАРТЕ =====
+function autoLoadColorsJson() {
+    fetch('model_colors.json')
+        .then(response => {
+            if (response.ok) return response.text();
+            throw new Error('Файл не найден');
+        })
+        .then(jsonData => {
+            colorManager.loadFromJson(jsonData);
+            addDebug('✅ Автоматически загружен model_colors.json', 'success');
+            
+            const infoDiv = document.getElementById('json-file-info');
+            if (infoDiv) infoDiv.innerHTML = `✅ Автозагрузка: ${Object.keys(colorManager.colors).length} цветов`;
+            
+            setTimeout(() => {
+                colorManager.applyToCurrentModels();
+            }, 500);
+        })
+        .catch(() => {
+            addDebug('ℹ️ Файл model_colors.json не найден', 'info');
+        });
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+setTimeout(() => {
+    autoLoadColorsJson();
+    addDebug('🎨 Система цветов готова. Цвета сохраняются с текущих моделей', 'success');
+}, 1000);
 </script>
   </body>
 </html>
