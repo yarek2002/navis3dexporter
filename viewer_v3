@@ -712,11 +712,11 @@ let clipPlanes = {
 };
 // Настройка слайдеров
 const sliderConfigs = [
-    { id: 'clipX1', plane: 'X1', side: 'right' },
+    { id: 'clipX', plane: 'X1', side: 'right' },
     { id: 'clipX2', plane: 'X2', side: 'left' },
-    { id: 'clipY1', plane: 'Y1', side: 'top' },
+    { id: 'clipY', plane: 'Y1', side: 'top' },
     { id: 'clipY2', plane: 'Y2', side: 'bottom' },
-    { id: 'clipZ1', plane: 'Z1', side: 'back' },
+    { id: 'clipZ', plane: 'Z1', side: 'back' },
     { id: 'clipZ2', plane: 'Z2', side: 'front' }
 ];
 
@@ -731,22 +731,22 @@ sliderConfigs.forEach(config => {
 function updatePlane(value) {
 
     if (config.side === 'right') {
-        clipPlanes.X1.constant = -value;   // ← ВАЖНО
+        clipPlanes.X1.constant = -value;   // min slider => начальное положение
     } 
     else if (config.side === 'left') {
-        clipPlanes.X2.constant = value;
+        clipPlanes.X2.constant = -value;
     }
     else if (config.side === 'top') {
-        clipPlanes.Y1.constant = -value;   // ← ВАЖНО
+        clipPlanes.Y1.constant = -value;
     }
     else if (config.side === 'bottom') {
-        clipPlanes.Y2.constant = value;
+        clipPlanes.Y2.constant = -value;
     }
     else if (config.side === 'back') {
         clipPlanes.Z1.constant = -value;   // ← ВАЖНО
     }
     else if (config.side === 'front') {
-        clipPlanes.Z2.constant = value;
+        clipPlanes.Z2.constant = -value;   // спереди -> назад
     }
     
     if (clippingEnabled) {
@@ -835,6 +835,8 @@ function updatePlane(value) {
     let materialsUpdated = 0;
 
     scene.traverse((node) => {
+        // Helper-плоскости должны быть видимыми и не должны сами клиппиться.
+        if (node.isMesh && node.userData && node.userData.isClipHelper) return;
         if (node.isMesh && node.material) {
             const materials = Array.isArray(node.material) ? node.material : [node.material];
             
@@ -979,7 +981,7 @@ function updateClipPlaneHelpers() {
     const colors = {
         X1: 0xff4444, X2: 0xff8888,
         Y1: 0x44ff44, Y2: 0x88ff88,
-        Z1: 0x4444ff, Z2: 0x88ff88
+        Z1: 0x4444ff, Z2: 0x8888ff
     };
 
     Object.keys(clipPlanes).forEach(key => {
@@ -996,6 +998,8 @@ function updateClipPlaneHelpers() {
                 depthWrite: false
             });
             helper = new THREE.Mesh(geometry, material);
+            // Флаг для исключения helper-объектов из общей клиппинг-обработки.
+            helper.userData.isClipHelper = true;
             scene.add(helper);
             clipPlaneHelpers[key] = helper;
         }
