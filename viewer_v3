@@ -5,6 +5,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
     <style>
       body { margin: 0; overflow: hidden; background: #1a1a2e; font-family: 'Segoe UI', Arial; }
       
@@ -581,16 +582,36 @@
       </div>
 	  </div>
 	</details>
-    <!-- Тумблер теней в правом верхнем углу -->
-	<div id="shadows-toggle-container" style="position: absolute; top: 20px; right: 430px; z-index: 999; background: rgba(30, 30, 40, 0.95); padding: 10px 15px; border-radius: 12px; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 12px;">
-	  <span style="color: #ddd; font-size: 14px;">💡 Тени</span>
-	  <label class="toggle" style="margin: 0;">
-		<input type="checkbox" id="shadowsEnabledToggle" checked>
-		<span class="toggle-ui"></span>
-		<span class="toggle-state" id="shadowsEnabledState" style="min-width: 42px; text-align: right; color: #aaa;">ON</span>
-	  </label>
-	</div>
-	<!-- Кнопка "Информация" в правом верхнем углу -->
+<!-- Блок переключателей: теперь колонкой -->
+<div id="shadows-toggle-container" style="position: absolute; top: 20px; right: 430px; z-index: 999; background: rgba(30, 30, 40, 0.95); padding: 12px 18px; border-radius: 12px; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); 
+     display: flex; 
+     flex-direction: column; 
+     gap: 12px; 
+     min-width: 200px;">
+  
+  <!-- Тени -->
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px;">
+    <span style="color: #ddd; font-size: 14px;">💡 Тени</span>
+    <label class="toggle" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+      <input type="checkbox" id="shadowsEnabledToggle" checked>
+      <span class="toggle-ui"></span>
+      <span class="toggle-state" id="shadowsEnabledState" style="min-width: 35px; text-align: right; color: #aaa; font-size: 12px;">ON</span>
+    </label>
+  </div>
+
+  <!-- Режим первого лица -->
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px;">
+    <span style="color: #ddd; font-size: 14px;">👤📹 От первого лица</span>
+    <label class="toggle" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+      <input type="checkbox" id="firstPersonToggle">
+      <span class="toggle-ui"></span>
+      <span class="toggle-state" id="firstPersonState" style="min-width: 35px; text-align: right; color: #aaa; font-size: 12px;">OFF</span>
+    </label>
+  </div>
+
+</div>
+
+	<!-- Кнопка "Информация" в правом нижнем углу -->
 <div id="info-toggle-container" style="position: absolute; bottom: 20px; right: 20px; z-index: 1000; background: rgba(30, 30, 40, 0.95); padding: 8px 12px; border-radius: 50%; border: 1px solid #4a6fa5; backdrop-filter: blur(5px); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.6);">
   <span style="color: #88aaff; font-size: 24px; font-weight: bold; line-height: 1;">ℹ️</span>
 </div>
@@ -602,7 +623,7 @@
     <button onclick="document.getElementById('info-panel').style.display='none'" style="background: none; border: none; color: #ff8888; font-size: 24px; cursor: pointer;">×</button>
   </div>
   
-  <ul style="line-height: 1.6; padding-left: 20px; margin: 0;">
+<ul style="line-height: 1.6; padding-left: 20px; margin: 0;">
     <li><strong>Вращение</strong> — зажатая левая кнопка мыши + движение</li>
     <li><strong>Перемещение</strong> — зажатая правая кнопка мыши + движение</li>
     <li><strong>Масштаб</strong> — колесо мыши или "щипок" на тач-устройствах</li>
@@ -610,14 +631,38 @@
     <li><strong>Измерение расстояния</strong> — включи «📏 Линейка», кликни две точки на модели</li>
     <li><strong>Срез модели</strong> — включи тумблер «Срез» и двигай ползунки X/Y/Z</li>
     <li><strong>Тени / режим просмотра</strong> — тумблер «💡 Тени» (ON = реалистичные тени, OFF = яркий preview)</li>
+    
+    <!-- Новый пункт про режим первого лица -->
+    <li><strong>Режим от первого лица (fly inside)</strong> — тумблер «👤 1st Person» в правом верхнем углу<br>
+        <span style="color:#88aaff; font-size: 13px;">
+            • WASD — движение вперёд/назад/влево/вправо<br>
+            • Space — подняться вверх<br>
+            • Shift — опуститься вниз<br>
+            • Мышь — свободный обзор (автоматический захват курсора)<br>
+            • ESC — выйти из режима
+        </span>
+    </li>
+    
+    <li><strong>Скорость полёта</strong> — слайдер под тумблером «1st Person» (рекомендуется 8–15 внутри зданий)</li>
+    
     <li><strong>Загрузка модели</strong> — через номер, имя файла или локальный .glb / .gltf</li>
     <li><strong>Выбор частей</strong> — Ctrl + клик по объекту (показывает имя модели)</li>
     <li><strong>Очистка</strong> — кнопка «🗑️ Очистить»</li>
-	<li><strong>Сетка имеет размер 1x1 метр</strong></li>
-  </ul>
+    <li><strong>Сетка имеет размер 1x1 метр</strong></li>
+</ul>
+
+<!-- Уведомление при включении First Person Mode -->
+<div id="fp-notification" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 20, 35, 0.95); color: #fff; padding: 20px 30px; border-radius: 12px; border: 2px solid #4aa56f; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 3000; text-align: center; backdrop-filter: blur(8px); min-width: 320px;">
+  <div style="font-size: 18px; margin-bottom: 8px; color: #4aa56f;">
+    👤 Режим от первого лица активирован
+  </div>
+  <div style="font-size: 15px; line-height: 1.5;">
+    Для выхода нажмите <strong style="color:#ffdd66;">ESC</strong>
+  </div>
+</div>
   
   <div style="margin-top: 20px; text-align: center; color: #aaa; font-size: 13px;">
-    Viewer version: 2026_v4 • Control based on Three.js + OrbitControls • Developed by: Chasovskoy Y.A.
+    Viewer version: 2026_v5 • Control based on Three.js + OrbitControls • Developed by: Chasovskoy Y.A.
   </div>
 </div>
 
@@ -3261,6 +3306,114 @@ setTimeout(() => {
     autoLoadColorsJson();
     addDebug('🎨 Система цветов готова. Цвета сохраняются с текущих моделей', 'success');
 }, 1000);
+</script>
+<script>
+// ====================== FIRST PERSON MODE (в правом верхнем углу) ======================
+let pointerControls = null;
+let isFirstPerson = false;
+let moveSpeed = 1.0;   // скорость полёта в метрах в секунду
+
+const keys = {};
+
+function initFirstPersonControls() {
+  if (pointerControls) return;
+  
+  pointerControls = new THREE.PointerLockControls(camera, document.body);
+  scene.add(pointerControls.getObject());
+
+  document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  document.addEventListener('keyup',   (e) => { keys[e.code] = false; });
+
+  // Автоматический выход при ESC
+  pointerControls.addEventListener('unlock', () => {
+    if (isFirstPerson) {
+      document.getElementById('firstPersonToggle').checked = false;
+      toggleFirstPerson(false);
+    }
+  });
+
+  addDebug('👤 PointerLockControls готов', 'success');
+}
+
+function toggleFirstPerson(enabled) {
+  isFirstPerson = enabled;
+  const stateEl = document.getElementById('firstPersonState');
+
+  if (enabled) {
+    controls.enabled = false;                    // выключаем орбиту
+    pointerControls.lock();                      // захватываем курсор
+    camera.near = 0.01;                          // важно! чтобы не резало модель изнутри
+    camera.updateProjectionMatrix();
+    
+    stateEl.textContent = 'ON';
+    stateEl.style.color = '#4aa56f';
+    addDebug('👤 Режим от первого лица включён — можно залетать внутрь здания', 'success');
+  } else {
+    if (pointerControls.isLocked) pointerControls.unlock();
+    controls.enabled = true;
+    camera.near = 0.1;
+    camera.updateProjectionMatrix();
+    
+    stateEl.textContent = 'OFF';
+    stateEl.style.color = '#aaa';
+    addDebug('👤 Режим первого лица выключен', 'info');
+  }
+}
+
+function updateFirstPersonMovement(delta) {
+  if (!isFirstPerson || !pointerControls || !pointerControls.isLocked) return;
+
+  const direction = new THREE.Vector3();
+  pointerControls.getDirection(direction);
+
+  const right = new THREE.Vector3();
+  right.crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
+
+  let moveVector = new THREE.Vector3();
+
+  if (keys['KeyW']) moveVector.add(direction);
+  if (keys['KeyS']) moveVector.sub(direction);
+  if (keys['KeyA']) moveVector.sub(right);
+  if (keys['KeyD']) moveVector.add(right);
+  if (keys['Space']) moveVector.y += 1;
+  if (keys['ShiftLeft'] || keys['ShiftRight']) moveVector.y -= 1;
+
+  if (moveVector.lengthSq() > 0) {
+    moveVector.normalize().multiplyScalar(moveSpeed * delta);
+    camera.position.add(moveVector);
+  }
+}
+
+// Инициализация
+setTimeout(() => {
+  initFirstPersonControls();
+
+  const fpToggle = document.getElementById('firstPersonToggle');
+  if (fpToggle) {
+    fpToggle.addEventListener('change', (e) => {
+      toggleFirstPerson(e.target.checked);
+    });
+  }
+
+  addDebug('✅ Переключатель "1st Person" добавлен в правый верхний угол', 'success');
+}, 1200);
+
+// Обновлённый animate()
+const oldAnimate = animate;
+animate = function() {
+  requestAnimationFrame(animate);
+
+  const delta = 0.016;
+
+  if (isFirstPerson) {
+    updateFirstPersonMovement(delta);
+  } else if (controls) {
+    controls.update();
+  }
+
+  if (showClipPlanes) updateClipPlaneHelpers();
+  if (renderer && scene && camera) renderer.render(scene, camera);
+};
 </script>
   </body>
 </html>
