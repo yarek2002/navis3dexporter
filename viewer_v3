@@ -439,14 +439,7 @@
 		</div>
       <div style="margin-top:15px;border-top:1px solid #3a3a5a;padding-top:10px;">
         <h3 style="color:#ffcc66;">✂️ Срез модели</h3>
-		<div class="toggle-row">
-		  <div class="toggle-label">Показывать плоскости среза</div>
-		  <label class="toggle" title="Включить/выключить видимость плоскостей">
-			<input type="checkbox" id="showClipPlanesToggle">
-			<span class="toggle-ui"></span>
-			<span class="toggle-state" id="showClipPlanesState">OFF</span>
-		  </label>
-		</div>
+
         <div class="toggle-row">
           <div class="toggle-label">Срез</div>
           <label class="toggle" title="Включить/выключить срез">
@@ -455,21 +448,30 @@
             <span class="toggle-state" id="clipEnabledState">OFF</span>
           </label>
         </div>
+		
+		<div class="toggle-row">
+		  <div class="toggle-label">Показывать плоскости среза</div>
+		  <label class="toggle" title="Включить/выключить видимость плоскостей">
+			<input type="checkbox" id="showClipPlanesToggle">
+			<span class="toggle-ui"></span>
+			<span class="toggle-state" id="showClipPlanesState">OFF</span>
+		  </label>
+		</div>
 
 		<div>
-		  <label>Срез X (справа)</label>
+		  <label>Срез X (слева)</label>
 		  <input type="range" id="clipX" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
-		  <label>Срез X2 (слева)</label>
+		  <label>Срез X2 (справа)</label>
 		  <input type="range" id="clipX2" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
-		  <label>Срез Y (сверху)</label>
+		  <label>Срез Y (снизу)</label>
 		  <input type="range" id="clipY" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
-		  <label>Срез Y2 (снизу)</label>
+		  <label>Срез Y2 (сверху)</label>
 		  <input type="range" id="clipY2" min="-15" max="15" step="0.0001" value="-15" style="width:100%;">
 		</div>
 		<div>
@@ -603,7 +605,7 @@
   <ul style="line-height: 1.6; padding-left: 20px; margin: 0;">
     <li><strong>Вращение</strong> — зажатая левая кнопка мыши + движение</li>
     <li><strong>Перемещение</strong> — зажатая правая кнопка мыши + движение</li>
-    <li><strong>Масштаб</strong> — колесо мыши или pinch на тач-устройствах</li>
+    <li><strong>Масштаб</strong> — колесо мыши или "щипок" на тач-устройствах</li>
     <li><strong>Сброс вида</strong> — кнопка «📷 Сбросить камеру»</li>
     <li><strong>Измерение расстояния</strong> — включи «📏 Линейка», кликни две точки на модели</li>
     <li><strong>Срез модели</strong> — включи тумблер «Срез» и двигай ползунки X/Y/Z</li>
@@ -2578,38 +2580,41 @@ function setupPreviewMode() {
     });
     
     // Создаем яркое равномерное освещение
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Увеличено с 1.0 до 1.5
+    const ambientLight = new THREE.AmbientLight(0xffffff, 3); // Увеличено с 1.0 до 1.5
     ambientLight.name = 'preview_ambient';
     scene.add(ambientLight);
     
     // Добавляем яркие направленные источники со всех сторон
-    const light1 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.8 до 1.2
-    light1.position.set(1, 1, 1);
+    const light1 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.8 до 1.2
+    light1.position.set(2, 0, 0);
     light1.name = 'preview_light1';
     scene.add(light1);
     
-    const light2 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.5 до 1.0
-    light2.position.set(-1, -0.5, -1);
+    const light2 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.5 до 1.0
+    light2.position.set(0, 2, 0);
     light2.name = 'preview_light2';
     scene.add(light2);
     
-    const light3 = new THREE.DirectionalLight(0xffffff, 1.0); // Увеличено с 0.3 до 0.8
-    light3.position.set(0, 1, 0);
+    const light3 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.3 до 0.8
+    light3.position.set(0, 0, 2);
     light3.name = 'preview_light3';
     scene.add(light3);
     
-    // Добавляем свет снизу для подсветки теневых областей
-    const light4 = new THREE.DirectionalLight(0xffffff, 1.0);
-    light4.position.set(0, -1, 0);
+    const light4 = new THREE.DirectionalLight(0xffffff, 2);
+    light4.position.set(0, -2, 0);
     light4.name = 'preview_light4';
     scene.add(light4);
     
-    // Добавляем свет сзади
-    const light5 = new THREE.DirectionalLight(0xffffff, 1.0);
-    light5.position.set(0, 0, 1);
+
+    const light5 = new THREE.DirectionalLight(0xffffff, 2);
+    light5.position.set(0, 0, -2);
     light5.name = 'preview_light5';
     scene.add(light5);
-    
+
+    const light6 = new THREE.DirectionalLight(0xffffff, 2);
+    light6.position.set(-2, 0, 0);
+    light6.name = 'preview_light6';
+    scene.add(light6);
     // Выключаем тени у preview света
     [light1, light2, light3, light4, light5].forEach(light => {
         light.castShadow = false;
