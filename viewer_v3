@@ -5,7 +5,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
     <style>
       body { margin: 0; overflow: hidden; background: #1a1a2e; font-family: 'Segoe UI', Arial; }
       
@@ -601,11 +600,21 @@
 
   <!-- Режим первого лица -->
   <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px;">
-    <span style="color: #ddd; font-size: 14px;">👤📹 От первого лица</span>
+    <span style="color: #ddd; font-size: 14px; min-width: 60px;">✈️ Fly Mode</span>
     <label class="toggle" style="margin: 0; display: flex; align-items: center; gap: 8px;">
       <input type="checkbox" id="firstPersonToggle">
       <span class="toggle-ui"></span>
       <span class="toggle-state" id="firstPersonState" style="min-width: 35px; text-align: right; color: #aaa; font-size: 12px;">OFF</span>
+    </label>
+  </div>
+  
+  <!-- Каркасный режим -->
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px;">
+    <span style="color: #ddd; font-size: 14px;">Каркас (wireframe)</span>
+     <label class="toggle" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+      <input type="checkbox" id="wireframeToggle">
+      <span class="toggle-ui"></span>
+      <span class="toggle-state" id="wireframeState" style="min-width: 35px; text-align: right; color: #aaa; font-size: 12px;">OFF</span>
     </label>
   </div>
 
@@ -632,22 +641,31 @@
     <li><strong>Срез модели</strong> — включи тумблер «Срез» и двигай ползунки X/Y/Z</li>
     <li><strong>Тени / режим просмотра</strong> — тумблер «💡 Тени» (ON = реалистичные тени, OFF = яркий preview)</li>
     
-    <!-- Новый пункт про режим первого лица -->
-    <li><strong>Режим от первого лица (fly inside)</strong> — тумблер «👤 1st Person» в правом верхнем углу<br>
+    <!-- Режим первого лица -->
+    <li><strong>Режим Fly mode</strong> — тумблер «✈️ Fly Mode» в правом верхнем углу<br>
         <span style="color:#88aaff; font-size: 13px;">
             • WASD — движение вперёд/назад/влево/вправо<br>
             • Space — подняться вверх<br>
-            • Shift — опуститься вниз<br>
-            • Мышь — свободный обзор (автоматический захват курсора)<br>
-            • ESC — выйти из режима
+            • F — опуститься вниз<br>
+            • Shift+клавиши сверху — ускорение<br>
+            • Мышь — поворот вправо/влево<br>
         </span>
     </li>
     
-    <li><strong>Скорость полёта</strong> — слайдер под тумблером «1st Person» (рекомендуется 8–15 внутри зданий)</li>
-    
     <li><strong>Загрузка модели</strong> — через номер, имя файла или локальный .glb / .gltf</li>
-    <li><strong>Выбор частей</strong> — Ctrl + клик по объекту (показывает имя модели)</li>
-    <li><strong>Очистка</strong> — кнопка «🗑️ Очистить»</li>
+    
+    <!-- Контекстное меню (подробно) -->
+    <li><strong>Контекстное меню (Ctrl + ПКМ)</strong> — дополнительные действия с моделью:<br>
+        <span style="color:#88aaff; font-size: 13px;">
+            • <strong>👁️ Скрыть модель</strong> — временно скрыть выбранную часть (повторный клик — показать)<br>
+            • <strong>🗑️ Удалить модель</strong> — полностью удалить часть из сцены<br>
+            • <strong>🎨 Изменить цвет...</strong> — открыть палитру для изменения цвета материала<br>
+            • <strong>🔲 Каркас (Wireframe)</strong> — переключить отображение в каркасный режим<br>
+            • <strong>🌫️ Прозрачность...</strong> — настроить прозрачность материала (0–100%)<br>
+        </span>
+    </li>
+    
+    <li><strong>Очистка</strong> — кнопка «🗑️ Очистить» (удаляет все модели)</li>
     <li><strong>Сетка имеет размер 1x1 метр</strong></li>
 </ul>
 
@@ -700,6 +718,33 @@
 		</div>
 	  </div>
 	</div>
+		<!-- Контекстное меню (ПКМ) -->
+	<div id="context-menu" style="display: none; position: absolute; background: rgba(30,30,40,0.98); border: 1px solid #4a6fa5; border-radius: 8px; padding: 6px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.6); z-index: 10000; min-width: 180px; font-size: 14px; backdrop-filter: blur(6px);">
+	  <div id="context-menu-title" style="padding: 8px 16px; color: #88aaff; font-weight: bold; border-bottom: 1px solid #3a3a5a; margin-bottom: 4px;"></div>
+	  
+	  <div class="context-item" onclick="contextHideModel()">👁️ Скрыть модель</div>
+	  <div class="context-item" onclick="contextDeleteModel()">🗑️ Удалить модель</div>
+	  <div class="context-item" onclick="contextChangeColor()">🎨 Изменить цвет...</div>
+	  <div class="context-item" onclick="contextToggleWireframe()">🔲 Каркас (Wireframe)</div>
+	  <div class="context-item" onclick="contextOpacitySlider()">🌫️ Прозрачность...</div>
+	  
+	  <div style="height: 1px; background: #3a3a5a; margin: 6px 0;"></div>
+	  <div class="context-item" onclick="hideContextMenu()">✕ Закрыть</div>
+	</div>
+
+	<style>
+	  .context-item {
+		padding: 10px 16px;
+		color: #ddd;
+		cursor: pointer;
+		transition: all 0.15s;
+	  }
+	  .context-item:hover {
+		background: #4a6fa5;
+		color: white;
+		padding-left: 20px;
+	  }
+	</style>
     <script>
       // Глобальные переменные
       const MODEL_FROM_URL = "<?= modelParam ?>";
@@ -928,7 +973,7 @@ function updatePlane(value) {
         scene.background = new THREE.Color(0x1a1a2e);
 
         // Камера
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 1000000);
         camera.position.copy(defaultCameraPosition);
         camera.lookAt(defaultCameraTarget);
         
@@ -1514,21 +1559,34 @@ function updateClipPlaneHelpers() {
         `;
       }
 
-      // Анимация
-      function animate() {
-        requestAnimationFrame(animate);
-        
-        if (controls) {
-          controls.update();
+// ====================== АНИМАЦИЯ ======================
+let isFlyMode = false;   // ← ОБЯЗАТЕЛЬНО объявляем здесь, до animate!
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    const delta = 0.016;   // примерно 60 fps
+
+    if (isFlyMode) {
+        if (typeof updateFlyMovement === 'function') {
+            updateFlyMovement(delta);
         }
-        if (showClipPlanes) {
-			updateClipPlaneHelpers();
-		}
-        if (renderer && scene && camera) {
-          renderer.render(scene, camera);
-        }
-      }
-      animate();
+    } 
+    else if (controls) {
+        controls.update();
+    }
+
+    // Обновление плоскостей среза
+    if (showClipPlanes && typeof updateClipPlaneHelpers === 'function') {
+        updateClipPlaneHelpers();
+    }
+
+    if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+    }
+}
+
+animate();
 
       // Обработка изменения размера окна
       window.addEventListener('resize', function() {
@@ -1780,33 +1838,39 @@ function updateClipPlaneHelpers() {
           }
         }
 
-        function updateCameraToCenter() {
-          if (!v2.hasModels || !camera || !controls) return;
-          
-          const center = v2.sceneCenter.clone();
-          const size = v2.sceneSize.clone();
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const safeMaxDim = Math.max(maxDim, 0.1);
-          
-          const fov = camera.fov * (Math.PI / 180);
-          let distance = safeMaxDim / Math.sin(fov / 2);
-          distance *= 1.5;
-          distance = Math.min(Math.max(distance, 1), 100000);
-          
-          camera.position.set(
-            center.x + distance,
-            center.y + distance * 0.3,
-            center.z + distance
-          );
-          camera.lookAt(center.x, center.y, center.z);
-          
-          controls.target.copy(center);
-          controls.update();
-          
-          camera.near = Math.max(0.01, maxDim / 1000);
-          camera.far = Math.max(1000, distance * 10, maxDim * 10);
-          camera.updateProjectionMatrix();
-        }
+function updateCameraToCenter() {
+    if (!v2.hasModels || !camera || !controls) return;
+
+    const center = v2.sceneCenter.clone();
+    const size = v2.sceneSize.clone();
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const safeMaxDim = Math.max(maxDim, 0.1);
+
+    const fov = camera.fov * (Math.PI / 180);
+    let distance = safeMaxDim / Math.sin(fov / 2) * 1.8;
+
+    distance = Math.max(distance, 1);
+
+    // Позиционируем камеру
+    camera.position.set(
+        center.x + distance * 0.8,
+        center.y + distance * 0.6,
+        center.z + distance
+    );
+    camera.lookAt(center);
+
+    controls.target.copy(center);
+    controls.update();
+
+    // === ИСПРАВЛЕНИЕ ДЛЯ FLY MODE ===
+    // Делаем near очень маленьким, чтобы можно было подлетать вплотную внутри модели
+    camera.near = 0.001;        // было динамическим и часто слишком большим
+    camera.far  = Math.max(10000, distance * 8, maxDim * 15);
+
+    camera.updateProjectionMatrix();
+
+    addDebug(`📷 Камера обновлена | near: ${camera.near.toFixed(4)} | far: ${camera.far.toFixed(0)} | maxDim: ${maxDim.toFixed(2)}`, 'info');
+}
 
         function updateFileLists() {
           const gltfList = el('v2-gltf-files-list');
@@ -1884,7 +1948,7 @@ function updateClipPlaneHelpers() {
 				<!-- Левая часть -->
 				<div style="flex:1;">
 				  <div class="v2-model-name">${modelData.name}</div>
-				  <div>${visible ? '👁️ Видима' : '👁️ Скрыта'}</div>
+				  <div>${visible ? '👁️ Видима' : '🙈 Скрыта'}</div>
 				</div>
 
 				<!-- Правая часть (цвет + удаление) -->
@@ -1965,7 +2029,7 @@ function getModelColor(meshGroup) {
 
 		  // Обновляем UI (маленький и большой список)
 		  updateModelsList();
-		  syncLargeModalIfOpen(); // если у вас есть эта функция из предыдущего разговора
+		  syncLargeModalIfOpen(); 
 		};
 
         function updateV2ModelStats() {
@@ -1996,74 +2060,82 @@ function getModelColor(meshGroup) {
           }
         }
 
-		function loadModelWithDependencies(gltfFile, modelName) {
-			return new Promise((resolve, reject) => {
-				const reader = new FileReader();
+function loadModelWithDependencies(gltfFile, modelName) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-				reader.onload = function(e) {
-					const arrayBuffer = e.target.result;
-					const loader = new THREE.GLTFLoader();
+        reader.onload = function(e) {
+            const arrayBuffer = e.target.result;
+            const loader = new THREE.GLTFLoader();
 
-					const binUrls = new Map();
-					v2.fileManager.bin.forEach((file, name) => {
-						binUrls.set(name, URL.createObjectURL(file));
-					});
+            // Подготовка URL-ов для .bin файлов
+            const binUrls = new Map();
+            v2.fileManager.bin.forEach((file, name) => {
+                binUrls.set(name, URL.createObjectURL(file));
+            });
 
-					loader.manager.setURLModifier((url) => {
-						if (binUrls.has(url)) return binUrls.get(url);
-						return url;
-					});
+            loader.manager.setURLModifier((url) => {
+                if (binUrls.has(url)) return binUrls.get(url);
+                return url;
+            });
 
-					loader.parse(
-						arrayBuffer,
-						'',
-						function(gltf) {
-							binUrls.forEach(url => URL.revokeObjectURL(url));
+            loader.parse(
+                arrayBuffer,
+                '',
+                function(gltf) {
+                    // Освобождаем ObjectURL
+                    binUrls.forEach(url => URL.revokeObjectURL(url));
 
-							const model = gltf.scene;
-							ensureMultiGroup();
-							
-							v2.multiGroup.add(model);
+                    const model = gltf.scene;
+                    ensureMultiGroup();
 
-							// СОЗДАЕМ modelId ПЕРВЫМ
-							const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
-							
-							// ТЕПЕРЬ добавляем ссылку на модель в каждый меш (modelId уже существует)
-							model.traverse(node => {
-								if (node.isMesh) {
-									node.userData.parentModelName = modelName;
-									node.userData.parentModelId = modelId;
-									node.userData.modelName = modelName;
-								}
-							});
+                    // === ЦЕНТРИРОВАНИЕ КАЖДОЙ ЧАСТИ ===
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
 
-							addDebug(`✅ Часть "${modelName}" добавлена в группу`, 'success');
-							
-							v2.modelsMap.set(modelId, {
-								mesh: model,
-								name: modelName,
-								visible: true
-							});
+                    // Опционально: опустить модель на "пол"
+                    // const size = box.getSize(new THREE.Vector3());
+                    // model.position.y -= size.y / 2;
 
-							resolve({ id: modelId });
-						},
-						undefined,
-						function(error) {
-							binUrls.forEach(url => URL.revokeObjectURL(url));
-							addDebug(`❌ Ошибка парсинга GLTF: ${error.message || error}`, 'error');
-							reject(error);
-						}
-					);
-				};
+                    v2.multiGroup.add(model);
 
-				reader.onerror = function(error) {
-					addDebug(`❌ Ошибка чтения файла GLTF`, 'error');
-					reject(error);
-				};
+                    const modelId = 'v2_model_' + Date.now() + '_' + Math.random().toString(16).slice(2);
 
-				reader.readAsArrayBuffer(gltfFile);
-			});
-		}
+                    model.traverse(node => {
+                        if (node.isMesh) {
+                            node.userData.parentModelName = modelName;
+                            node.userData.parentModelId = modelId;
+                            node.userData.modelName = modelName;
+                        }
+                    });
+
+                    v2.modelsMap.set(modelId, {
+                        mesh: model,
+                        name: modelName,
+                        visible: true,
+                        originalPosition: model.position.clone()
+                    });
+
+                    addDebug(`✅ Часть "${modelName}" загружена и прицентрирована`, 'success');
+                    resolve({ id: modelId });
+                },
+                undefined,
+                function(error) {
+                    binUrls.forEach(url => URL.revokeObjectURL(url));
+                    addDebug(`❌ Ошибка парсинга GLTF "${modelName}": ${error.message || error}`, 'error');
+                    reject(error);
+                }
+            );
+        };
+
+        reader.onerror = function(error) {
+            addDebug(`❌ Ошибка чтения файла ${modelName}`, 'error');
+            reject(error);
+        };
+
+        reader.readAsArrayBuffer(gltfFile);
+    });
+}
 window.removeModel = function(id) {
     const modelData = v2.modelsMap.get(id);
     if (!modelData) {
@@ -2120,14 +2192,12 @@ function disposeObject(object) {
                 if (mat.roughnessMap) mat.roughnessMap.dispose();
                 if (mat.metalnessMap) mat.metalnessMap.dispose();
                 if (mat.emissiveMap) mat.emissiveMap.dispose();
-                // ... добавь другие карты, если используешь
 
                 mat.dispose();
             });
         }
     });
 
-    // Если это анимированная модель — можно очистить анимации
     if (object.animations) {
         object.animations.length = 0;
     }
@@ -2451,307 +2521,389 @@ function syncLargeModalIfOpen() {
       })();
     </script>
 <script>
-// ===== ФУНКЦИЯ ДЛЯ ВЫБОРА ОБЪЕКТОВ ПО CTRL+ЛКМ =====
-setTimeout(function() {
-    if (!renderer || !scene || !camera) {
-        console.error('Renderer, scene or camera not found');
-        return;
-    }
+// ====================== УЛУЧШЕННАЯ СИСТЕМА ВЫБОРА ОБЪЕКТОВ (ПОДДЕРЖКА GLB) ======================
 
-    console.log('Инициализация выбора объектов...');
+let selectedObject = null;
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
 
-    let raycaster = new THREE.Raycaster();
-    let mouse = new THREE.Vector2();
-    let selectedObject = null;
-    let isSelecting = false;
-
-    function clearHighlight() {
-        if (selectedObject) {
-            if (selectedObject.material) {
-                if (Array.isArray(selectedObject.material)) {
-                    selectedObject.material.forEach(mat => {
-                        if (mat.emissive) {
-                            mat.emissive.setHex(selectedObject.userData.originalEmissive || 0x000000);
-                        }
-                    });
-                } else if (selectedObject.material.emissive) {
-                    selectedObject.material.emissive.setHex(selectedObject.userData.originalEmissive || 0x000000);
+// === ОЧИСТКА ПОДСВЕТКИ ===
+function clearHighlight() {
+    if (selectedObject && selectedObject.material) {
+        const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+        materials.forEach(mat => {
+            if (mat.emissive) {
+                mat.emissive.setHex(selectedObject.userData.originalEmissive || 0x000000);
+                if (selectedObject.userData.originalEmissiveIntensity !== undefined) {
+                    mat.emissiveIntensity = selectedObject.userData.originalEmissiveIntensity;
                 }
             }
-            selectedObject = null;
-        }
+        });
     }
+    selectedObject = null;
+}
 
+// === ПОДСВЕТКА ОБЪЕКТА ===
+function highlightObject(object) {
+    clearHighlight();
+    if (!object || !object.material) return;
 
-    function highlightObject(object) {
-        clearHighlight();
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    materials.forEach(mat => {
+        if (mat.emissive !== undefined) {
+            if (object.userData.originalEmissive === undefined) {
+                object.userData.originalEmissive = mat.emissive.getHex();
+                object.userData.originalEmissiveIntensity = mat.emissiveIntensity || 0;
+            }
+            mat.emissive.setHex(0x44aaff);   // ярко-голубая подсветка
+            mat.emissiveIntensity = 0.5;
+        }
+    });
+    selectedObject = object;
+}
+
+// === ПОЛУЧЕНИЕ ОБЪЕКТА ПО КЛИКУ (С ПРИОРИТЕТОМ ДЛЯ GLB ЧАСТЕЙ) ===
+function getTargetObjectFromClick(event) {
+    if (!renderer || !renderer.domElement) return null;
+    
+    const rect = renderer.domElement.getBoundingClientRect();
+    
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    // Рекурсивно по всей сцене
+    const intersects = raycaster.intersectObject(scene, true);
+    if (intersects.length === 0) return null;
+
+    let hitObject = intersects[0].object;
+    
+    // === ПРИОРИТЕТ 1: Поиск GLB частей (item1_1, item2_1 и т.д.) ===
+    let checkObject = hitObject;
+    let depth = 0;
+    const maxDepth = 15;
+    
+    while (checkObject && checkObject !== scene && depth < maxDepth) {
+        // Проверяем имя объекта
+        if (checkObject.name && /^item\d+_\d+$/i.test(checkObject.name)) {
+            console.log(`🎯 Выбрана GLB часть: ${checkObject.name}`);
+            return checkObject;
+        }
         
-        if (object && object.material) {
-            if (Array.isArray(object.material)) {
-                object.material.forEach(mat => {
-                    if (mat.emissive) {
-                        object.userData.originalEmissive = mat.emissive.getHex();
-                        mat.emissive.setHex(0x444444);
-                    }
-                });
-            } else if (object.material.emissive) {
-                object.userData.originalEmissive = object.material.emissive.getHex();
-                object.material.emissive.setHex(0x444444);
+        // Проверяем userData
+        if (checkObject.userData) {
+            if (checkObject.userData.partName && /^item\d+_\d+$/i.test(checkObject.userData.partName)) {
+                console.log(`🎯 Выбрана GLB часть (userData): ${checkObject.userData.partName}`);
+                return checkObject;
             }
-            selectedObject = object;
+            // v2 части
+            if (checkObject.userData.parentModelId || checkObject.userData.parentModelName || checkObject.userData.modelName) {
+                return checkObject;
+            }
+        }
+        
+        // Проверяем осмысленные имена (не технические)
+        if (checkObject.name && 
+            checkObject.name.length > 2 && 
+            !checkObject.name.startsWith('Object_') && 
+            !checkObject.name.startsWith('Mesh_') && 
+            !checkObject.name.startsWith('_') &&
+            !/^\d+$/.test(checkObject.name) &&
+            checkObject.name !== 'Scene' &&
+            checkObject.name !== 'Group') {
+            return checkObject;
+        }
+        
+        checkObject = checkObject.parent;
+        depth++;
+    }
+    
+    // === ПРИОРИТЕТ 2: Если нашли меш с осмысленным именем ===
+    if (hitObject.isMesh && hitObject.name && hitObject.name.length > 2 && 
+        !hitObject.name.startsWith('Object_') && !hitObject.name.startsWith('Mesh_')) {
+        return hitObject;
+    }
+    
+    // === ПРИОРИТЕТ 3: Возвращаем первый попавшийся меш ===
+    for (let intersect of intersects) {
+        if (intersect.object.isMesh) {
+            return intersect.object;
         }
     }
-	function getObjectInfo(object) {
-		let info = {
-			name: object.name || 'Без имени',
-			type: object.type,
-			modelName: 'Неизвестно',
-			fullPath: ''
-		};
-		
-		// Собираем путь
-		let parent = object;
-		let path = [];
-		
-		while (parent) {
-			if (parent.name && parent.name !== '') {
-				path.unshift(parent.name);
-			}
-			parent = parent.parent;
-		}
-		
-		info.fullPath = path.join(' > ');
-		
-		// ПРОСТОЙ СПОСОБ: берем имя из userData
-		if (object.userData && object.userData.parentModelName) {
-			info.modelName = object.userData.parentModelName;
-			console.log('Найдено в userData:', object.userData.parentModelName);
-		}
-		
-		return info;
-	}
-	// Обработчик клика на canvas
+    
+    return hitObject;
+}
+
+// === ПОЛУЧЕНИЕ ИМЕНИ МОДЕЛИ (С ПОДДЕРЖКОЙ GLB ЧАСТЕЙ) ===
+function getModelName(obj) {
+    if (!obj) return 'Без имени';
+
+    // === ПРИОРИТЕТ 1: GLB части item1_1, item2_1 ===
+    if (obj.name && /^item(\d+)_(\d+)$/i.test(obj.name)) {
+        const match = obj.name.match(/^item(\d+)_(\d+)$/i);
+        if (match) {
+            const group = parseInt(match[1]);
+            const part = parseInt(match[2]);
+            return `Деталь ${group}.${part}`;
+        }
+    }
+    
+    // Проверка userData для GLB частей
+    if (obj.userData && obj.userData.partName && /^item\d+_\d+$/i.test(obj.userData.partName)) {
+        const match = obj.userData.partName.match(/^item(\d+)_(\d+)$/i);
+        if (match) {
+            return `Деталь ${match[1]}.${match[2]}`;
+        }
+    }
+
+    // === ПРИОРИТЕТ 2: userData из v2 или ручной разметки ===
+    if (obj.userData) {
+        if (obj.userData.displayName) return obj.userData.displayName;
+        if (obj.userData.parentModelName) return obj.userData.parentModelName;
+        if (obj.userData.modelName) return obj.userData.modelName;
+        
+        // Для v2 частей
+        if (obj.userData.parentModelId && window.v2?.modelsMap) {
+            const data = v2.modelsMap.get(obj.userData.parentModelId);
+            if (data?.name) return data.name;
+        }
+    }
+
+    // === ПРИОРИТЕТ 3: Имя файла модели (для всей GLB) ===
+    if (window.currentModel && window.currentModel.userData) {
+        if (window.currentModel.userData.sourceFile) {
+            const fileName = window.currentModel.userData.sourceFile;
+            const baseName = fileName.replace(/\.(glb|gltf)$/i, '').split('/').pop();
+            if (baseName && baseName.length > 2) {
+                return baseName;
+            }
+        }
+        if (window.currentModel.userData.fileName) {
+            return window.currentModel.userData.fileName;
+        }
+    }
+
+    // === ПРИОРИТЕТ 4: Имя самого объекта (очищенное) ===
+    if (obj.name && 
+        obj.name.length > 3 && 
+        !obj.name.startsWith('Object_') && 
+        !obj.name.startsWith('Mesh_') && 
+        !obj.name.startsWith('Scene') &&
+        !obj.name.startsWith('Group') &&
+        !/^\d+$/.test(obj.name)) {
+        
+        let cleanName = obj.name;
+        cleanName = cleanName.replace(/^(Object_|Mesh_|Plane_|Cube_|Cylinder_|Sphere_|Group_)/, '');
+        return cleanName;
+    }
+
+    // === ПРИОРИТЕТ 5: Поиск в родителях ===
+    let parent = obj.parent;
+    let depth = 0;
+    while (parent && parent !== scene && depth < 10) {
+        if (parent.name && 
+            parent.name.length > 3 && 
+            !parent.name.startsWith('Object_') && 
+            !parent.name.startsWith('Mesh_') &&
+            !parent.name.startsWith('Group')) {
+            return parent.name;
+        }
+        parent = parent.parent;
+        depth++;
+    }
+
+    // === ПРИОРИТЕТ 6: Поиск любой части item*_* в дереве ===
+    let foundItem = null;
+    if (obj.traverse) {
+        obj.traverse((node) => {
+            if (foundItem) return;
+            if (node.name && /^item\d+_\d+$/i.test(node.name)) {
+                foundItem = node.name;
+            }
+        });
+        if (foundItem) {
+            const match = foundItem.match(/^item(\d+)_(\d+)$/i);
+            if (match) return `Деталь ${match[1]}.${match[2]}`;
+        }
+    }
+
+    // === ПОСЛЕДНИЙ FALLBACK ===
+    if (obj.isMesh) return 'Меш';
+    if (obj.isGroup) return 'Группа';
+    return obj.name || 'Часть модели';
+}
+
+// === ОБНОВЛЕНИЕ СТАТУСА ===
+function updateStatus(message, isError = false) {
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+        statusEl.innerHTML = message;
+        statusEl.style.color = isError ? '#ff6666' : '#ffffff';
+    }
+}
+
+// ====================== Ctrl + ЛКМ (выбор) ======================
+if (renderer && renderer.domElement) {
     renderer.domElement.addEventListener('click', function(event) {
-        if (event.ctrlKey) {
-            console.log('CTRL+Клик по canvas');
-            
-            const rect = renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-            
-            raycaster.setFromCamera(mouse, camera);
-            
-            const meshes = [];
-            scene.traverse(node => {
-                if (node.isMesh) {
-                    meshes.push(node);
-                }
-            });
-            
-            const intersects = raycaster.intersectObjects(meshes);
-            
-            if (intersects.length > 0) {
-                const hitObject = intersects[0].object;
-                console.log('Попали в объект:', hitObject.name || 'без имени');
-                
-                if (selectedObject) clearHighlight();
-                highlightObject(hitObject);
-                
-                const info = getObjectInfo(hitObject);
-                
-                console.log('Найденная модель:', info.modelName);
-                console.log('Полный путь:', info.fullPath);
-                
-                if (typeof addDebug === 'function') {
-                    addDebug(`📦 Модель: ${info.modelName}`, 'info');
-                }
-                
-                document.getElementById('status').innerHTML = `Модель: ${info.modelName}`;
-                
-                // Автоматически вставляем имя модели в поле ввода
-                const input = document.getElementById('drive-modelname');
-                if (input && info.modelName !== 'Неизвестно') {
-                    // Убираем расширение .nwc если оно есть
-                    let modelName = info.modelName;
-                    if (modelName.endsWith('.nwc')) {
-                        modelName = modelName.slice(0, -4);
+        if (!event.ctrlKey) return;
+        
+        event.preventDefault();
+        event.stopPropagation();
+
+        const targetObject = getTargetObjectFromClick(event);
+        
+        if (!targetObject) {
+            updateStatus('⚪ Ничего не выбрано');
+            console.log('❌ Ничего не выбрано');
+            return;
+        }
+
+        const modelName = getModelName(targetObject);
+        console.log(`✅ Выбрано: ${modelName} (тип: ${targetObject.type}, имя: ${targetObject.name})`);
+
+        highlightObject(targetObject);
+        updateStatus(`✅ Выбрано: <strong>${modelName}</strong>`);
+
+        // Заполняем поле для загрузки по имени
+        const input = document.getElementById('drive-modelname');
+        if (input) input.value = modelName;
+        
+        // Сохраняем выбранный объект глобально
+        window.selectedObject = targetObject;
+
+        if (typeof addDebug === 'function') {
+            addDebug(`📦 Выбрана часть: ${modelName}`, 'success');
+        }
+        
+        // Дополнительная информация для GLB частей
+        if (targetObject.name && /^item\d+_\d+$/i.test(targetObject.name)) {
+            console.log(`📌 GLB часть: ${targetObject.name}`);
+            // Ищем другие части в той же модели
+            let parentGroup = targetObject.parent;
+            if (parentGroup) {
+                const otherParts = [];
+                parentGroup.traverse((node) => {
+                    if (node !== targetObject && node.name && /^item\d+_\d+$/i.test(node.name)) {
+                        otherParts.push(node.name);
                     }
-                    input.value = modelName;
-                }
-            } else {
-                console.log('Ничего не выбрано');
-                clearHighlight();
-                document.getElementById('status').innerHTML = '⚪ Готов к загрузке';
-            }
-        }
-    });
-
-    // Снимаем выделение при отпускании Ctrl
-    document.addEventListener('keyup', function(event) {
-        if (event.key === 'Control') {
-            clearHighlight();
-            document.getElementById('status').innerHTML = '⚪ Готов к загрузке';
-        }
-    });
-
-    console.log('Система выбора объектов готова. Используйте CTRL+Клик');
-    
-}, 2000);
-</script>
-<script>
-// ===== ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ОТОБРАЖЕНИЯ =====
-let renderMode = '3d'; // '3d' или 'preview'
-let originalLights = []; // Для сохранения оригинальных источников света
-
-function setupPreviewMode() {
-    // Сохраняем текущие источники света если еще не сохраняли
-    if (originalLights.length === 0) {
-        scene.traverse(node => {
-            if (node.isLight) {
-                originalLights.push({
-                    light: node,
-                    intensity: node.intensity,
-                    visible: node.visible
                 });
+                if (otherParts.length > 0) {
+                    console.log(`📌 Другие части в модели: ${otherParts.join(', ')}`);
+                }
             }
-        });
+        }
+    });
+
+    // ====================== Ctrl + ПКМ (контекстное меню) ======================
+    renderer.domElement.addEventListener('contextmenu', function(event) {
+        if (!event.ctrlKey) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const targetObject = getTargetObjectFromClick(event);
+        
+        if (!targetObject) {
+            if (typeof hideContextMenu === 'function') hideContextMenu();
+            return;
+        }
+
+        // Сохраняем цель для контекстного меню
+        window.contextMenuTarget = targetObject;
+        
+        const isV2Part = !!(targetObject.userData && 
+                           (targetObject.userData.parentModelId || 
+                            targetObject.userData.parentModelName));
+
+        if (typeof showContextMenu === 'function') {
+            showContextMenu(event, targetObject, isV2Part);
+        } else {
+            console.warn('showContextMenu не определена');
+        }
+    });
+} else {
+    console.error('❌ renderer или renderer.domElement не определён');
+}
+
+// ====================== Отпускание Ctrl ======================
+document.addEventListener('keyup', function(event) {
+    if (event.key === 'Control') {
+        clearHighlight();
+        updateStatus('⚪ Готов к загрузке');
+        console.log('🔓 Ctrl отпущен, подсветка снята');
+    }
+});
+
+// ====================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ======================
+
+// Функция для ручного выбора части GLB
+window.selectGLBPart = function(partName) {
+    if (!window.currentModel) {
+        console.error('Нет загруженной модели');
+        return false;
     }
     
-    // Выключаем все существующие источники света
-    scene.traverse(node => {
-        if (node.isLight) {
-            node.visible = false;
+    let foundPart = null;
+    window.currentModel.traverse((node) => {
+        if (node.name === partName) {
+            foundPart = node;
         }
     });
     
-    // Создаем яркое равномерное освещение
-    const ambientLight = new THREE.AmbientLight(0xffffff, 3); // Увеличено с 1.0 до 1.5
-    ambientLight.name = 'preview_ambient';
-    scene.add(ambientLight);
-    
-    // Добавляем яркие направленные источники со всех сторон
-    const light1 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.8 до 1.2
-    light1.position.set(2, 0, 0);
-    light1.name = 'preview_light1';
-    scene.add(light1);
-    
-    const light2 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.5 до 1.0
-    light2.position.set(0, 2, 0);
-    light2.name = 'preview_light2';
-    scene.add(light2);
-    
-    const light3 = new THREE.DirectionalLight(0xffffff, 2); // Увеличено с 0.3 до 0.8
-    light3.position.set(0, 0, 2);
-    light3.name = 'preview_light3';
-    scene.add(light3);
-    
-    const light4 = new THREE.DirectionalLight(0xffffff, 2);
-    light4.position.set(0, -2, 0);
-    light4.name = 'preview_light4';
-    scene.add(light4);
-    
-
-    const light5 = new THREE.DirectionalLight(0xffffff, 2);
-    light5.position.set(0, 0, -2);
-    light5.name = 'preview_light5';
-    scene.add(light5);
-
-    const light6 = new THREE.DirectionalLight(0xffffff, 2);
-    light6.position.set(-2, 0, 0);
-    light6.name = 'preview_light6';
-    scene.add(light6);
-    // Выключаем тени у preview света
-    [light1, light2, light3, light4, light5].forEach(light => {
-        light.castShadow = false;
-    });
-    
-    // Выключаем тени в рендерере
-    renderer.shadowMap.enabled = false;
-    
-    // Убираем тени у всех объектов
-    scene.traverse(node => {
-        if (node.isMesh) {
-            node.castShadow = false;
-            node.receiveShadow = false;
-        }
-    });
-}
-
-function setup3dMode() {
-    // Удаляем preview освещение
-    const previewLights = [];
-    scene.traverse(node => {
-        if (node.name && node.name.startsWith('preview_')) {
-            previewLights.push(node);
-        }
-    });
-    
-    previewLights.forEach(light => {
-        scene.remove(light);
-    });
-    
-    // Восстанавливаем оригинальные источники света
-    originalLights.forEach(item => {
-        if (item.light) {
-            item.light.visible = true;
-            item.light.intensity = item.intensity;
-        }
-    });
-    
-    // Включаем тени
-    renderer.shadowMap.enabled = true;
-    
-    // Восстанавливаем тени у объектов
-    scene.traverse(node => {
-        if (node.isMesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-        }
-    });
-}
-
-function toggleRenderMode(enable3d) {
-    if (enable3d) {
-        renderMode = '3d';
-        setup3dMode();
+    if (foundPart) {
+        highlightObject(foundPart);
+        window.selectedObject = foundPart;
+        const modelName = getModelName(foundPart);
+        updateStatus(`✅ Выбрано: <strong>${modelName}</strong>`);
+        
+        const input = document.getElementById('drive-modelname');
+        if (input) input.value = modelName;
+        
+        console.log(`✅ Выбрана часть: ${partName}`);
+        return true;
     } else {
-        renderMode = 'preview';
-        setupPreviewMode();
+        console.error(`Часть "${partName}" не найдена`);
+        return false;
     }
-    
-    // Обновляем UI
-    const toggle = document.getElementById('shadowsEnabledToggle');
-    const state = document.getElementById('shadowsEnabledState');
-    if (toggle) toggle.checked = enable3d;
-    if (state) state.textContent = enable3d ? '3D' : 'Preview';
-    
-    // Принудительный рендер
-    if (renderer) {
-        renderer.render(scene, camera);
-    }
-    
-    if (typeof addDebug === 'function') {
-        addDebug(`🎨 Режим отображения: ${enable3d ? '3D (с тенями)' : 'Preview (яркое освещение)'}`, 'success');
-    }
-}
+};
 
-// Инициализация
-setTimeout(() => {
-    const modeToggle = document.getElementById('shadowsEnabledToggle');
-    if (modeToggle) {
-        modeToggle.addEventListener('change', function(e) {
-            toggleRenderMode(e.target.checked);
-        });
+// Функция для получения списка всех частей GLB
+window.getGLBParts = function() {
+    if (!window.currentModel) {
+        console.error('Нет загруженной модели');
+        return [];
     }
     
-    // Начальное состояние - 3D режим
-    renderMode = '3d';
+    const parts = [];
+    window.currentModel.traverse((node) => {
+        if (node.name && /^item\d+_\d+$/i.test(node.name)) {
+            parts.push({
+                name: node.name,
+                displayName: getModelName(node),
+                object: node
+            });
+        }
+    });
     
-    if (typeof addDebug === 'function') {
-        addDebug('🎨 Переключение режимов отображения инициализировано', 'info');
-        addDebug('💡 ON = 3D режим (с тенями), OFF = Preview режим (яркое равномерное освещение)', 'info');
+    return parts;
+};
+
+// Функция для установки имени модели при загрузке
+window.setModelName = function(fileName, modelObject) {
+    window.lastLoadedModelName = fileName.replace(/\.(glb|gltf)$/i, '').split('/').pop();
+    
+    if (modelObject && modelObject.userData) {
+        modelObject.userData.sourceFile = fileName;
+        modelObject.userData.fileName = window.lastLoadedModelName;
+        modelObject.userData.displayName = window.lastLoadedModelName;
     }
-}, 2000);
+    
+    console.log(`📛 Имя модели установлено: ${window.lastLoadedModelName}`);
+    return window.lastLoadedModelName;
+};
+
+console.log('✅ Улучшенная система выбора объектов (с поддержкой GLB item*_*) загружена');
 </script>
 <script>
 // ==================== Режим линейки (вариант 2) ====================
@@ -3255,19 +3407,15 @@ function forceUpdateColorPickers() {
     if (!v2 || !v2.modelsMap) return;
 
     v2.modelsMap.forEach((modelData, id) => {
-        const colorHex = colorManager.getColor(modelData.name) || getModelColor(modelData.mesh) || '#ffffff';
-        
-        // Обновляем в маленьком списке
-        const smallPicker = document.querySelector(`input[onchange="changePartColor('${id}', this.value)"]`);
-        if (smallPicker) {
-            smallPicker.value = colorHex;
-        }
+        const colorHex = getModelColor(modelData.mesh) || '#ffffff';
 
-        // Обновляем в большом модальном окне (если открыто)
+        // Ищем пикер в маленьком списке
+        const smallPicker = document.querySelector(`#v2-model-list input[onchange="changePartColor('${id}', this.value)"]`);
+        if (smallPicker) smallPicker.value = colorHex;
+
+        // Ищем пикер в большом модальном окне
         const largePicker = document.querySelector(`#large-model-list-content input[onchange="changePartColor('${id}', this.value)"]`);
-        if (largePicker) {
-            largePicker.value = colorHex;
-        }
+        if (largePicker) largePicker.value = colorHex;
     });
 }
 // Глобальная обёртка для updateModelsList
@@ -3308,112 +3456,1172 @@ setTimeout(() => {
 }, 1000);
 </script>
 <script>
-// ====================== FIRST PERSON MODE (в правом верхнем углу) ======================
-let pointerControls = null;
-let isFirstPerson = false;
-let moveSpeed = 1.0;   // скорость полёта в метрах в секунду
+// ====================== FLY MODE С F ДЛЯ ВНИЗ ======================
+let moveSpeed = 1.0;
+let lookSpeed = 0.002;
+let isDraggingMouse = false;
+let previousMouseX = 0;
+let previousMouseY = 0;
+
+// Параметры для ускорения
+let isSprinting = false;
+const NORMAL_SPEED = 1.0;
+const SPRINT_SPEED = 3.0;
 
 const keys = {};
 
-function initFirstPersonControls() {
-  if (pointerControls) return;
-  
-  pointerControls = new THREE.PointerLockControls(camera, document.body);
-  scene.add(pointerControls.getObject());
-
-  document.addEventListener('keydown', (e) => { keys[e.code] = true; });
-  document.addEventListener('keyup',   (e) => { keys[e.code] = false; });
-
-  // Автоматический выход при ESC
-  pointerControls.addEventListener('unlock', () => {
-    if (isFirstPerson) {
-      document.getElementById('firstPersonToggle').checked = false;
-      toggleFirstPerson(false);
-    }
-  });
-
-  addDebug('👤 PointerLockControls готов', 'success');
-}
-
-function toggleFirstPerson(enabled) {
-  isFirstPerson = enabled;
+// Переключение режима
+function toggleFlyMode(enabled) {
+  isFlyMode = enabled;
   const stateEl = document.getElementById('firstPersonState');
 
   if (enabled) {
-    controls.enabled = false;                    // выключаем орбиту
-    pointerControls.lock();                      // захватываем курсор
-    camera.near = 0.01;                          // важно! чтобы не резало модель изнутри
-    camera.updateProjectionMatrix();
+    if (controls) controls.enabled = false;
+    
+    // Сохраняем текущий поворот камеры
+    const currentYaw = camera.rotation.y;
+    const currentPitch = camera.rotation.x;
+    camera.rotation.set(currentPitch, currentYaw, 0);
+    camera.rotation.order = 'YXZ'; // Важно для правильного порядка поворотов
     
     stateEl.textContent = 'ON';
-    stateEl.style.color = '#4aa56f';
-    addDebug('👤 Режим от первого лица включён — можно залетать внутрь здания', 'success');
-  } else {
-    if (pointerControls.isLocked) pointerControls.unlock();
-    controls.enabled = true;
-    camera.near = 0.1;
-    camera.updateProjectionMatrix();
+    stateEl.style.color = enabled ? '#00ffcc' : '#aaa';
     
+    addDebug('✈️ Fly Mode включён • WASD — движение • Space — вверх • F — вниз • Shift — ускорение', 'success');
+    showFlyNotification();
+    
+    isDraggingMouse = false;
+    renderer.domElement.style.cursor = 'default';
+  } else {
+    if (controls) controls.enabled = true;
     stateEl.textContent = 'OFF';
     stateEl.style.color = '#aaa';
-    addDebug('👤 Режим первого лица выключен', 'info');
+    addDebug('✈️ Fly Mode выключен', 'info');
+    isDraggingMouse = false;
   }
 }
 
-function updateFirstPersonMovement(delta) {
-  if (!isFirstPerson || !pointerControls || !pointerControls.isLocked) return;
+// Обновление движения
+function updateFlyMovement(delta) {
+  if (!isFlyMode) return;
 
-  const direction = new THREE.Vector3();
-  pointerControls.getDirection(direction);
-
-  const right = new THREE.Vector3();
-  right.crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
-
-  let moveVector = new THREE.Vector3();
-
-  if (keys['KeyW']) moveVector.add(direction);
-  if (keys['KeyS']) moveVector.sub(direction);
-  if (keys['KeyA']) moveVector.sub(right);
-  if (keys['KeyD']) moveVector.add(right);
-  if (keys['Space']) moveVector.y += 1;
-  if (keys['ShiftLeft'] || keys['ShiftRight']) moveVector.y -= 1;
-
-  if (moveVector.lengthSq() > 0) {
-    moveVector.normalize().multiplyScalar(moveSpeed * delta);
-    camera.position.add(moveVector);
+  // Получаем направление камеры
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+  
+  // Создаем векторы для движения
+  const moveDirection = new THREE.Vector3();
+  
+  // Движение вперед-назад (горизонтальная плоскость)
+  if (keys['KeyW']) {
+    moveDirection.x += forward.x;
+    moveDirection.z += forward.z;
   }
+  if (keys['KeyS']) {
+    moveDirection.x -= forward.x;
+    moveDirection.z -= forward.z;
+  }
+  
+  // Движение влево-вправо
+  if (keys['KeyA'] || keys['KeyD']) {
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+    
+    if (keys['KeyA']) {
+      moveDirection.x -= right.x;
+      moveDirection.z -= right.z;
+    }
+    if (keys['KeyD']) {
+      moveDirection.x += right.x;
+      moveDirection.z += right.z;
+    }
+  }
+  
+  // Нормализуем горизонтальное движение
+  if (moveDirection.x !== 0 || moveDirection.z !== 0) {
+    moveDirection.normalize();
+  }
+  
+  // Вертикальное движение
+  let verticalMove = 0;
+  if (keys['Space']) verticalMove += 1;
+  if (keys['KeyF']) verticalMove -= 1;
+  
+  // Скорость
+  let currentSpeed = isSprinting ? SPRINT_SPEED : NORMAL_SPEED;
+  
+  // Применяем движение
+  camera.position.x += moveDirection.x * currentSpeed * delta;
+  camera.position.z += moveDirection.z * currentSpeed * delta;
+  camera.position.y += verticalMove * currentSpeed * delta;
+}
+
+// Обработка движения мыши - ПРЯМОЕ ИЗМЕНЕНИЕ КАМЕРЫ
+function onMouseMove(e) {
+    if (!isFlyMode || !isDraggingMouse) return;
+
+    const deltaX = e.clientX - previousMouseX;
+    const deltaY = e.clientY - previousMouseY;
+
+    // Поворачиваем камеру напрямую
+    camera.rotation.y -= deltaX * lookSpeed * 1.2;
+    camera.rotation.x -= deltaY * lookSpeed * 1.0;
+    
+    // Ограничиваем угол наклона (чтобы не перевернуться)
+    camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
+    
+    // Обнуляем крен (roll) для предотвращения заваливания
+    camera.rotation.z = 0;
+
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+}
+
+// Обработка нажатий кнопок мыши
+function onMouseDown(e) {
+  if (isFlyMode && e.button === 0) {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingMouse = true;
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+    renderer.domElement.style.cursor = 'grabbing';
+  }
+}
+
+function onMouseUp(e) {
+  if (e.button === 0) {
+    isDraggingMouse = false;
+    renderer.domElement.style.cursor = 'default';
+  }
+}
+
+function onMouseLeave() {
+  isDraggingMouse = false;
+  renderer.domElement.style.cursor = 'default';
+}
+
+// Управление клавишами
+document.addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+  
+  // Ускорение по Shift
+  if (e.code === 'ShiftLeft') {
+    isSprinting = true;
+    e.preventDefault();
+  }
+  
+  // Предотвращаем скролл при Space и F
+  if (e.code === 'Space' || e.code === 'KeyF') {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  keys[e.code] = false;
+  
+  if (e.code === 'ShiftLeft') {
+    isSprinting = false;
+  }
+});
+
+// Уведомление
+function showFlyNotification() {
+  const notif = document.getElementById('fp-notification');
+  if (notif) {
+    notif.innerHTML = `
+      <div style="font-size:18px; color:#4aa56f;">✈️ Fly Mode активирован</div>
+      <div style="margin-top:8px; font-size:14.5px;">
+        🖱️ Левая кнопка мыши — поворот<br>
+        ⌨️ WASD — движение<br>
+        ␣ Space — вверх • <span style="color:#ffaa00;">F — вниз</span><br>
+        🚀 Shift — ускорение
+      </div>
+    `;
+    notif.style.display = 'block';
+    setTimeout(() => { notif.style.display = 'none'; }, 5000);
+  }
+}
+
+// Подключение тумблера
+document.addEventListener('DOMContentLoaded', function() {
+  const toggle = document.getElementById('firstPersonToggle');
+  if (toggle) {
+    toggle.addEventListener('change', function(e) {
+      toggleFlyMode(e.target.checked);
+    });
+  }
+});
+
+// Настройка обработчиков
+if (renderer && renderer.domElement) {
+  renderer.domElement.removeEventListener('mousedown', onMouseDown);
+  renderer.domElement.removeEventListener('mouseup', onMouseUp);
+  renderer.domElement.removeEventListener('mouseleave', onMouseLeave);
+  
+  renderer.domElement.addEventListener('mousedown', onMouseDown);
+  renderer.domElement.addEventListener('mouseup', onMouseUp);
+  renderer.domElement.addEventListener('mouseleave', onMouseLeave);
+}
+
+// Убедимся, что обработчики событий добавлены
+document.removeEventListener('mouseup', onMouseUp);
+document.removeEventListener('mousemove', onMouseMove);
+document.addEventListener('mouseup', onMouseUp);
+document.addEventListener('mousemove', onMouseMove);
+</script>
+<script>
+// Глобальные переменные для контекстного меню
+let contextMenuTarget = null;
+let contextMenuTargetIsV2 = false;
+
+// Показать контекстное меню
+function showContextMenu(event, object, isV2Part = false) {
+  contextMenuTarget = object;
+  contextMenuTargetIsV2 = isV2Part;
+
+  const menu = document.getElementById('context-menu');
+  const title = document.getElementById('context-menu-title');
+
+  let name = object.userData?.modelName || 
+             object.userData?.parentModelName || 
+             object.name || 'Объект';
+
+  title.textContent = name.length > 28 ? name.substring(0, 25) + '...' : name;
+
+  menu.style.left = (event.clientX + 10) + 'px';
+  menu.style.top = (event.clientY + 10) + 'px';
+  menu.style.display = 'block';
+
+  setTimeout(() => {
+    document.addEventListener('click', hideContextMenuOnce, { once: true });
+  }, 10);
+}
+
+function hideContextMenu() {
+  const menu = document.getElementById('context-menu');
+  if (menu) menu.style.display = 'none';
+  contextMenuTarget = null;
+}
+
+function hideContextMenuOnce(e) {
+  if (!document.getElementById('context-menu').contains(e.target)) {
+    hideContextMenu();
+  }
+}
+
+// ==================== ДЕЙСТВИЯ МЕНЮ (ИСПРАВЛЕННЫЕ) ====================
+
+window.contextHideModel = function() {
+    if (!contextMenuTarget) return;
+
+    let rootObject = contextMenuTarget;
+
+    // 🔥 если это v2 — берем КОРНЕВОЙ mesh из modelsMap
+    let modelData = null;
+
+    if (contextMenuTargetIsV2 && v2 && v2.modelsMap) {
+        const modelId = contextMenuTarget.userData?.parentModelId;
+
+        if (modelId && v2.modelsMap.has(modelId)) {
+            modelData = v2.modelsMap.get(modelId);
+            rootObject = modelData.mesh; // ← ВАЖНО: работаем только с ним
+        }
+    }
+
+    const newVisible = !rootObject.visible;
+
+    // ✅ применяем к корню
+    rootObject.visible = newVisible;
+
+    // ✅ синхронизируем данные
+    if (modelData) {
+        modelData.visible = newVisible;
+    }
+
+    const action = newVisible ? '👁️ Видима' : '🙈 Скрыта';
+    addDebug(`${action}: ${getModelName(rootObject)}`, newVisible ? 'success' : 'info');
+
+    fullRefreshV2List();
+
+    if (typeof recalculateGlobalBoundingBox === 'function') {
+        recalculateGlobalBoundingBox();
+    }
+    if (typeof updateCameraToCenter === 'function') {
+        updateCameraToCenter();
+    }
+
+    hideContextMenu();
+};
+
+window.contextDeleteModel = function() {
+    if (!contextMenuTarget) return;
+    
+    const modelName = getModelName(contextMenuTarget);
+    
+    if (contextMenuTargetIsV2 && typeof removeModel === 'function') {
+        const modelId = contextMenuTarget.userData?.parentModelId;
+        if (modelId) {
+            removeModel(modelId);
+            addDebug(`🗑️ Удалена часть: ${modelName}`, 'success');
+        }
+    } else if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+        addDebug(`🗑️ Удалена модель: ${modelName}`, 'success');
+    }
+    
+    // ОБЯЗАТЕЛЬНО: обновляем все списки
+    fullRefreshV2List();
+    
+    hideContextMenu();
+};
+
+window.contextChangeColor = function() {
+    if (!contextMenuTarget) return;
+    
+    const currentColor = getModelColorHex(contextMenuTarget) || '#ffaa00';
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = currentColor;
+    
+    colorInput.onchange = function() {
+        const newColorHex = this.value;
+        const newColor = new THREE.Color(newColorHex);
+        
+        // Меняем цвет всей части
+        let changedCount = 0;
+        contextMenuTarget.traverse(node => {
+            if (node.isMesh && node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                materials.forEach(mat => {
+                    if (mat && mat.color) {
+                        mat.color.copy(newColor);
+                        mat.needsUpdate = true;
+                        changedCount++;
+                    }
+                });
+            }
+        });
+        
+        // Если это v2 часть, обновляем цвет в colorManager
+        if (contextMenuTargetIsV2 && window.colorManager) {
+            const modelId = contextMenuTarget.userData?.parentModelId;
+            if (modelId && v2.modelsMap.has(modelId)) {
+                const modelData = v2.modelsMap.get(modelId);
+                colorManager.setColor(modelData.name, newColorHex);
+            }
+        }
+        
+        addDebug(`🎨 Цвет изменён для "${getModelName(contextMenuTarget)}" (${changedCount} материалов)`, 'success');
+        
+        // ОБЯЗАТЕЛЬНО: обновляем все списки и пикеры
+        fullRefreshV2List();
+        setTimeout(() => updateAllColorPickers(), 50);
+        
+        hideContextMenu();
+    };
+    
+    colorInput.click();
+};
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+function getModelName(obj) {
+    if (!obj) return 'Без имени';
+    
+    // Сначала проверяем userData (самый надёжный источник для v2)
+    if (obj.userData) {
+        if (obj.userData.modelName) return obj.userData.modelName;
+        if (obj.userData.parentModelName) return obj.userData.parentModelName;
+        if (obj.userData.name) return obj.userData.name;
+    }
+    
+    // Проверяем имя объекта
+    if (obj.name && obj.name !== '') return obj.name;
+    
+    // Если это v2 часть, пытаемся найти через modelsMap
+    if (window.v2 && v2.modelsMap) {
+        const modelId = obj.userData?.parentModelId;
+        if (modelId && v2.modelsMap.has(modelId)) {
+            const modelData = v2.modelsMap.get(modelId);
+            if (modelData && modelData.name) return modelData.name;
+        }
+    }
+    
+    return 'Без имени';
+}
+
+// ==================== ДЕЙСТВИЯ МЕНЮ (ИСПРАВЛЕННЫЕ) ====================
+
+window.contextHideModel = function() {
+    if (!contextMenuTarget) return;
+
+    let rootObject = contextMenuTarget;
+    let modelData = null;
+    let modelName = getModelName(contextMenuTarget); // ← получаем имя ДО изменений
+
+    if (contextMenuTargetIsV2 && v2 && v2.modelsMap) {
+        const modelId = contextMenuTarget.userData?.parentModelId;
+        if (modelId && v2.modelsMap.has(modelId)) {
+            modelData = v2.modelsMap.get(modelId);
+            rootObject = modelData.mesh;
+            // Обновляем имя из modelData, если нужно
+            if (modelData.name) modelName = modelData.name;
+        }
+    }
+
+    const newVisible = !rootObject.visible;
+
+    // Применяем видимость к корню
+    rootObject.visible = newVisible;
+
+    // Синхронизируем данные
+    if (modelData) {
+        modelData.visible = newVisible;
+    }
+
+    const action = newVisible ? '👁️ Показана' : '🙈 Скрыта';
+    addDebug(`${action}: ${modelName}`, newVisible ? 'success' : 'info'); // ← используем правильное имя
+
+    // Пересчитываем bounding box для корректного центрирования
+    if (typeof recalculateGlobalBoundingBox === 'function') {
+        recalculateGlobalBoundingBox();
+    }
+    if (typeof updateCameraToCenter === 'function') {
+        updateCameraToCenter();
+    }
+
+    // Обновляем список моделей в UI
+    fullRefreshV2List();
+
+    hideContextMenu();
+};
+
+window.contextDeleteModel = function() {
+    if (!contextMenuTarget) return;
+    
+    const modelName = getModelName(contextMenuTarget); // ← получаем имя ДО удаления
+    
+    if (contextMenuTargetIsV2 && typeof removeModel === 'function') {
+        const modelId = contextMenuTarget.userData?.parentModelId;
+        if (modelId) {
+            removeModel(modelId);
+            addDebug(`🗑️ Удалена часть: ${modelName}`, 'success');
+        }
+    } else if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+        addDebug(`🗑️ Удалена модель: ${modelName}`, 'success');
+    }
+    
+    // Обновляем все списки
+    fullRefreshV2List();
+    
+    hideContextMenu();
+};
+
+window.contextChangeColor = function() {
+    if (!contextMenuTarget) return;
+    
+    const modelName = getModelName(contextMenuTarget); // ← получаем имя для лога
+    const currentColor = getModelColorHex(contextMenuTarget) || '#ffaa00';
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = currentColor;
+    
+    colorInput.onchange = function() {
+        const newColorHex = this.value;
+        const newColor = new THREE.Color(newColorHex);
+        
+        // Меняем цвет всей части
+        let changedCount = 0;
+        contextMenuTarget.traverse(node => {
+            if (node.isMesh && node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                materials.forEach(mat => {
+                    if (mat && mat.color) {
+                        mat.color.copy(newColor);
+                        mat.needsUpdate = true;
+                        changedCount++;
+                    }
+                });
+            }
+        });
+        
+        // Если это v2 часть, обновляем цвет в colorManager
+        if (contextMenuTargetIsV2 && window.colorManager) {
+            const modelId = contextMenuTarget.userData?.parentModelId;
+            if (modelId && v2.modelsMap.has(modelId)) {
+                const modelData = v2.modelsMap.get(modelId);
+                colorManager.setColor(modelData.name, newColorHex);
+            }
+        }
+        
+        addDebug(`🎨 Цвет изменён для "${modelName}" (${changedCount} материалов)`, 'success');
+        
+        // Обновляем все списки и пикеры
+        fullRefreshV2List();
+        setTimeout(() => updateAllColorPickers(), 50);
+        
+        hideContextMenu();
+    };
+    
+    colorInput.click();
+};
+
+// Функция для получения HEX цвета модели
+function getModelColorHex(model) {
+    let color = '#ffaa00';
+    if (!model) return color;
+    
+    model.traverse(node => {
+        if (node.isMesh && node.material && color === '#ffaa00') {
+            const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+            if (mat && mat.color) {
+                color = '#' + mat.color.getHexString();
+            }
+        }
+    });
+    return color;
+}
+</script>
+<script>
+// ========== КАРКАСНЫЙ РЕЖИМ (FULLY WORKING) ==========
+
+let wireframeEnabled = false;
+let originalMaterials = new WeakMap();
+
+function toggleWireframe(enabled) {
+    // Если параметр не передан - переключаем
+    if (enabled === undefined) {
+        enabled = !wireframeEnabled;
+    }
+    
+    wireframeEnabled = enabled;
+    
+    // === ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ UI ===
+    const toggleInput = document.querySelector('#wireframeToggle');
+    const stateSpan = document.querySelector('#wireframeState');
+    
+    if (toggleInput) {
+        toggleInput.checked = enabled;
+        console.log('✅ Тумблер обновлён:', enabled);
+    } else {
+        console.error('❌ Элемент #wireframeToggle не найден!');
+    }
+    
+    if (stateSpan) {
+        stateSpan.textContent = enabled ? 'ON' : 'OFF';
+        stateSpan.style.color = enabled ? '#00ffcc' : '#aaa';
+    }
+    
+    console.log(`🔲 Каркасный режим: ${enabled ? 'ВКЛЮЧЁН' : 'ВЫКЛЮЧЕН'}`);
+    
+    // Применяем ко всей сцене
+    if (typeof scene !== 'undefined' && scene) {
+        scene.traverse((node) => {
+            if (node.isMesh && node.material) {
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                
+                materials.forEach((mat) => {
+                    if (!mat) return;
+                    
+                    if (enabled) {
+                        // Включаем каркас
+                        if (!originalMaterials.has(node)) {
+                            originalMaterials.set(node, {
+                                color: mat.color ? mat.color.clone() : null,
+                                opacity: mat.opacity,
+                                transparent: mat.transparent,
+                                wireframe: mat.wireframe
+                            });
+                        }
+                        
+                        mat.wireframe = true;
+                        if (mat.color) mat.color.setHex(0x00ffcc);
+                        mat.transparent = true;
+                        mat.opacity = 0.95;
+                    } else {
+                        // Выключаем каркас
+                        const original = originalMaterials.get(node);
+                        if (original) {
+                            mat.wireframe = original.wireframe || false;
+                            if (mat.color && original.color) mat.color.copy(original.color);
+                            mat.opacity = original.opacity;
+                            mat.transparent = original.transparent;
+                            originalMaterials.delete(node);
+                        } else {
+                            mat.wireframe = false;
+                        }
+                    }
+                    
+                    mat.needsUpdate = true;
+                });
+            }
+        });
+        
+        if (typeof renderer !== 'undefined' && renderer) {
+            renderer.render(scene, camera);
+        }
+    }
+    
+    if (typeof addDebug === 'function') {
+        addDebug(`Каркасный режим: ${enabled ? 'ВКЛЮЧЁН' : 'ВЫКЛЮЧЕН'}`, enabled ? 'success' : 'info');
+    }
+}
+
+// === ИНИЦИАЛИЗАЦИЯ С НЕСКОЛЬКИМИ СПОСОБАМИ ПЕРЕХВАТА ===
+function initWireframe() {
+    console.log('🔄 Инициализация каркасного режима...');
+    
+    // Ищем тумблер
+    const toggle = document.querySelector('#wireframeToggle');
+    
+    if (!toggle) {
+        console.error('❌ Не найден элемент #wireframeToggle!');
+        return;
+    }
+    
+    // Способ 1: Стандартный обработчик
+    toggle.addEventListener('change', function(e) {
+        e.stopPropagation();
+        console.log('🎯 Событие change сработало! checked:', e.target.checked);
+        toggleWireframe(e.target.checked);
+    });
+    
+    // Способ 2: Дублируем на click (на случай, если change не срабатывает)
+    toggle.addEventListener('click', function(e) {
+        console.log('🖱️ Клик по тумблеру, checked после клика:', toggle.checked);
+    });
+    
+    // Способ 3: Наблюдатель за атрибутом checked (резервный)
+    let lastChecked = toggle.checked;
+    setInterval(() => {
+        if (toggle.checked !== lastChecked) {
+            console.log('🔄 Изменение detected через интервал:', toggle.checked);
+            lastChecked = toggle.checked;
+            toggleWireframe(toggle.checked);
+        }
+    }, 100);
+    
+    console.log('✅ Каркасный режим инициализирован');
+}
+
+// Запускаем инициализацию
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWireframe);
+} else {
+    initWireframe();
+}
+
+// Глобальная функция для ручного вызова
+window.toggleWireframe = toggleWireframe;
+</script>
+<script>
+// ========== КАРКАСНЫЙ РЕЖИМ ДЛЯ КОНКРЕТНОГО ОБЪЕКТА ==========
+
+// Храним оригинальные материалы для каждого объекта
+const objectOriginalMaterials = new WeakMap();
+
+function toggleWireframeForObject(object, enable) {
+    if (!object || !object.isObject3D) return;
+
+    // Проходим по всем мешам внутри объекта (включая вложенные)
+    object.traverse((node) => {
+        if (!node.isMesh || !node.material) return;
+
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+
+        materials.forEach((mat, index) => {
+            if (!mat) return;
+
+            // Сохраняем оригинальный материал при первом переключении
+            if (!objectOriginalMaterials.has(node)) {
+                objectOriginalMaterials.set(node, materials.map(m => m.clone()));
+            }
+
+            if (enable) {
+                // === ВКЛЮЧАЕМ КАРКАС ===
+                mat.wireframe = true;
+                mat.wireframeLinewidth = 3;
+
+                // Делаем каркас ярким и контрастным
+                if (mat.color) {
+                    mat.color.setHex(0x00ffff);     // ярко-бирюзовый
+                }
+                mat.transparent = true;
+                mat.opacity = 0.9;
+                mat.depthTest = true;
+            } 
+            else {
+                // === ВЫКЛЮЧАЕМ КАРКАС — возвращаем оригинал ===
+                const originals = objectOriginalMaterials.get(node);
+                if (originals && originals[index]) {
+                    const orig = originals[index];
+                    mat.wireframe = false;
+                    if (mat.color && orig.color) mat.color.copy(orig.color);
+                    mat.opacity = orig.opacity !== undefined ? orig.opacity : 1;
+                    mat.transparent = orig.transparent || false;
+                    mat.depthTest = true;
+                }
+            }
+
+            mat.needsUpdate = true;
+        });
+    });
+
+    const action = enable ? '🔲 Каркас включён' : '◼️ Каркас выключен';
+    addDebug(`${action} для: ${getModelName(object)}`, enable ? 'success' : 'info');
+}
+
+// Глобальная функция для контекстного меню
+window.contextToggleWireframe = function() {
+    if (!contextMenuTarget) {
+        hideContextMenu();
+        return;
+    }
+
+    // Определяем, включён ли уже каркас у этого объекта
+    let isCurrentlyWireframe = false;
+    
+    contextMenuTarget.traverse((node) => {
+        if (node.isMesh && node.material) {
+            const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+            if (mat && mat.wireframe === true) {
+                isCurrentlyWireframe = true;
+                return false; // выходим
+            }
+        }
+    });
+
+    // Переключаем в противоположное состояние
+    toggleWireframeForObject(contextMenuTarget, !isCurrentlyWireframe);
+
+    hideContextMenu();
+
+    // Обновляем списки (на всякий случай)
+    if (typeof updateModelsList === 'function') updateModelsList();
+    if (typeof syncLargeModalIfOpen === 'function') syncLargeModalIfOpen();
+};
+</script>
+<script>
+// ========== ПРОЗРАЧНОСТЬ ЧЕРЕЗ КОНТЕКСТНОЕ МЕНЮ (РАБОЧАЯ ВЕРСИЯ) ==========
+
+// Глобальная переменная для хранения текущего объекта
+let currentOpacityTarget = null;
+
+// Функция применения прозрачности к объекту
+function setObjectOpacity(obj, transparencyValue) {
+    if (!obj) {
+        console.error('setObjectOpacity: obj is null');
+        return false;
+    }
+    
+    let changed = false;
+    
+    // Если obj - это группа (Group), проходим по всем детям
+    const processMesh = (mesh) => {
+        if (!mesh.isMesh) return;
+        if (!mesh.material) return;
+        
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        
+        materials.forEach((mat) => {
+            if (!mat) return;
+            
+            // Сохраняем оригинальные значения при первом изменении
+            if (mat.userData.originalOpacity === undefined) {
+                mat.userData.originalOpacity = mat.opacity !== undefined ? mat.opacity : 1;
+                mat.userData.originalTransparent = mat.transparent || false;
+                if (mat.color) {
+                    mat.userData.originalColor = mat.color.clone();
+                }
+                console.log(`Сохранён оригинал для ${mesh.name}: opacity=${mat.userData.originalOpacity}`);
+            }
+            
+            // Применяем прозрачность (transparencyValue: 0=видимый, 1=невидимый)
+            const newOpacity = 1 - transparencyValue;
+            
+            if (newOpacity < 1.0) {
+                mat.transparent = true;
+                mat.opacity = newOpacity;
+            } else {
+                mat.opacity = mat.userData.originalOpacity;
+                mat.transparent = mat.userData.originalTransparent;
+            }
+            
+            mat.needsUpdate = true;
+            changed = true;
+        });
+    };
+    
+    // Обрабатываем объект
+    if (obj.isMesh) {
+        processMesh(obj);
+    } else if (obj.isGroup || obj.children) {
+        obj.traverse((child) => {
+            if (child.isMesh) {
+                processMesh(child);
+            }
+        });
+    }
+    
+    return changed;
+}
+
+// Функция получения текущей прозрачности объекта
+function getCurrentObjectOpacity(obj) {
+    if (!obj) return 0;
+    
+    let opacity = null;
+    
+    const checkMesh = (mesh) => {
+        if (opacity !== null) return;
+        if (!mesh.isMesh) return;
+        if (!mesh.material) return;
+        
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (let mat of materials) {
+            if (mat && mat.transparent && typeof mat.opacity === 'number') {
+                opacity = 1 - mat.opacity;
+                break;
+            }
+        }
+    };
+    
+    if (obj.isMesh) {
+        checkMesh(obj);
+    } else if (obj.traverse) {
+        obj.traverse(checkMesh);
+    }
+    
+    return opacity !== null ? opacity : 0;
+}
+
+// ГЛАВНАЯ ФУНКЦИЯ для контекстного меню
+window.contextOpacitySlider = function() {
+    console.log('🎯 contextOpacitySlider вызвана');
+    
+    if (!contextMenuTarget) {
+        console.error('contextMenuTarget не определён');
+        if (typeof hideContextMenu === 'function') hideContextMenu();
+        return;
+    }
+    
+    console.log('Цель:', contextMenuTarget.name, contextMenuTarget.type);
+    
+    // Находим целевой объект (часть модели)
+    let targetPart = null;
+    
+    // Пытаемся найти меш, на который кликнули
+    if (contextMenuTarget.isMesh) {
+        targetPart = contextMenuTarget;
+    } else {
+        // Ищем первый меш вверх по иерархии
+        let parent = contextMenuTarget;
+        while (parent && !parent.isMesh && parent !== scene) {
+            parent = parent.parent;
+        }
+        if (parent && parent.isMesh) {
+            targetPart = parent;
+        } else {
+            // Если не нашли, используем сам объект
+            targetPart = contextMenuTarget;
+        }
+    }
+    
+    if (!targetPart) {
+        console.error('Не удалось найти целевую часть');
+        if (typeof addDebug === 'function') {
+            addDebug('❌ Не удалось найти объект для изменения прозрачности', 'error');
+        }
+        if (typeof hideContextMenu === 'function') hideContextMenu();
+        return;
+    }
+    
+    console.log('Целевая часть:', targetPart.name);
+    
+    // Сохраняем в глобальную переменную
+    currentOpacityTarget = targetPart;
+    
+    // Получаем имя
+    const partName = targetPart.name || "Часть модели";
+    
+    // Скрываем контекстное меню
+    if (typeof hideContextMenu === 'function') hideContextMenu();
+    
+    // Удаляем старое модальное окно, если есть
+    const oldModal = document.getElementById('opacity-modal');
+    if (oldModal) oldModal.remove();
+    
+    // СОЗДАЁМ МОДАЛЬНОЕ ОКНО
+    const modal = document.createElement('div');
+    modal.id = "opacity-modal";
+    modal.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(25,25,40,0.98); border: 2px solid #4a6fa5; border-radius: 14px;
+        padding: 25px; width: 370px; z-index: 10001; color: white; font-family: Segoe UI, Arial;
+        box-shadow: 0 20px 70px rgba(0,0,0,0.85); text-align: center;
+        backdrop-filter: blur(8px);
+    `;
+    
+    modal.innerHTML = `
+        <h3 style="margin:0 0 12px 0; color:#88aaff;">🌫️ Прозрачность части</h3>
+        <div style="margin-bottom:20px; font-size:14.5px; opacity:0.95; word-break:break-all; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;">
+            📦 ${partName}
+        </div>
+        
+        <input type="range" id="opSlider" min="0" max="1" step="0.01" value="0"
+               style="width:100%; height:9px; accent-color:#4a6fa5; cursor: pointer;">
+        
+        <div id="opValue" style="margin:15px 0 25px 0; font-size:22px; font-weight:bold; color:#4a6fa5;">
+            0%
+        </div>
+        
+        <div style="margin-bottom:15px; font-size:11px; color:#888;">
+            💡 0% = полностью видимый | 100% = полностью прозрачный
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button id="closeOpacityBtn" class="btn" style="background:#4a6fa5; cursor:pointer; padding: 8px 16px; border: none; border-radius: 6px; color: white;">Закрыть</button>
+            <button id="resetOpacityBtn" class="btn success" style="background:#4aa56f; cursor:pointer; padding: 8px 16px; border: none; border-radius: 6px; color: white;">100% прозрачности</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // === ПОЛУЧАЕМ ЭЛЕМЕНТЫ ===
+    const slider = document.getElementById('opSlider');
+    const valueEl = document.getElementById('opValue');
+    const closeBtn = document.getElementById('closeOpacityBtn');
+    const resetBtn = document.getElementById('resetOpacityBtn');
+    
+    if (!slider) {
+        console.error('Слайдер не найден!');
+        return;
+    }
+    
+    // Получаем текущую прозрачность
+    const currentOpacity = getCurrentObjectOpacity(targetPart);
+    slider.value = currentOpacity;
+    valueEl.textContent = Math.round(currentOpacity * 100) + "%";
+    
+    // === ОБРАБОТЧИК СЛАЙДЕРА (ГЛАВНЫЙ) ===
+    const onSliderChange = function(e) {
+        const transparencyValue = parseFloat(e.target.value);
+        const percent = Math.round(transparencyValue * 100);
+        valueEl.textContent = percent + "%";
+        
+        console.log(`Слайдер: ${percent}%`);
+        
+        if (currentOpacityTarget) {
+            const result = setObjectOpacity(currentOpacityTarget, transparencyValue);
+            console.log(`Применено: ${result ? 'успешно' : 'ошибка'}`);
+            
+            // Принудительный рендер
+            if (typeof renderer !== 'undefined' && renderer && typeof scene !== 'undefined' && typeof camera !== 'undefined') {
+                renderer.render(scene, camera);
+            }
+            
+            if (typeof addDebug === 'function') {
+                addDebug(`🌫️ Прозрачность "${partName}" → ${percent}%`, 'info');
+            }
+        } else {
+            console.error('currentOpacityTarget = null!');
+        }
+    };
+    
+    // Вешаем обработчик
+    slider.addEventListener('input', onSliderChange);
+    
+    // Закрытие
+    closeBtn.addEventListener('click', function() {
+        modal.remove();
+        currentOpacityTarget = null;
+    });
+    
+    // Сброс на 100%
+    resetBtn.addEventListener('click', function() {
+        if (slider) {
+            slider.value = 1;
+            valueEl.textContent = "100%";
+            
+            if (currentOpacityTarget) {
+                setObjectOpacity(currentOpacityTarget, 1);
+                if (typeof renderer !== 'undefined' && renderer) {
+                    renderer.render(scene, camera);
+                }
+                if (typeof addDebug === 'function') {
+                    addDebug(`🌫️ Прозрачность "${partName}" → 100%`, 'info');
+                }
+            }
+        }
+    });
+    
+    // Закрытие по клику вне окна
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+            currentOpacityTarget = null;
+        }
+    });
+    
+    console.log('✅ Модальное окно создано, слайдер готов');
+};
+
+// Добавляем стили, если их нет
+if (!document.querySelector('#opacity-style')) {
+    const style = document.createElement('style');
+    style.id = 'opacity-style';
+    style.textContent = `
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); transition: all 0.2s; }
+        #opSlider { cursor: pointer; }
+    `;
+    document.head.appendChild(style);
+}
+
+console.log('✅ Система прозрачности загружена');
+</script>
+<script>
+// ==================== ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ОТОБРАЖЕНИЯ ====================
+let renderMode = '3d';
+let originalLights = [];
+let previewLights = [];
+
+function setupPreviewMode() {
+    // Сохраняем текущие источники света если еще не сохраняли
+    if (originalLights.length === 0) {
+        scene.traverse(node => {
+            if (node.isLight && !node.name?.startsWith('preview_')) {
+                originalLights.push({
+                    light: node,
+                    intensity: node.intensity,
+                    visible: node.visible
+                });
+            }
+        });
+    }
+    
+    // Выключаем все существующие источники света (кроме preview)
+    scene.traverse(node => {
+        if (node.isLight && !node.name?.startsWith('preview_')) {
+            node.visible = false;
+        }
+    });
+    
+    // Удаляем старые preview если есть
+    previewLights.forEach(light => {
+        if (light.parent) scene.remove(light);
+    });
+    previewLights = [];
+    
+    // Создаем яркое равномерное освещение
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    ambientLight.name = 'preview_ambient';
+    scene.add(ambientLight);
+    previewLights.push(ambientLight);
+    
+    // Добавляем яркие направленные источники со всех сторон
+    const directions = [
+        { pos: [ 2,  2,  2], intensity: 1.0 },
+        { pos: [-2,  2, -2], intensity: 0.8 },
+        { pos: [ 2, -2,  2], intensity: 0.8 },
+        { pos: [-2, -2, -2], intensity: 0.8 },
+        { pos: [ 0,  3,  0], intensity: 0.6 },
+        { pos: [ 0, -1,  0], intensity: 0.4 }
+    ];
+    
+    directions.forEach((dir, i) => {
+        const light = new THREE.DirectionalLight(0xffffff, dir.intensity);
+        light.position.set(dir.pos[0], dir.pos[1], dir.pos[2]);
+        light.name = `preview_light_${i}`;
+        light.castShadow = false;
+        scene.add(light);
+        previewLights.push(light);
+    });
+    
+    // Выключаем тени в рендерере для preview режима
+    if (renderer) renderer.shadowMap.enabled = false;
+    
+    // Убираем тени у всех объектов
+    scene.traverse(node => {
+        if (node.isMesh) {
+            node.castShadow = false;
+            node.receiveShadow = false;
+        }
+    });
+}
+
+function setup3dMode() {
+    // Удаляем preview освещение
+    previewLights.forEach(light => {
+        if (light.parent) scene.remove(light);
+    });
+    previewLights = [];
+    
+    // Восстанавливаем оригинальные источники света
+    originalLights.forEach(item => {
+        if (item.light) {
+            item.light.visible = item.visible !== undefined ? item.visible : true;
+            item.light.intensity = item.intensity;
+        }
+    });
+    
+    // Включаем тени
+    if (renderer) renderer.shadowMap.enabled = true;
+    
+    // Восстанавливаем тени у объектов
+    scene.traverse(node => {
+        if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+        }
+    });
+}
+
+function toggleRenderMode(enable3d) {
+    if (enable3d) {
+        renderMode = '3d';
+        setup3dMode();
+        addDebug('🎨 Режим: 3D (с тенями)', 'success');
+    } else {
+        renderMode = 'preview';
+        setupPreviewMode();
+        addDebug('🎨 Режим: Preview (яркое равномерное освещение)', 'success');
+    }
+    
+    // Обновляем UI
+    const toggle = document.getElementById('shadowsEnabledToggle');
+    const state = document.getElementById('shadowsEnabledState');
+    if (toggle) toggle.checked = enable3d;
+    if (state) state.textContent = enable3d ? '3D' : 'Preview';
+    
+    // Принудительный рендер
+    if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+    }
 }
 
 // Инициализация
 setTimeout(() => {
-  initFirstPersonControls();
-
-  const fpToggle = document.getElementById('firstPersonToggle');
-  if (fpToggle) {
-    fpToggle.addEventListener('change', (e) => {
-      toggleFirstPerson(e.target.checked);
-    });
-  }
-
-  addDebug('✅ Переключатель "1st Person" добавлен в правый верхний угол', 'success');
-}, 1200);
-
-// Обновлённый animate()
-const oldAnimate = animate;
-animate = function() {
-  requestAnimationFrame(animate);
-
-  const delta = 0.016;
-
-  if (isFirstPerson) {
-    updateFirstPersonMovement(delta);
-  } else if (controls) {
-    controls.update();
-  }
-
-  if (showClipPlanes) updateClipPlaneHelpers();
-  if (renderer && scene && camera) renderer.render(scene, camera);
-};
+    const modeToggle = document.getElementById('shadowsEnabledToggle');
+    if (modeToggle) {
+        // Удаляем старые обработчики, чтобы не было дублирования
+        const newToggle = modeToggle.cloneNode(true);
+        modeToggle.parentNode.replaceChild(newToggle, modeToggle);
+        
+        newToggle.addEventListener('change', function(e) {
+            toggleRenderMode(e.target.checked);
+        });
+    }
+    
+    // Начальное состояние - 3D режим (тени включены)
+    renderMode = '3d';
+    
+    addDebug('🎨 Переключение режимов отображения инициализировано', 'info');
+    addDebug('💡 ON = 3D режим (с тенями), OFF = Preview режим (яркое равномерное освещение)', 'info');
+}, 2000);
 </script>
-  </body>
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e80317099bafba0',t:'MTc3NTQ3MjIyMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
